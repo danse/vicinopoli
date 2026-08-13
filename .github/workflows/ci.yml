@@ -39,13 +39,20 @@ jobs:
       - run: uv run mypy app
       - name: Create test database
         run: |
-          uv run python -c \
-            "import asyncio, asyncpg; \
-           async def main(): \
-             c = await asyncpg.connect(host='localhost', port=5432, user='vicinopoli', password='vicinopoli', database='postgres'); \
-             await c.execute('CREATE DATABASE vicinopoli_test OWNER vicinopoli'); \
-             await c.close() \
-           asyncio.run(main())"
+          uv run python - <<'EOF'
+          import asyncio
+          import asyncpg
+
+          async def main():
+              conn = await asyncpg.connect(
+                  host="localhost", port=5432, user="vicinopoli",
+                  password="vicinopoli", database="postgres",
+              )
+              await conn.execute("CREATE DATABASE vicinopoli_test OWNER vicinopoli")
+              await conn.close()
+
+          asyncio.run(main())
+          EOF
       - run: uv run pytest
       - name: OpenAPI schema is in sync with the committed snapshot
         run: |
