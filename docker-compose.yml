@@ -1,0 +1,70 @@
+name: vicinopoli
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: vicinopoli
+      POSTGRES_PASSWORD: vicinopoli
+      POSTGRES_DB: vicinopoli
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vicinopoli -d vicinopoli"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9001:9001" # MinIO console (dev only)
+
+  backend:
+    build: ./backend
+    environment:
+      ENVIRONMENT: development
+      DATABASE_URL: postgresql+asyncpg://vicinopoli:vicinopoli@db:5432/vicinopoli
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: media
+      NOMINATIM_BASE_URL: https://nominatim.openstreetmap.org
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    expose:
+      - "8000"
+
+  frontend:
+    build: ./frontend
+    expose:
+      - "80"
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  db_data:
+  minio_data:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,32 @@
+# vicinopoli production reverse proxy (Hetzner VPS).
+#
+# DOMAIN decides the TLS behaviour:
+#   - a hostname (e.g. vicinopoli.example.com or <ip>.sslip.io):
+#       Caddy provisions a Let's Encrypt cert automatically on first request,
+#       and redirects :80 -> :443.
+#   - the bare server IP (e.g. 203.0.113.7):
+#       Caddy serves plain HTTP on :80 (IPs get no auto-TLS). Enough for a
+#       non-public smoke deploy; add a real hostname when you want HTTPS/PWA.
+#
+# Place this via deploy/docker-compose.prod.yml (mounted read-only).
+
+{$DOMAIN:localhost} {
+	# Backend API + OpenAPI docs
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	# PWA / frontend static build
+	handle {
+		reverse_proxy frontend:80
+	}
+
+	encode gzip zstd
+
+	# Basic hardening headers (PWA benefits from cache-busting asset hashes)
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		X-Frame-Options DENY
+	}
+}

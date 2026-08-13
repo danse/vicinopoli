@@ -1,0 +1,1 @@
+"""vicinopoli backend application package."""

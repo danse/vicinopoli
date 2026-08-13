@@ -43,6 +43,7 @@ vicinopoli/
   docs/
     plan.md            # roadmap + milestones
     decisions/         # ADRs
+  deploy/              # production deployment (Hetzner VPS) — see deploy/README.md
   backend/             # FastAPI + Pydantic + SQLAlchemy + Alembic
   frontend/            # Vite + React + Tailwind + shadcn/ui + PWA
   openapi/             # generated TS types (gitignored)
@@ -58,3 +59,9 @@ See `docs/decisions/` for Architecture Decision Records (ADRs). Key choices:
 - Anonymous device tokens + optional pseudonym, no login; a trust ladder gives
   new devices reduced reach.
 - Tailwind CSS + shadcn/ui for styling; Italian (`it`) default locale with `en`.
+
+## Deployment
+
+See [`deploy/README.md`](deploy/README.md) for running the production stack on a
+Hetzner VPS (self-contained `docker-compose.prod.yml`, Caddy with Let's Encrypt
+TLS).
