@@ -32,7 +32,41 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 ## To do
 
-- github integration failed with: "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5, astral-sh/setup-uv@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/"
+- github integration failed with:
+ - "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5, astral-sh/setup-uv@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/"
+ - backend
+
+==================================== ERRORS ====================================
+_______ ERROR at setup of test_device_exposes_segment_flags_and_consent ________
+
+request = <SubRequest 'engine' for <Coroutine test_device_exposes_segment_flags_and_consent>>
+kwargs = {}, func = <function engine at 0x7fecbe6463e0>
+event_loop_fixture_id = '_session_event_loop'
+setup = <function _wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.setup at 0x7fecbddfa0c0>
+setup_task = <Task finished name='Task-1' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.setup() done, de...exceptions: [Errno 111] Connect call failed ('::1', 5433, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 5433)")>
+
+    @functools.wraps(fixture)
+    def _asyncgen_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
+        func = _perhaps_rebind_fixture_func(fixture, request.instance)
+        event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
+            request, func
+        )
+        event_loop = request.getfixturevalue(event_loop_fixture_id)
+        kwargs.pop(event_loop_fixture_id, None)
+        gen_obj = func(**_add_kwargs(func, kwargs, event_loop, request))
+
+ - e2e
+
+[WebServer]  Container vicinopoli-caddy-1  Started
+
+Error: Process from config.webServer exited early.
+Error: Error: Process from config.webServer exited early.
+
+
+make: *** [Makefile:42: test-e2e] Error 1
+Error: Process completed with exit code 2.
+
+
 - set vicinopoli.it in configs now that it's registered, page returns "secure connection failed" at the moment
 - range-adjusting controls
 - npm audit

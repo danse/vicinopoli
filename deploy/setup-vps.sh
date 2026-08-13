@@ -38,11 +38,12 @@ fi
 echo "[2/5] Placing repo at ${APP_DIR}..."
 mkdir -p "${APP_DIR}"
 # Copy all files (excluding git state, node_modules, venvs, generated output).
+# `openapi/` MUST ship: the frontend image regenerates its TS types from the
+# committed snapshot at build time (ADR 0003).
 rsync -a --exclude '.git' \
   --exclude 'node_modules' \
   --exclude 'backend/.venv' \
   --exclude 'frontend/dist' \
-  --exclude 'openapi' \
   --exclude 'frontend/src/api/generated' \
   "${REPO_DIR}/" "${APP_DIR}/"
 

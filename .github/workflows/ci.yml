@@ -73,3 +73,14 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Run e2e against the stack
         run: make test-e2e
+
+  prod-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production images (fresh clone, prod compose)
+        run: |
+          # Same build the VPS runs (deploy/docker-compose.prod.yml). Fails
+          # here, not at deploy time, if the build context or a COPY source
+          # (e.g. openapi/openapi.json, frontend/nginx.conf) is missing.
+          docker compose -f deploy/docker-compose.prod.yml build backend frontend
