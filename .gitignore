@@ -43,3 +43,4 @@ e2e/.cache/
 data/
 *.log
 session.dot
+canned
