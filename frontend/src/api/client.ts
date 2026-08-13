@@ -12,6 +12,16 @@ export type MediaPresignResponse = components["schemas"]["MediaPresignResponse"]
 export type MediaRegistered = components["schemas"]["MediaRegistered"];
 export type MediaInfo = components["schemas"]["MediaInfo"];
 
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly detail: unknown,
+  ) {
+    super(`Request failed: ${status}`);
+    this.name = "ApiError";
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
@@ -21,9 +31,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     },
   });
   if (!response.ok) {
-    throw new Error(
-      `Request failed: ${response.status} ${response.statusText}`,
-    );
+    const body = (await response.json().catch(() => null)) as
+      | { detail?: unknown }
+      | null;
+    throw new ApiError(response.status, body?.detail);
   }
   return (await response.json()) as T;
 }

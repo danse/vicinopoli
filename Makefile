@@ -1,15 +1,18 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help up down monitoring build gen migrate test-backend lint-backend \
+.PHONY: help up up-manual down monitoring build gen migrate test-backend lint-backend \
         test-frontend build-frontend lint-frontend test-e2e format backup
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
-up: ## Start the full stack
+up: ## Start the full stack (dev, deterministic static geocoder)
 	docker compose up -d --build
+
+up-manual: ## Start the stack with the real geocoder (Nominatim) for manual testing
+	GEOCODER_MODE=nominatim docker compose up -d --build
 
 down: ## Stop the stack
 	docker compose down

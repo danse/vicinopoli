@@ -43,6 +43,10 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: media
+      # Dev/tests use the deterministic static geocoder by default. For manual
+      # testing against the real geocoder, run: GEOCODER_MODE=nominatim make up
+      # (Production always sets GEOCODER_MODE=nominatim).
+      GEOCODER_MODE: ${GEOCODER_MODE:-static}
       NOMINATIM_BASE_URL: https://nominatim.openstreetmap.org
       SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:

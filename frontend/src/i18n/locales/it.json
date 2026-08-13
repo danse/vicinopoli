@@ -14,6 +14,7 @@
     "publish": "Pubblica",
     "publishing": "Pubblicazione...",
     "error": "Non è stato possibile pubblicare. Riprova.",
+    "addressNotFound": "Indirizzo non trovato.",
     "feedTitle": "Cosa succede in zona",
     "empty": "Nessun messaggio nei dintorni. Sii il primo!",
     "radius": "Entro {{radius}}",

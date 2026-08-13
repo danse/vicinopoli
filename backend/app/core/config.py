@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     media_public_base_url: str = "http://localhost:8080/media"
 
     nominatim_base_url: str = "https://nominatim.openstreetmap.org"
+    # "static" is the deterministic dev/test mode (a handful of hardcoded
+    # addresses). Production MUST set GEOCODER_MODE=nominatim — otherwise real
+    # addresses fail to geocode and posts cannot be published.
     geocoder_mode: str = "static"
     geocoder_cache_ttl: int = 86400
 

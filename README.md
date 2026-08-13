@@ -8,6 +8,7 @@ voice, or photos to your neighbours. No account, no password.
 
 ```bash
 make up           # start the full stack (PostGIS, MinIO, Caddy, backend, frontend)
+make up-manual    # same, but with the real geocoder (Nominatim) for manual testing
 make gen          # generate TypeScript API types from the backend OpenAPI schema
 make test-backend # run backend tests
 make test-frontend# run frontend tests
@@ -16,6 +17,21 @@ make test-frontend# run frontend tests
 The PWA is served at `http://localhost:8080` (via Caddy, rootless Docker on
 this machine). Backend API and docs are proxied at `http://localhost:8080/api`
 and `http://localhost:8080/api/docs`.
+
+## Geocoding modes
+
+`GEOCODER_MODE` selects which address geocoder the backend uses:
+
+| Mode       | Behavior                                                                 |
+|------------|--------------------------------------------------------------------------|
+| `static`   | Deterministic, offline-safe lookup for a handful of hardcoded test       |
+|            | addresses (e.g. `Via Roma 1, Roma`). Default for `make up`; e2e and unit |
+|            | tests rely on it for repeatable results.                                 |
+| `nominatim`| Real geocoding against the public Nominatim API. Used by `make up-manual`|
+|            | for manual testing and by production (see `deploy/README.md`).           |
+
+Production **must** set `GEOCODER_MODE=nominatim` — the `static` mode only
+resolves test addresses, so any real address would fail to publish.
 
 ## Architecture
 

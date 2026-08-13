@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
+  ApiError,
   createPost,
   presignMedia,
   registerMedia,
@@ -71,6 +72,7 @@ export function Composer({
   const [recordingError, setRecordingError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(false);
+  const [addressError, setAddressError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const tracksRef = useRef<MediaStreamTrack[]>([]);
@@ -123,6 +125,7 @@ export function Composer({
     if (!canSubmit) return;
     setSubmitting(true);
     setError(false);
+    setAddressError(false);
     try {
       if (pseudonym.trim() !== "") {
         await updateMe({ pseudonym: pseudonym.trim() });
@@ -174,8 +177,12 @@ export function Composer({
       setVoice(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       onPosted();
-    } catch {
-      setError(true);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        setAddressError(true);
+      } else {
+        setError(true);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -295,6 +302,11 @@ export function Composer({
       </div>
       {error && (
         <p className="mt-2 text-sm text-destructive">{t("composer.error")}</p>
+      )}
+      {addressError && (
+        <p className="mt-2 text-sm text-destructive">
+          {t("composer.addressNotFound")}
+        </p>
       )}
       <Button className="mt-4" disabled={!canSubmit} onClick={handleSubmit}>
         {submitting ? t("composer.publishing") : t("composer.publish")}
