@@ -5,6 +5,7 @@ import { type FeedResponse, getFeed } from "@/api/client";
 
 interface FeedProps {
   address: string;
+  refreshTick?: number;
 }
 
 function formatRadius(meters: number): string {
@@ -12,7 +13,7 @@ function formatRadius(meters: number): string {
   return `${meters} m`;
 }
 
-export function Feed({ address }: FeedProps) {
+export function Feed({ address, refreshTick = 0 }: FeedProps) {
   const { t } = useTranslation();
   const [feed, setFeed] = useState<FeedResponse | null>(null);
 
@@ -33,7 +34,7 @@ export function Feed({ address }: FeedProps) {
     return () => {
       cancelled = true;
     };
-  }, [address]);
+  }, [address, refreshTick]);
 
   if (feed === null) return null;
 
@@ -59,6 +60,16 @@ export function Feed({ address }: FeedProps) {
             key={post.id}
             className="rounded-lg border bg-card p-4 text-card-foreground"
           >
+            <div className="mb-1 flex items-center gap-2">
+              <span className="text-sm font-semibold">
+                {post.pseudonym ?? t("composer.anonymous")}
+              </span>
+              {post.new_neighbour && (
+                <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                  {t("composer.newNeighbour")}
+                </span>
+              )}
+            </div>
             <p>{post.body}</p>
             <p className="mt-2 text-xs text-muted-foreground">
               {post.display_address}

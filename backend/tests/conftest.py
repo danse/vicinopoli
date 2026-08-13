@@ -9,7 +9,7 @@ import os
 
 os.environ.setdefault(
     "DATABASE_URL",
-    "postgresql+asyncpg://vicinopoli:vicinopoli@localhost:5433/vicinopoli",
+    "postgresql+asyncpg://vicinopoli:vicinopoli@localhost:5433/vicinopoli_test",
 )
 os.environ.setdefault("GEOCODER_MODE", "static")
 
@@ -52,7 +52,9 @@ async def session_factory(engine):
 async def _truncate_tables(session_factory):
     yield
     async with session_factory() as session:
-        await session.execute(text("TRUNCATE posts, locations RESTART IDENTITY CASCADE"))
+        await session.execute(
+            text("TRUNCATE reports, posts, devices, locations RESTART IDENTITY CASCADE")
+        )
         await session.commit()
 
 

@@ -7,6 +7,8 @@
   "composer": {
     "addressLabel": "Il tuo indirizzo",
     "addressPlaceholder": "Es. Via Roma 1, Roma",
+    "pseudonymLabel": "Scegli un nome",
+    "pseudonymPlaceholder": "Es. Gino",
     "messageLabel": "Scrivi un messaggio",
     "messagePlaceholder": "Ciao vicini!",
     "publish": "Pubblica",
@@ -14,6 +16,8 @@
     "error": "Non è stato possibile pubblicare. Riprova.",
     "feedTitle": "Cosa succede in zona",
     "empty": "Nessun messaggio nei dintorni. Sii il primo!",
-    "radius": "Entro {{radius}}"
+    "radius": "Entro {{radius}}",
+    "anonymous": "Vicino anonimo",
+    "newNeighbour": "Nuovo vicino"
   }
 }

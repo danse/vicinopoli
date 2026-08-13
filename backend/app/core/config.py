@@ -27,5 +27,11 @@ class Settings(BaseSettings):
 
     sentry_dsn: str | None = None
 
+    device_cookie_name: str = "device_id"
+    device_cookie_secure: bool = False
+
+    post_rate_limit_per_minute: int | None = 5
+    report_threshold: int = 3
+
 
 settings = Settings()

@@ -27,22 +27,38 @@ const feed = {
       geohash: "sr1x",
       distance_m: 0.0,
       created_at: "2026-08-13T00:00:00Z",
+      pseudonym: "Gino",
+      new_neighbour: true,
     },
   ],
   effective_radius_m: 500,
   target_count: 10,
 };
 
+const device = {
+  id: "device-1",
+  pseudonym: null,
+  new_neighbour: true,
+  created_at: "2026-08-13T00:00:00Z",
+};
 function mockFetch() {
-  return vi.fn().mockImplementation((url: string) => {
-    const body = url.startsWith("/api/feed") ? { ...feed } : { ...created };
+  return vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+    const method = init?.method ?? "GET";
+    let body: Record<string, unknown>;
+    if (url === "/api/me") {
+      body =
+        method === "PATCH" ? { ...device, pseudonym: "Gino" } : { ...device };
+    } else if (url.startsWith("/api/feed")) {
+      body = { ...feed };
+    } else {
+      body = { ...created };
+    }
     return Promise.resolve({
       ok: true,
       json: () => Promise.resolve(body),
     });
   });
 }
-
 describe("App", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", mockFetch());
@@ -58,6 +74,7 @@ describe("App", () => {
   it("shows the composer with address and message inputs", () => {
     render(<App />);
     expect(screen.getByLabelText("Il tuo indirizzo")).toBeInTheDocument();
+    expect(screen.getByLabelText("Scegli un nome")).toBeInTheDocument();
     expect(screen.getByLabelText("Scrivi un messaggio")).toBeInTheDocument();
   });
 
@@ -75,5 +92,6 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByText("Ciao vicini!")).toBeInTheDocument();
     });
+    expect(screen.getByText("Gino")).toBeInTheDocument();
   });
 });

@@ -5,6 +5,8 @@ export type FeedResponse = components["schemas"]["FeedResponse"];
 export type PostCreate = components["schemas"]["PostCreate"];
 export type PostScope = components["schemas"]["PostScope"];
 export type PostResponse = components["schemas"]["PostResponse"];
+export type DeviceResponse = components["schemas"]["DeviceResponse"];
+export type DeviceUpdate = components["schemas"]["DeviceUpdate"];
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -45,4 +47,15 @@ export function getFeed(
     searchParams.set("search_radius_m", String(params.search_radius_m));
   }
   return request(`/api/feed?${searchParams.toString()}`);
+}
+
+export function getMe(): Promise<DeviceResponse> {
+  return request("/api/me");
+}
+
+export function updateMe(payload: DeviceUpdate): Promise<DeviceResponse> {
+  return request("/api/me", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
 }

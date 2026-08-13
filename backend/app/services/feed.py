@@ -12,10 +12,12 @@ from dataclasses import dataclass
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.geocoder import GeocodedAddress
 from app.models.location import Location
-from app.models.post import Post, PostScope
+from app.models.post import Post, PostScope, PostStatus
+from app.services.trust import is_new_neighbour
 
 # Expanding-radius ladder (metres) per ADR 0007.
 RADIUS_STEPS = (500, 1_000, 5_000, 20_000, 50_000)
@@ -41,6 +43,8 @@ class FeedPost:
     geohash: str
     distance_m: float
     created_at: object
+    pseudonym: str | None = None
+    new_neighbour: bool = True
 
 
 async def _posts_within(
@@ -49,10 +53,11 @@ async def _posts_within(
     radius_m: int,
     search_radius_m: int,
 ) -> list[tuple[Post, Location, float]]:
-    """Return posts within ``radius_m``, before scope filtering.
+    """Return active posts within ``radius_m``, before scope filtering.
 
     Uses ``ST_DWithin`` on the GiST-indexed geography column. The distance is
     computed with ``ST_Distance`` so visibility can be evaluated precisely.
+    Posts hidden or auto-hidden by reports (ADR 0009) are excluded.
     """
     viewer_geog = func.ST_GeogFromText(f"SRID=4326;POINT({viewer.longitude} {viewer.latitude})")
     # ST_DWithin(geography, geography, metres) — the column is geography.
@@ -62,7 +67,8 @@ async def _posts_within(
     stmt = (
         select(Post, Location, distance.label("distance_m"))
         .join(Location, Post.location_id == Location.id)
-        .where(within)
+        .options(selectinload(Post.device))
+        .where(within, Post.status == PostStatus.active)
         .order_by(distance.asc())
     )
     result = await session.execute(stmt)
@@ -111,18 +117,22 @@ async def expanding_radius_feed(
             if _is_visible(post, location, distance_m, viewer, search_radius_m)
         ]
         if len(visible) >= target_count or radius_m == MAX_RADIUS_M:
-            feed_posts = [
-                FeedPost(
-                    id=str(post.id),
-                    body=post.body,
-                    scope=post.scope,
-                    display_address=location.display_address,
-                    geohash=location.geohash,
-                    distance_m=distance_m,
-                    created_at=post.created_at,
+            feed_posts = []
+            for post, location, distance_m in visible:
+                author = post.device
+                feed_posts.append(
+                    FeedPost(
+                        id=str(post.id),
+                        body=post.body,
+                        scope=post.scope,
+                        display_address=location.display_address,
+                        geohash=location.geohash,
+                        distance_m=distance_m,
+                        created_at=post.created_at,
+                        pseudonym=author.pseudonym if author else None,
+                        new_neighbour=is_new_neighbour(author) if author else True,
+                    )
                 )
-                for post, location, distance_m in visible
-            ]
             return feed_posts, effective_radius
 
     return [], MAX_RADIUS_M

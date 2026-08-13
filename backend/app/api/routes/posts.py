@@ -1,8 +1,10 @@
 """Post creation and feed endpoints.
 
 - ``POST /api/posts`` — geocode the address, resolve the canonical location,
-  and store a text post.
-- ``GET  /api/feed`` — expanding-radius feed honouring scope/visibility.
+  and store a text post attributed to the calling device (ADR 0005 caps the
+  scope of untrusted devices).
+- ``GET  /api/feed`` — expanding-radius feed honouring scope/visibility; posts
+  that are reported-hidden are excluded (ADR 0009).
 """
 
 from typing import Annotated
@@ -11,8 +13,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_geocoder, get_session
+from app.api.deps import get_device, get_geocoder, get_post_rate_limiter, get_session
 from app.core.geocoder import Geocoder
+from app.core.ratelimit import RateLimiter
+from app.models.device import Device
 from app.models.location import Location
 from app.models.post import Post
 from app.schemas.post import (
@@ -23,11 +27,14 @@ from app.schemas.post import (
     PostResponse,
 )
 from app.services.feed import MAX_RADIUS_M, expanding_radius_feed
+from app.services.trust import effective_scope, is_new_neighbour
 
 router = APIRouter()
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 GeocoderDep = Annotated[Geocoder, Depends(get_geocoder)]
+DeviceDep = Annotated[Device, Depends(get_device)]
+RateLimiterDep = Annotated[RateLimiter | None, Depends(get_post_rate_limiter)]
 
 
 async def _resolve_location(
@@ -65,13 +72,20 @@ async def create_post(
     payload: PostCreate,
     session: SessionDep,
     geocoder: GeocoderDep,
+    device: DeviceDep,
+    rate_limiter: RateLimiterDep,
 ) -> PostResponse:
+    if rate_limiter is not None and not rate_limiter.allow(str(device.id)):
+        raise HTTPException(status_code=429, detail="rate limit exceeded")
+
     location, _ = await _resolve_location(session, geocoder, payload.address)
 
-    post = Post(location_id=location.id, body=payload.body, scope=payload.scope)
+    scope = effective_scope(device, payload.scope)
+    post = Post(location_id=location.id, body=payload.body, scope=scope, device_id=device.id)
     session.add(post)
     await session.commit()
     await session.refresh(post)
+    await session.refresh(post.location)
 
     return PostResponse(
         id=post.id,
@@ -84,6 +98,8 @@ async def create_post(
         ),
         distance_m=0.0,
         created_at=post.created_at,
+        pseudonym=device.pseudonym,
+        new_neighbour=is_new_neighbour(device),
     )
 
 
@@ -113,6 +129,8 @@ async def get_feed(
                 geohash=post.geohash,
                 distance_m=post.distance_m,
                 created_at=post.created_at,
+                pseudonym=post.pseudonym,
+                new_neighbour=post.new_neighbour,
             )
             for post in feed_posts
         ],

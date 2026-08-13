@@ -18,6 +18,12 @@ class PostScope(StrEnum):
     r5km = "5km"
 
 
+class PostStatus(StrEnum):
+    active = "active"
+    auto_hidden = "auto_hidden"
+    hidden = "hidden"
+
+
 class PostCreate(BaseModel):
     address: str = Field(min_length=1, max_length=512)
     body: str = Field(min_length=1, max_length=5000)
@@ -37,6 +43,8 @@ class PostResponse(BaseModel):
     location: LocationInfo
     distance_m: float | None = None
     created_at: datetime
+    pseudonym: str | None = None
+    new_neighbour: bool = True
 
 
 class FeedItem(BaseModel):
@@ -47,6 +55,8 @@ class FeedItem(BaseModel):
     geohash: str
     distance_m: float | None = None
     created_at: datetime
+    pseudonym: str | None = None
+    new_neighbour: bool = True
 
 
 class FeedResponse(BaseModel):

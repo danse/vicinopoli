@@ -13,22 +13,19 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 ## Milestones
 
-### 3. Identity + trust + reports
-
-- Anonymous device token (httpOnly cookie) + optional pseudonym.
-- Trust ladder: reduced reach for new devices.
-- Rate limiting; report state machine with auto-hide at threshold.
-
 ### 4. Voice + photos
 
 - Browser `MediaRecorder` -> `webm/opus`; presigned uploads to MinIO.
 - Photo upload with client-side resize/compression; media rendering in feed.
+- Experiment foundation: feature-flag layer (`experiment` segment on the device
+  token) + privacy-safe event collection (`post_viewed`, `post_created`,
+  `onboarding_completed`), with GDPR consent built in. A/B tooling proper is
+  deferred until there is real usage to measure.
 
-### 5. Heatmap + stroll mode + building scope
+### 5. Heatmap + building scope
 
 - H3/geohash cell aggregates served as a tile layer (PostGIS + Martin).
 - MapLibre GL JS heatmap; density only, never individual pins.
-- "Passeggiata" (stroll) mode: read-only browsing of other areas.
 - `building` scope (same normalized address).
 
 ### 6. Hardening
@@ -48,7 +45,6 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 ### Cold bootstrap
 
 - Feed auto-expands radius until ~10 posts (ceiling ~50km).
-- Stroll mode for read-only exploration of other areas.
 
 ### Trust ladder
 

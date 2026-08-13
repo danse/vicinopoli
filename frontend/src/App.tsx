@@ -1,12 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { getMe } from "@/api/client";
 import { Composer } from "@/components/composer";
 import { Feed } from "@/components/feed";
 
 export default function App() {
   const { t, i18n } = useTranslation();
   const [address, setAddress] = useState("");
+  const [pseudonym, setPseudonym] = useState("");
+  const [feedTick, setFeedTick] = useState(0);
+
+  useEffect(() => {
+    getMe()
+      .then((me) => setPseudonym(me.pseudonym ?? ""))
+      .catch(() => {});
+  }, []);
 
   const toggleLanguage = () => {
     const next = i18n.language === "it" ? "en" : "it";
@@ -27,8 +36,14 @@ export default function App() {
           {t("app.switchLanguage")}
         </button>
       </header>
-      <Composer address={address} onAddressChange={setAddress} />
-      <Feed address={address} />
+      <Composer
+        address={address}
+        onAddressChange={setAddress}
+        pseudonym={pseudonym}
+        onPseudonymChange={setPseudonym}
+        onPosted={() => setFeedTick((tick) => tick + 1)}
+      />
+      <Feed address={address} refreshTick={feedTick} />
     </main>
   );
 }

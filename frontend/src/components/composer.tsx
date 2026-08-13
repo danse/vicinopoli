@@ -1,15 +1,24 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { createPost } from "@/api/client";
+import { createPost, updateMe } from "@/api/client";
 import { Button } from "@/components/ui/button";
 
 interface ComposerProps {
   address: string;
   onAddressChange: (address: string) => void;
+  pseudonym: string;
+  onPseudonymChange: (pseudonym: string) => void;
+  onPosted: () => void;
 }
 
-export function Composer({ address, onAddressChange }: ComposerProps) {
+export function Composer({
+  address,
+  onAddressChange,
+  pseudonym,
+  onPseudonymChange,
+  onPosted,
+}: ComposerProps) {
   const { t } = useTranslation();
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -22,12 +31,16 @@ export function Composer({ address, onAddressChange }: ComposerProps) {
     setSubmitting(true);
     setError(false);
     try {
+      if (pseudonym.trim() !== "") {
+        await updateMe({ pseudonym: pseudonym.trim() });
+      }
       await createPost({
         address: address.trim(),
         body: body.trim(),
         scope: "1km",
       });
       setBody("");
+      onPosted();
     } catch {
       setError(true);
     } finally {
@@ -50,6 +63,21 @@ export function Composer({ address, onAddressChange }: ComposerProps) {
           value={address}
           placeholder={t("composer.addressPlaceholder")}
           onChange={(e) => onAddressChange(e.target.value)}
+        />
+      </div>
+      <div className="mt-4 grid gap-2">
+        <label
+          htmlFor="composer-pseudonym"
+          className="text-sm font-medium text-foreground"
+        >
+          {t("composer.pseudonymLabel")}
+        </label>
+        <input
+          id="composer-pseudonym"
+          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          value={pseudonym}
+          placeholder={t("composer.pseudonymPlaceholder")}
+          onChange={(e) => onPseudonymChange(e.target.value)}
         />
       </div>
       <div className="mt-4 grid gap-2">

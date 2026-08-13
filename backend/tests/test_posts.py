@@ -28,9 +28,11 @@ async def test_create_text_post(client) -> None:
     assert response.status_code == 201
     data = response.json()
     assert data["body"] == "Ciao vicini!"
-    assert data["scope"] == "1km"
+    # Untrusted device (ADR 0005): scope is capped to the smallest radius.
+    assert data["scope"] == "500m"
     assert data["location"]["display_address"] == "Via Roma 1, Roma"
     assert data["distance_m"] == 0.0
+    assert data["new_neighbour"] is True
 
 
 @pytest.mark.asyncio
