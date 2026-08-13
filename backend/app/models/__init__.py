@@ -1,5 +1,6 @@
 """ORM models."""
 
+from app.models.activity_cell import ActivityCell
 from app.models.analytics_event import AnalyticsEvent
 from app.models.base import Base
 from app.models.device import Device, DeviceStatus
@@ -9,6 +10,7 @@ from app.models.post import Post, PostScope, PostStatus
 from app.models.report import Report, ReportStatus
 
 __all__ = [
+    "ActivityCell",
     "AnalyticsEvent",
     "Base",
     "Device",

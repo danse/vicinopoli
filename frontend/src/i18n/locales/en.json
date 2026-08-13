@@ -26,7 +26,12 @@
     "voiceRecording": "Recording...",
     "voiceReady": "Voice ready ({{duration}}s)",
     "voiceAlt": "Attached voice message",
-    "voiceError": "Voice recording failed."
+    "voiceError": "Voice recording failed.",
+    "scopeLabel": "Who can see it",
+    "scopeBuilding": "My building only",
+    "scope500m": "500 metres",
+    "scope1km": "1 km",
+    "scope5km": "5 km"
   },
   "consent": {
     "title": "Analytics",

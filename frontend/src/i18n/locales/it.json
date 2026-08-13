@@ -26,7 +26,12 @@
     "voiceRecording": "Registrazione in corso...",
     "voiceReady": "Voce pronta ({{duration}}s)",
     "voiceAlt": "Messaggio vocale allegato",
-    "voiceError": "Registrazione vocale non riuscita."
+    "voiceError": "Registrazione vocale non riuscita.",
+    "scopeLabel": "Chi può vederlo",
+    "scopeBuilding": "Solo il mio palazzo",
+    "scope500m": "500 metri",
+    "scope1km": "1 km",
+    "scope5km": "5 km"
   },
   "consent": {
     "title": "Analisi statistiche",

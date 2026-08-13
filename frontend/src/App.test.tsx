@@ -4,6 +4,28 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import "./i18n";
 
+vi.mock("maplibre-gl", () => ({
+  default: {
+    Map: vi.fn().mockImplementation(() => {
+      const handlers: Record<string, () => void> = {};
+      const map = {
+        on: (event: string, cb: () => void) => {
+          handlers[event] = cb;
+          return map;
+        },
+        fire: (event: string) => handlers[event]?.(),
+        addSource: vi.fn(),
+        addLayer: vi.fn(),
+        getSource: vi.fn().mockReturnValue({
+          setData: vi.fn(),
+        }),
+      };
+      return map;
+    }),
+    GeoJSONSource: class {},
+  },
+}));
+
 beforeAll(() => {
   vi.stubGlobal(
     "createImageBitmap",
@@ -95,6 +117,35 @@ function mockFetch() {
     let body: Record<string, unknown>;
     if (url === "/api/me") {
       body = { ...device, analytics_consent: consented };
+    } else if (url === "/api/geocode") {
+      body = {
+        display_address: "Via Roma 1, Roma",
+        cell: "sr1m9h",
+        cell_center_latitude: 41.89,
+        cell_center_longitude: 12.48,
+      };
+    } else if (url.startsWith("/api/heatmap")) {
+      body = {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: { cell: "sr1m9h", count: 2 },
+            geometry: {
+              type: "Polygon",
+              coordinates: [
+                [
+                  [12.48, 41.89],
+                  [12.5, 41.89],
+                  [12.5, 41.9],
+                  [12.48, 41.9],
+                  [12.48, 41.89],
+                ],
+              ],
+            },
+          },
+        ],
+      };
     } else if (url.startsWith("/api/feed")) {
       body = { ...feedWithMedia };
     } else if (url === "/api/media/presign") {
@@ -179,6 +230,32 @@ describe("App", () => {
       expect(screen.getByText("Ciao vicini!")).toBeInTheDocument();
     });
     expect(screen.getByText("Gino")).toBeInTheDocument();
+  });
+
+  it("sends the selected scope with the post", async () => {
+    const store = mockFetch();
+    vi.stubGlobal("fetch", store);
+
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+      target: { value: "Via Roma 1, Roma" },
+    });
+    fireEvent.change(screen.getByLabelText("Scrivi un messaggio"), {
+      target: { value: "Messaggio per il palazzo" },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Solo il mio palazzo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Messaggio per il palazzo")).toBeInTheDocument();
+    });
+    const postCall = store.mock.calls.find(
+      ([path]: unknown[]) => path === "/api/posts",
+    );
+    expect(postCall).toBeDefined();
+    const init = postCall![1] as RequestInit;
+    expect(JSON.parse(String(init.body))).toMatchObject({ scope: "building" });
   });
 
   it("uploads a photo and shows it in the feed", async () => {

@@ -6,6 +6,7 @@ from app.core.geocoder import (
     GeocodedAddress,
     NominatimGeocoder,
     StaticGeocoder,
+    geohash_decode,
     geohash_encode,
     normalize_address,
 )
@@ -18,6 +19,26 @@ def test_normalize_address_collapses_whitespace() -> None:
 def test_geohash_encode_is_stable() -> None:
     assert geohash_encode(41.8933, 12.4829) == geohash_encode(41.8933, 12.4829)
     assert geohash_encode(41.8, 12.4) != geohash_encode(45.4, 9.2)
+
+
+def test_geohash_decode_returns_cell_bounds() -> None:
+    lat, lon = 41.8933, 12.4829
+    cell = geohash_encode(lat, lon, precision=5)
+    lat_min, lon_min, lat_max, lon_max = geohash_decode(cell)
+    assert lat_min <= lat <= lat_max
+    assert lon_min <= lon <= lon_max
+    # The cell is a rectangle: each edge covers a known span at precision 5.
+    assert lat_max - lat_min > 0
+    assert lon_max - lon_min > 0
+
+
+def test_geohash_decode_roundtrip_within_cell_edge() -> None:
+    cell = geohash_encode(0.0, 0.0, precision=4)
+    lat_min, lon_min, lat_max, lon_max = geohash_decode(cell)
+    # The decoded bounds are the same cell the encoder produced for its centre.
+    corner_lat = (lat_min + lat_max) / 2
+    corner_lon = (lon_min + lon_max) / 2
+    assert geohash_encode(corner_lat, corner_lon, precision=4) == cell
 
 
 @pytest.mark.asyncio

@@ -86,6 +86,37 @@ def geohash_encode(latitude: float, longitude: float, precision: int = 9) -> str
     return "".join(chars)
 
 
+def geohash_decode(cell: str) -> tuple[float, float, float, float]:
+    """Decode a geohash cell into ``(lat_min, lon_min, lat_max, lon_max)``.
+
+    Inverse of :func:`geohash_encode`; used to turn a stored cell id into the
+    rectangle it covers (heatmap tile geometry).
+    """
+    lat_range = [-90.0, 90.0]
+    lon_range = [-180.0, 180.0]
+    even = True
+    for char in cell:
+        value = _BASE32.index(char)
+        for bit_shift in range(4, -1, -1):
+            bit = (value >> bit_shift) & 1
+            if even:
+                mid = (lon_range[0] + lon_range[1]) / 2
+                if bit:
+                    lon_range[0] = mid
+                else:
+                    lon_range[1] = mid
+            else:
+                mid = (lat_range[0] + lat_range[1]) / 2
+                if bit:
+                    lat_range[0] = mid
+                else:
+                    lat_range[1] = mid
+            even = not even
+    lat_min, lat_max = lat_range
+    lon_min, lon_max = lon_range
+    return lat_min, lon_min, lat_max, lon_max
+
+
 class Geocoder(ABC):
     """Interface implemented by every geocoder."""
 

@@ -5,6 +5,7 @@ import {
   createPost,
   presignMedia,
   registerMedia,
+  type PostScope,
   uploadPhotoToUrl,
   updateMe,
 } from "@/api/client";
@@ -16,6 +17,18 @@ interface ComposerProps {
   pseudonym: string;
   onPseudonymChange: (pseudonym: string) => void;
   onPosted: () => void;
+}
+
+const SCOPE_OPTIONS: PostScope[] = ["building", "500m", "1km", "5km"];
+
+function scopeLabel(scope: PostScope): string {
+  const key: Record<PostScope, string> = {
+    building: "composer.scopeBuilding",
+    "500m": "composer.scope500m",
+    "1km": "composer.scope1km",
+    "5km": "composer.scope5km",
+  };
+  return key[scope];
 }
 
 const MAX_DIMENSION = 1200;
@@ -51,6 +64,7 @@ export function Composer({
 }: ComposerProps) {
   const { t } = useTranslation();
   const [body, setBody] = useState("");
+  const [scope, setScope] = useState<PostScope>("1km");
   const [photo, setPhoto] = useState<File | null>(null);
   const [voice, setVoice] = useState<Recording | null>(null);
   const [recording, setRecording] = useState(false);
@@ -152,7 +166,7 @@ export function Composer({
       await createPost({
         address: address.trim(),
         body: body.trim(),
-        scope: "1km",
+        scope,
         media_ids: mediaIds,
       });
       setBody("");
@@ -213,6 +227,29 @@ export function Composer({
           placeholder={t("composer.messagePlaceholder")}
           onChange={(e) => setBody(e.target.value)}
         />
+      </div>
+      <div className="mt-4 grid gap-2">
+        <span className="text-sm font-medium text-foreground">
+          {t("composer.scopeLabel")}
+        </span>
+        <div role="radiogroup" className="flex flex-wrap gap-2">
+          {SCOPE_OPTIONS.map((option) => (
+            <label
+              key={option}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input px-3 py-1.5 text-sm text-foreground has-[:checked]:bg-accent"
+            >
+              <input
+                type="radio"
+                name="scope"
+                value={option}
+                checked={scope === option}
+                onChange={() => setScope(option)}
+                className="h-4 w-4"
+              />
+              {t(scopeLabel(option))}
+            </label>
+          ))}
+        </div>
       </div>
       <div className="mt-4 grid gap-2">
         <label

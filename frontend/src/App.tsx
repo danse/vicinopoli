@@ -5,6 +5,7 @@ import { getMe } from "@/api/client";
 import { Composer } from "@/components/composer";
 import { ConsentBanner } from "@/components/consent-banner";
 import { Feed } from "@/components/feed";
+import { Heatmap } from "@/components/heatmap";
 
 export default function App() {
   const { t, i18n } = useTranslation();
@@ -61,6 +62,7 @@ export default function App() {
         onPseudonymChange={setPseudonym}
         onPosted={() => setFeedTick((tick) => tick + 1)}
       />
+      {address.trim() !== "" && <Heatmap address={address} />}
       <Feed
         address={address}
         refreshTick={feedTick}

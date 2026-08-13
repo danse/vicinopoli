@@ -105,3 +105,18 @@ export async function sendAnalyticsEvents(
     body: JSON.stringify({ events }),
   });
 }
+
+export type GeocodeResponse = components["schemas"]["GeocodeResponse"];
+export type HeatmapTileResponse = components["schemas"]["HeatmapTileResponse"];
+
+export function geocode(address: string): Promise<GeocodeResponse> {
+  return request(`/api/geocode?address=${encodeURIComponent(address)}`);
+}
+
+export function getHeatmapTile(
+  z: number,
+  x: number,
+  y: number,
+): Promise<HeatmapTileResponse> {
+  return request(`/api/heatmap/${z}/${x}/${y}`);
+}

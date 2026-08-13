@@ -28,6 +28,7 @@ from app.schemas.post import (
     PostResponse,
 )
 from app.services.feed import MAX_RADIUS_M, expanding_radius_feed
+from app.services.heatmap import bump_activity_cell
 from app.services.media import media_by_post, media_info
 from app.services.trust import effective_scope, is_new_neighbour
 
@@ -86,6 +87,7 @@ async def create_post(
     post = Post(location_id=location.id, body=payload.body, scope=scope, device_id=device.id)
     session.add(post)
     await session.flush()
+    await bump_activity_cell(session, location)
 
     attached: list[Media] = []
     if payload.media_ids:

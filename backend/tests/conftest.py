@@ -53,7 +53,10 @@ async def _truncate_tables(session_factory):
     yield
     async with session_factory() as session:
         await session.execute(
-            text("TRUNCATE reports, posts, devices, locations RESTART IDENTITY CASCADE")
+            text(
+                "TRUNCATE reports, posts, devices, locations, activity_cells "
+                "RESTART IDENTITY CASCADE"
+            )
         )
         await session.commit()
 
