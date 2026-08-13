@@ -13,15 +13,6 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 ## Milestones
 
-### 4. Voice + photos
-
-- Browser `MediaRecorder` -> `webm/opus`; presigned uploads to MinIO.
-- Photo upload with client-side resize/compression; media rendering in feed.
-- Experiment foundation: feature-flag layer (`experiment` segment on the device
-  token) + privacy-safe event collection (`post_viewed`, `post_created`,
-  `onboarding_completed`), with GDPR consent built in. A/B tooling proper is
-  deferred until there is real usage to measure.
-
 ### 5. Heatmap + building scope
 
 - H3/geohash cell aggregates served as a tile layer (PostGIS + Martin).
@@ -51,3 +42,10 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 - New devices can post immediately but with reduced reach until they accrue
   trust (age, no reports, engagement).
 - Phone verification is a later, optional *reach* gate — never a read gate.
+
+## Other tasks
+
+- set vicinopoli.it in configs now that it's registered, page returns "secure connection failed" at the moment
+- range-adjusting controls
+- connect the backend to sentry
+- blind accessibility test for audio content workflows

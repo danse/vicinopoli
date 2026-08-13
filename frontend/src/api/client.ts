@@ -7,6 +7,10 @@ export type PostScope = components["schemas"]["PostScope"];
 export type PostResponse = components["schemas"]["PostResponse"];
 export type DeviceResponse = components["schemas"]["DeviceResponse"];
 export type DeviceUpdate = components["schemas"]["DeviceUpdate"];
+export type MediaPresignRequest = components["schemas"]["MediaPresignRequest"];
+export type MediaPresignResponse = components["schemas"]["MediaPresignResponse"];
+export type MediaRegistered = components["schemas"]["MediaRegistered"];
+export type MediaInfo = components["schemas"]["MediaInfo"];
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -53,9 +57,51 @@ export function getMe(): Promise<DeviceResponse> {
   return request("/api/me");
 }
 
+export function presignMedia(payload: MediaPresignRequest): Promise<MediaPresignResponse> {
+  return request("/api/media/presign", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function registerMedia(
+  payload: components["schemas"]["MediaRegisterRequest"],
+): Promise<MediaRegistered> {
+  return request("/api/media/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function uploadPhotoToUrl(
+  url: string,
+  file: Blob,
+  contentType: string,
+): Promise<void> {
+  const response = await fetch(url, {
+    method: "PUT",
+    body: file,
+    headers: { "Content-Type": contentType },
+  });
+  if (!response.ok) {
+    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+  }
+}
+
 export function updateMe(payload: DeviceUpdate): Promise<DeviceResponse> {
   return request("/api/me", {
     method: "PATCH",
     body: JSON.stringify(payload),
+  });
+}
+
+export type AnalyticsEventName = "post_viewed" | "post_created" | "onboarding_completed";
+
+export async function sendAnalyticsEvents(
+  events: { name: AnalyticsEventName; geohash?: string; post_id?: string }[],
+): Promise<void> {
+  await request("/api/events", {
+    method: "POST",
+    body: JSON.stringify({ events }),
   });
 }

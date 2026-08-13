@@ -2,7 +2,7 @@
 
 from collections.abc import AsyncIterator
 from typing import Annotated
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import Cookie, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +12,7 @@ from app.core.geocoder import Geocoder, build_geocoder
 from app.core.ratelimit import RateLimiter, build_rate_limiter
 from app.db import async_session_factory
 from app.models.device import Device
+from app.services.experiments import segment_for
 
 _geocoder: Geocoder | None = None
 _post_rate_limiter: RateLimiter | None = None
@@ -52,7 +53,11 @@ async def get_device(
         if device is not None:
             return device
 
-    device = Device()
+    device_id_value = uuid4()
+    device = Device(
+        id=device_id_value,
+        experiment_segment=segment_for(device_id_value),
+    )
     session.add(device)
     await session.flush()
 

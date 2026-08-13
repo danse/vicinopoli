@@ -1,11 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { type FeedResponse, getFeed } from "@/api/client";
+import {
+  type FeedResponse,
+  getFeed,
+  sendAnalyticsEvents,
+} from "@/api/client";
 
 interface FeedProps {
   address: string;
   refreshTick?: number;
+  analyticsConsented?: boolean;
 }
 
 function formatRadius(meters: number): string {
@@ -13,9 +18,14 @@ function formatRadius(meters: number): string {
   return `${meters} m`;
 }
 
-export function Feed({ address, refreshTick = 0 }: FeedProps) {
+export function Feed({
+  address,
+  refreshTick = 0,
+  analyticsConsented = false,
+}: FeedProps) {
   const { t } = useTranslation();
   const [feed, setFeed] = useState<FeedResponse | null>(null);
+  const lastReported = useRef<string>("");
 
   useEffect(() => {
     if (address === "") {
@@ -26,6 +36,18 @@ export function Feed({ address, refreshTick = 0 }: FeedProps) {
     getFeed({ address })
       .then((result) => {
         if (!cancelled) setFeed(result);
+        if (!cancelled && analyticsConsented && result.posts.length > 0) {
+          const key = result.posts.map((p) => p.id).join(",");
+          if (key !== lastReported.current) {
+            lastReported.current = key;
+            void sendAnalyticsEvents(
+              result.posts.slice(0, 10).map((p) => ({
+                name: "post_viewed",
+                geohash: p.geohash,
+              })),
+            );
+          }
+        }
       })
       .catch(() => {
         if (!cancelled)
@@ -34,7 +56,7 @@ export function Feed({ address, refreshTick = 0 }: FeedProps) {
     return () => {
       cancelled = true;
     };
-  }, [address, refreshTick]);
+  }, [address, refreshTick, analyticsConsented]);
 
   if (feed === null) return null;
 
@@ -71,6 +93,28 @@ export function Feed({ address, refreshTick = 0 }: FeedProps) {
               )}
             </div>
             <p>{post.body}</p>
+            {post.media && post.media.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {post.media.map((item) =>
+                  item.kind === "image" ? (
+                    <img
+                      key={item.id}
+                      src={item.url}
+                      alt={t("composer.photoAlt")}
+                      className="h-32 w-32 rounded-md object-cover"
+                    />
+                  ) : (
+                    <audio
+                      key={item.id}
+                      controls
+                      src={item.url}
+                      aria-label={t("composer.voiceAlt")}
+                      className="max-w-full"
+                    />
+                  ),
+                )}
+              </div>
+            )}
             <p className="mt-2 text-xs text-muted-foreground">
               {post.display_address}
             </p>

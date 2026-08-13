@@ -49,12 +49,40 @@ make format
 ## Test-driven development (TDD)
 
 - **Write the test first, watch it fail, then implement until green.** This
-  applies to every change, at every level: backend (`pytest`), frontend
-  (`vitest`), and user-facing flows (Playwright e2e).
+  applies to every change, at every level.
 - End-to-end tests live in `e2e/` and exercise the running stack through Caddy
   (`make test-e2e`). They are the source of truth for "does it actually work",
-  not just "do the unit tests pass". Start features with an e2e test where a
-  user-facing flow is involved.
+  not just "do the unit tests pass".
+- **Order matters for user-facing features:** write the Playwright e2e spec
+  *first* (watch it fail for the right reason), then the unit tests (backend and
+  frontend) for each piece, then implement until all of them are green. A
+  feature is not done until its e2e spec passes against the rebuilt stack.
+- Implement and verify against the *running* stack (`make up`), not the source
+  tree: rebuild containers after frontend/backend changes before running e2e.
+
+## Stale artifacts: check before you trust
+
+Recurring failure mode: tests or e2e run against **stale** code. Before
+debugging, verify each layer is actually running what was just changed:
+
+- **Containers** — `docker compose up -d --build <svc>` only recreates services
+  whose images changed. Config-only edits (e.g. `Caddyfile`, env) do **not**
+  rebuild images, and `make up` may not pick them up. Use
+  `docker compose up -d --force-recreate caddy` (or the affected svc) after
+  editing mounted config, and confirm uptime with
+  `docker compose ps --format "{{.Name}} {{.Status}}"`.
+- **Types** — `frontend/src/api/generated/` comes from `make gen`. When the
+  backend schemas or routes change, run `make gen`; TypeScript errors about
+  missing fields usually mean stale generated types, not a frontend bug.
+- **Docker image rebuilds** — the backend and frontend `Dockerfile`s copy the
+  source at build time. After any `backend/` or `frontend/` source change, the
+  container must be rebuilt (`docker compose up -d --build backend frontend`)
+  before e2e can reflect it.
+- **Migrations** — schema changes need `make migrate` (Alembic) on the running
+  DB; tests use a separate database built from models, so a passing pytest does
+  not mean the dev DB has the new columns.
+- **Rule of thumb:** when a test fails in a way that contradicts fresh code,
+  suspect staleness first and rebuild/regenerate before touching source.
 
 ## Conventions
 

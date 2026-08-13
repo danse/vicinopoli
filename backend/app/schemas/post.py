@@ -10,6 +10,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
+from app.schemas.media import MediaInfo
+
 
 class PostScope(StrEnum):
     building = "building"
@@ -28,6 +30,7 @@ class PostCreate(BaseModel):
     address: str = Field(min_length=1, max_length=512)
     body: str = Field(min_length=1, max_length=5000)
     scope: PostScope = PostScope.r1km
+    media_ids: list[uuid.UUID] = Field(default_factory=list, max_length=9)
 
 
 class LocationInfo(BaseModel):
@@ -45,6 +48,7 @@ class PostResponse(BaseModel):
     created_at: datetime
     pseudonym: str | None = None
     new_neighbour: bool = True
+    media: list[MediaInfo] = Field(default_factory=list)
 
 
 class FeedItem(BaseModel):
@@ -57,6 +61,7 @@ class FeedItem(BaseModel):
     created_at: datetime
     pseudonym: str | None = None
     new_neighbour: bool = True
+    media: list[MediaInfo] = Field(default_factory=list)
 
 
 class FeedResponse(BaseModel):

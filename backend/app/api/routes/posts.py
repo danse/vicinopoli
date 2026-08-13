@@ -18,6 +18,7 @@ from app.core.geocoder import Geocoder
 from app.core.ratelimit import RateLimiter
 from app.models.device import Device
 from app.models.location import Location
+from app.models.media import Media
 from app.models.post import Post
 from app.schemas.post import (
     FeedItem,
@@ -27,6 +28,7 @@ from app.schemas.post import (
     PostResponse,
 )
 from app.services.feed import MAX_RADIUS_M, expanding_radius_feed
+from app.services.media import media_by_post, media_info
 from app.services.trust import effective_scope, is_new_neighbour
 
 router = APIRouter()
@@ -83,6 +85,17 @@ async def create_post(
     scope = effective_scope(device, payload.scope)
     post = Post(location_id=location.id, body=payload.body, scope=scope, device_id=device.id)
     session.add(post)
+    await session.flush()
+
+    attached: list[Media] = []
+    if payload.media_ids:
+        media_rows = await session.scalars(
+            select(Media).where(Media.id.in_(payload.media_ids))
+        )
+        for media in media_rows:
+            if media.post_id is None:
+                media.post_id = post.id
+                attached.append(media)
     await session.commit()
     await session.refresh(post)
     await session.refresh(post.location)
@@ -100,6 +113,7 @@ async def create_post(
         created_at=post.created_at,
         pseudonym=device.pseudonym,
         new_neighbour=is_new_neighbour(device),
+        media=media_info(attached),
     )
 
 
@@ -119,6 +133,9 @@ async def get_feed(
         session, geocoded, target_count=target_count, search_radius_m=search_radius_m
     )
 
+    post_ids = [post.id for post in feed_posts]
+    media_by_id = await media_by_post(session, post_ids)
+
     return FeedResponse(
         posts=[
             FeedItem(
@@ -131,6 +148,7 @@ async def get_feed(
                 created_at=post.created_at,
                 pseudonym=post.pseudonym,
                 new_neighbour=post.new_neighbour,
+                media=media_info(media_by_id.get(post.id, [])),
             )
             for post in feed_posts
         ],

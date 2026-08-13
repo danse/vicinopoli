@@ -15,7 +15,11 @@ class DeviceResponse(BaseModel):
     pseudonym: str | None = None
     new_neighbour: bool
     created_at: datetime
+    experiment_segment: int
+    experiment_flags: dict[str, bool]
+    analytics_consent: bool | None = None
 
 
 class DeviceUpdate(BaseModel):
     pseudonym: str | None = Field(default=None, min_length=0, max_length=40)
+    analytics_consent: bool | None = None

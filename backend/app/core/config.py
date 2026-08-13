@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     minio_secret_key: str = "minioadmin"
     minio_bucket: str = "media"
     minio_secure: bool = False
+    minio_region: str = "us-east-1"
+    media_public_base_url: str = "http://localhost:8080/media"
 
     nominatim_base_url: str = "https://nominatim.openstreetmap.org"
     geocoder_mode: str = "static"

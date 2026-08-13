@@ -1,8 +1,23 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
 import "./i18n";
+
+beforeAll(() => {
+  vi.stubGlobal(
+    "createImageBitmap",
+    vi.fn().mockResolvedValue({ width: 100, height: 100 }),
+  );
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({
+    drawImage: vi.fn(),
+    canvas: {},
+  } as unknown as CanvasRenderingContext2D);
+  Object.defineProperty(HTMLCanvasElement.prototype, "toBlob", {
+    configurable: true,
+    value: (cb: (b: Blob | null) => void) => cb(new Blob()),
+  });
+});
 
 const created = {
   id: "post-1",
@@ -35,23 +50,69 @@ const feed = {
   target_count: 10,
 };
 
+const presign = {
+  object_key: "images/2026/08/abc.jpg",
+  url: "https://storage.example.test/abc.jpg",
+  kind: "image",
+  content_type: "image/jpeg",
+  size: 1024,
+};
+
+const registered = {
+  id: "media-1",
+  kind: "image",
+  object_key: "images/2026/08/abc.jpg",
+  content_type: "image/jpeg",
+  size: 1024,
+};
+
+const feedWithMedia = {
+  posts: [
+    {
+      ...feed.posts[0],
+      media: [
+        { id: "media-1", kind: "image", url: "https://x.test/abc.jpg", duration_s: null },
+      ],
+    },
+  ],
+  effective_radius_m: 500,
+  target_count: 10,
+};
+
 const device = {
   id: "device-1",
   pseudonym: null,
   new_neighbour: true,
   created_at: "2026-08-13T00:00:00Z",
+  experiment_segment: 7,
+  experiment_flags: {},
+  analytics_consent: null,
 };
 function mockFetch() {
+  let consented: boolean | null = null;
   return vi.fn().mockImplementation((url: string, init?: RequestInit) => {
     const method = init?.method ?? "GET";
     let body: Record<string, unknown>;
     if (url === "/api/me") {
-      body =
-        method === "PATCH" ? { ...device, pseudonym: "Gino" } : { ...device };
+      body = { ...device, analytics_consent: consented };
     } else if (url.startsWith("/api/feed")) {
-      body = { ...feed };
+      body = { ...feedWithMedia };
+    } else if (url === "/api/media/presign") {
+      body = presign;
+    } else if (url === "/api/media/register") {
+      body = registered;
+    } else if (url === "/api/events") {
+      body = { accepted: 1, stored: 1 };
+    } else if (/^https:\/\/storage/.test(url)) {
+      body = {};
     } else {
-      body = { ...created };
+      body = { ...created, media: [registered] };
+    }
+    if (method === "PATCH" && url === "/api/me") {
+      const payload = JSON.parse(String(init?.body ?? "{}")) as {
+        analytics_consent?: boolean | null;
+      };
+      consented = payload.analytics_consent ?? null;
     }
     return Promise.resolve({
       ok: true,
@@ -69,6 +130,31 @@ describe("App", () => {
     expect(
       screen.getByRole("heading", { name: "vicinopoli" }),
     ).toBeInTheDocument();
+  });
+
+  it("shows the consent banner and sends onboarding events when accepted", async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Accetta" }),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", { name: "Accetta" }),
+      ).not.toBeInTheDocument();
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/events",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("onboarding_completed"),
+      }),
+    );
   });
 
   it("shows the composer with address and message inputs", () => {
@@ -93,5 +179,144 @@ describe("App", () => {
       expect(screen.getByText("Ciao vicini!")).toBeInTheDocument();
     });
     expect(screen.getByText("Gino")).toBeInTheDocument();
+  });
+
+  it("uploads a photo and shows it in the feed", async () => {
+    const store = mockFetch();
+    vi.stubGlobal("fetch", store);
+
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+      target: { value: "Via Roma 1, Roma" },
+    });
+    fireEvent.change(screen.getByLabelText("Scrivi un messaggio"), {
+      target: { value: "Foto del quartiere" },
+    });
+
+    const file = new File(["x"], "photo.png", { type: "image/png" });
+    fireEvent.change(screen.getByLabelText("Aggiungi una foto"), {
+      target: { files: [file] },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("img", { name: "Foto allegata" }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("uploads a voice message and shows it in the feed", async () => {
+    const voicePresign = {
+      object_key: "voices/2026/08/abc.webm",
+      url: "https://storage.example.test/abc.webm",
+      kind: "voice",
+      content_type: "audio/webm",
+      size: 4096,
+    };
+    const voiceRegistered = {
+      id: "media-2",
+      kind: "voice",
+      object_key: "voices/2026/08/abc.webm",
+      content_type: "audio/webm",
+      size: 4096,
+    };
+    const store = vi
+      .fn()
+      .mockImplementation((url: string, init?: RequestInit) => {
+        const method = init?.method ?? "GET";
+        let body: Record<string, unknown>;
+        if (url === "/api/me") {
+          body =
+            method === "PATCH" ? { ...device, pseudonym: "Gino" } : { ...device };
+        } else if (url.startsWith("/api/feed")) {
+          body = {
+            ...feedWithMedia,
+            posts: [
+              {
+                ...feed.posts[0],
+                media: [
+                  {
+                    id: "media-2",
+                    kind: "voice",
+                    url: "https://x.test/abc.webm",
+                    duration_s: 3.5,
+                  },
+                ],
+              },
+            ],
+          };
+        } else if (url === "/api/media/presign") {
+          body = voicePresign;
+        } else if (url.startsWith("/api/media/register")) {
+          body = voiceRegistered;
+        } else if (url === "https://storage.example.test/abc.webm") {
+          body = {};
+        } else {
+          body = { ...created, media: [voiceRegistered] };
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(body),
+        });
+      });
+    vi.stubGlobal("fetch", store);
+
+    let recorder: {
+      state: string;
+      ondataavailable: ((e: { data: Blob }) => void) | null;
+      onstop: (() => void) | null;
+    } = { state: "inactive", ondataavailable: null, onstop: null };
+    const FakeMediaRecorder = vi.fn().mockImplementation(() => {
+      recorder = { state: "inactive", ondataavailable: null, onstop: null };
+      return {
+        get state() {
+          return recorder.state;
+        },
+        start: () => {
+          recorder.state = "recording";
+        },
+        stop: () => {
+          recorder.state = "inactive";
+          recorder.ondataavailable?.({ data: new Blob(["voice"]) });
+          recorder.onstop?.();
+        },
+      };
+    });
+    (FakeMediaRecorder as unknown as { isTypeSupported: (t: string) => boolean })
+      .isTypeSupported = vi.fn().mockReturnValue(true);
+    vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
+    Object.defineProperty(window.navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [{ stop: vi.fn() }],
+        }),
+      },
+    });
+
+    render(<App />);
+    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+      target: { value: "Via Roma 1, Roma" },
+    });
+    fireEvent.change(screen.getByLabelText("Scrivi un messaggio"), {
+      target: { value: "Messaggio vocale" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Registra voce" }));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Ferma" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Ferma" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText("Messaggio vocale allegato"),
+      ).toBeInTheDocument();
+    });
   });
 });

@@ -18,6 +18,20 @@
     "empty": "No messages nearby. Be the first!",
     "radius": "Within {{radius}}",
     "anonymous": "Anonymous neighbour",
-    "newNeighbour": "New neighbour"
+    "newNeighbour": "New neighbour",
+    "photoLabel": "Add a photo",
+    "photoAlt": "Attached photo",
+    "voiceLabel": "Record voice",
+    "voiceStop": "Stop",
+    "voiceRecording": "Recording...",
+    "voiceReady": "Voice ready ({{duration}}s)",
+    "voiceAlt": "Attached voice message",
+    "voiceError": "Voice recording failed."
+  },
+  "consent": {
+    "title": "Analytics",
+    "body": "May we collect anonymous statistics about how you use vicinopoli? No address or exact location is ever recorded.",
+    "accept": "Accept",
+    "decline": "Decline"
   }
 }

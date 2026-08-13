@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { getMe } from "@/api/client";
 import { Composer } from "@/components/composer";
+import { ConsentBanner } from "@/components/consent-banner";
 import { Feed } from "@/components/feed";
 
 export default function App() {
@@ -10,10 +11,19 @@ export default function App() {
   const [address, setAddress] = useState("");
   const [pseudonym, setPseudonym] = useState("");
   const [feedTick, setFeedTick] = useState(0);
+  const [consentDecided, setConsentDecided] = useState(true);
+  const [analyticsConsented, setAnalyticsConsented] = useState(false);
 
   useEffect(() => {
     getMe()
-      .then((me) => setPseudonym(me.pseudonym ?? ""))
+      .then((me) => {
+        setPseudonym(me.pseudonym ?? "");
+        if (me.analytics_consent === null) {
+          setConsentDecided(false);
+        } else {
+          setAnalyticsConsented(me.analytics_consent === true);
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -36,6 +46,14 @@ export default function App() {
           {t("app.switchLanguage")}
         </button>
       </header>
+      {!consentDecided && (
+        <ConsentBanner
+          onDecide={(consented) => {
+            setConsentDecided(true);
+            setAnalyticsConsented(consented);
+          }}
+        />
+      )}
       <Composer
         address={address}
         onAddressChange={setAddress}
@@ -43,7 +61,11 @@ export default function App() {
         onPseudonymChange={setPseudonym}
         onPosted={() => setFeedTick((tick) => tick + 1)}
       />
-      <Feed address={address} refreshTick={feedTick} />
+      <Feed
+        address={address}
+        refreshTick={feedTick}
+        analyticsConsented={analyticsConsented}
+      />
     </main>
   );
 }
