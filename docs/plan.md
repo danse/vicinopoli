@@ -32,16 +32,6 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 ## To do
 
-github integration failed with the following e2e error:
-
-[WebServer]  Container vicinopoli-caddy-1  Started
-
-Error: Process from config.webServer exited early.
-Error: Error: Process from config.webServer exited early.
-
-
-make: *** [Makefile:42: test-e2e] Error 1
-Error: Process completed with exit code 2.
 
 
 - set vicinopoli.it in configs now that it's registered, page returns "secure connection failed" at the moment
