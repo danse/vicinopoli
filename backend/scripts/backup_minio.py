@@ -26,6 +26,7 @@ def mirror(bucket: str, destination: str) -> None:
     if not client.bucket_exists(bucket):
         raise SystemExit(f"bucket '{bucket}' does not exist")
 
+    os.makedirs(destination, exist_ok=True)
     count = 0
     for item in client.list_objects(bucket, recursive=True):
         target = os.path.join(destination, item.object_name)
