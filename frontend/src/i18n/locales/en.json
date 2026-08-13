@@ -3,5 +3,17 @@
     "title": "vicinopoli",
     "tagline": "Your neighbours' square",
     "switchLanguage": "Italiano"
+  },
+  "composer": {
+    "addressLabel": "Your address",
+    "addressPlaceholder": "E.g. Via Roma 1, Roma",
+    "messageLabel": "Write a message",
+    "messagePlaceholder": "Hello neighbours!",
+    "publish": "Publish",
+    "publishing": "Publishing...",
+    "error": "Could not publish. Try again.",
+    "feedTitle": "What's happening nearby",
+    "empty": "No messages nearby. Be the first!",
+    "radius": "Within {{radius}}"
   }
 }

@@ -45,5 +45,5 @@ lint-frontend: ## Lint frontend (eslint + tsc --noEmit)
 	cd frontend && npm run lint
 
 format: ## Format backend and frontend
-	cd backend && ruff format . && ruff check --fix .
+	cd backend && .venv/bin/ruff format . && .venv/bin/ruff check --fix .
 	cd frontend && npx prettier --write "src/**/*.{ts,tsx,css}"

@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     minio_secure: bool = False
 
     nominatim_base_url: str = "https://nominatim.openstreetmap.org"
+    geocoder_mode: str = "static"
+    geocoder_cache_ttl: int = 86400
 
     sentry_dsn: str | None = None
 

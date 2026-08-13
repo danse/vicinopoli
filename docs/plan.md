@@ -13,23 +13,6 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 ## Milestones
 
-### 1. Scaffold + docs (current)
-
-- `AGENTS.md`, `README.md`, `docs/plan.md`, `docs/decisions/` (ADRs).
-- `docker-compose.yml` (PostGIS, MinIO, Caddy), `Makefile`, `Caddyfile`.
-- Backend skeleton: FastAPI + Pydantic v2, Alembic, pytest.
-- Frontend skeleton: Vite + React + TypeScript + Tailwind + shadcn/ui,
-  `vite-plugin-pwa`, `react-i18next`.
-- OpenAPI typegen pipeline (`make gen`).
-- Sentry (backend + frontend) + CI workflow.
-
-### 2. Text + radius + visibility
-
-- Geocoding (address -> coordinates + normalized address key) behind a
-  `Geocoder` interface with caching.
-- `locations` + `posts` schema; create a text post.
-- Expanding-radius feed honouring scope/visibility semantics.
-
 ### 3. Identity + trust + reports
 
 - Anonymous device token (httpOnly cookie) + optional pseudonym.
