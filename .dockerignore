@@ -1,0 +1,30 @@
+# Vite/TS
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# Backend / Python
+backend/**
+**/__pycache__/
+**/.venv/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.pytest_cache/
+
+# Git / ci
+.git/
+frontend/coverage/
+
+# E2E
+e2e/node_modules/
+e2e/test-results/
+e2e/playwright-report/
+
+# Docker volumes / data
+backups/
+data/
+*.log
+
+# Monitoring runtime files
+monitoring/grafana-data/

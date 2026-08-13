@@ -17,9 +17,8 @@ frontend/build/
 *.tsbuildinfo
 frontend/.vite/
 
-# Generated API types (produced by `make gen`)
+# Generated API types (produced by `make gen`; regenerated at build time)
 frontend/src/api/generated/
-openapi/
 
 # Playwright
 e2e/test-results/

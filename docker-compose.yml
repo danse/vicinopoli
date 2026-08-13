@@ -67,7 +67,9 @@ services:
       start_period: 20s
 
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
     expose:
       - "80"
     healthcheck:
