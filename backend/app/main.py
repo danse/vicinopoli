@@ -6,8 +6,10 @@ generated from the Pydantic models in ``app.schemas`` and consumed by
 ``make gen`` to produce the frontend TypeScript types.
 """
 
+import logging
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Request
@@ -21,15 +23,29 @@ from app.core.config import settings
 from app.core.logging import configure_logging, configure_sentry
 from app.services.metrics import observe_request
 from app.services.readiness import readiness_checks
-from app.services.storage import get_probe_client
+from app.services.storage import get_client, get_probe_client
+
+logger = logging.getLogger(__name__)
 
 configure_logging()
 configure_sentry()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Ensure the object-store bucket exists before serving is marked ready."""
+    try:
+        get_client()
+    except Exception:
+        logger.exception("Failed to initialise the object-store bucket at startup")
+    yield
+
 
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
     openapi_url="/api/openapi.json",
+    lifespan=lifespan,
 )
 
 

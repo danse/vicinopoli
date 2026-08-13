@@ -89,6 +89,8 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
+      - name: Pre-create backups dir (docker bind-mounts it as root otherwise)
+        run: mkdir -p backups
       - name: Run e2e against the stack
         run: make test-e2e
 
