@@ -32,9 +32,7 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 ## To do
 
-- github integration failed with:
- - "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5, astral-sh/setup-uv@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/"
- - backend
+github integration failed with the following backend error:
 
 ==================================== ERRORS ====================================
 _______ ERROR at setup of test_device_exposes_segment_flags_and_consent ________
@@ -55,7 +53,7 @@ setup_task = <Task finished name='Task-1' coro=<_wrap_asyncgen_fixture.<locals>.
         kwargs.pop(event_loop_fixture_id, None)
         gen_obj = func(**_add_kwargs(func, kwargs, event_loop, request))
 
- - e2e
+github integration failed with the following e2e error:
 
 [WebServer]  Container vicinopoli-caddy-1  Started
 
