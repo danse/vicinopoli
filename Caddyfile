@@ -8,6 +8,18 @@
 		reverse_proxy backend:8000
 	}
 
+	handle /healthz {
+		reverse_proxy backend:8000
+	}
+
+	handle /readyz {
+		reverse_proxy backend:8000
+	}
+
+	handle /metrics {
+		reverse_proxy backend:8000
+	}
+
 	handle /media/* {
 		reverse_proxy minio:9000
 	}

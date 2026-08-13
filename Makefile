@@ -1,8 +1,8 @@
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-.PHONY: help up down build gen migrate test-backend lint-backend \
-        test-frontend build-frontend lint-frontend test-e2e format
+.PHONY: help up down monitoring build gen migrate test-backend lint-backend \
+        test-frontend build-frontend lint-frontend test-e2e format backup
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
@@ -13,6 +13,9 @@ up: ## Start the full stack
 
 down: ## Stop the stack
 	docker compose down
+
+monitoring: ## Start the opt-in monitoring stack (Prometheus + Grafana)
+	docker compose --profile monitoring up -d
 
 build: ## Build all images
 	docker compose build
@@ -47,3 +50,6 @@ lint-frontend: ## Lint frontend (eslint + tsc --noEmit)
 format: ## Format backend and frontend
 	cd backend && .venv/bin/ruff format . && .venv/bin/ruff check --fix .
 	cd frontend && npx prettier --write "src/**/*.{ts,tsx,css}"
+
+backup: ## Dump the database and mirror the object store into backups/
+	bash scripts/backup.sh

@@ -17,6 +17,7 @@ dependencies = [
     "minio>=7.2,<8",
     "structlog>=24.1,<26",
     "sentry-sdk[fastapi]>=2.14,<3",
+    "prometheus-client>=0.20,<1",
 ]
 
 [project.optional-dependencies]

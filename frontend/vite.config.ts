@@ -8,14 +8,38 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      injectRegister: "auto",
       manifest: {
         name: "vicinopoli",
         short_name: "vicinopoli",
-        description: "La piazza dei vicini",
+        description: "La piazza dei tuoi vicini",
         theme_color: "#0f172a",
         background_color: "#0f172a",
         display: "standalone",
         start_url: "/",
+        lang: "it",
+        icons: [
+          {
+            src: "/icons/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "/icons/icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+          {
+            src: "/icons/icon-maskable-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+      },
+      workbox: {
+        navigateFallback: "/index.html",
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
       },
     }),
   ],

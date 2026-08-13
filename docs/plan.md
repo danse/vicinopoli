@@ -11,13 +11,6 @@ voice, or photos to your neighbours. No account, no password.
 Initial target: Italy. Internationalisation (i18n) in place from day one
 (`it` default, `en` parallel).
 
-## Milestones
-
-### 6. Hardening
-
-- PWA offline shell + install; backups (Postgres dump + MinIO); health checks.
-- Load/abuse testing; monitoring dashboards.
-
 ## Key semantics
 
 ### Visibility (asymmetric ranges)
@@ -37,11 +30,13 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
   trust (age, no reports, engagement).
 - Phone verification is a later, optional *reach* gate — never a read gate.
 
-## Other tasks
-
+## To do
 
 - github integration failed with: "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5, astral-sh/setup-uv@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/"
 - set vicinopoli.it in configs now that it's registered, page returns "secure connection failed" at the moment
 - range-adjusting controls
-- connect the backend to sentry
+- search engine optimisation
+- connect the backend to sentry or to other notification service based on its logs (is that prometheus?)
 - blind accessibility test for audio content workflows
+
+Remove from the list when done

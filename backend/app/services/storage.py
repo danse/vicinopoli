@@ -34,6 +34,17 @@ def get_client() -> Minio:
     return _client
 
 
+def get_probe_client() -> Minio:
+    """Return a raw MinIO client for readiness checks (no bucket creation)."""
+    return Minio(
+        settings.minio_endpoint,
+        access_key=settings.minio_access_key,
+        secret_key=settings.minio_secret_key,
+        secure=settings.minio_secure,
+        region=settings.minio_region,
+    )
+
+
 def build_object_key(kind: str, content_type: str) -> str:
     extension = content_type.split("/")[-1]
     return f"{kind}s/{uuid.uuid4().hex}.{extension}"
