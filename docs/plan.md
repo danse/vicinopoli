@@ -34,7 +34,6 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 
 
-- set vicinopoli.it in configs now that it's registered, page returns "secure connection failed" at the moment
 - range-adjusting controls
 - npm audit
 - search engine optimisation

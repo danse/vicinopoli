@@ -47,6 +47,7 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET: media
+      MEDIA_PUBLIC_BASE_URL: https://${DOMAIN}/media
       NOMINATIM_BASE_URL: https://nominatim.openstreetmap.org
       SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:

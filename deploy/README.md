@@ -35,7 +35,7 @@ This repo works in two modes:
    # from a local machine with access to the project dir
    rsync -a --exclude '.git' --exclude 'node_modules' \
        --exclude 'backend/.venv' --exclude 'frontend/dist' \
-       --exclude 'openapi' --exclude 'frontend/src/api/generated' \
+       --exclude 'frontend/src/api/generated' \
        ./ root@<VPS_IP>:/tmp/vicinopoli/
 
    ssh root@<VPS_IP> 'bash /tmp/vicinopoli/deploy/setup-vps.sh /tmp/vicinopoli /tmp/vicinopoli/deploy/.env.prod'
@@ -48,33 +48,27 @@ This repo works in two modes:
    Caddy fetches a Let's Encrypt cert automatically on first request. With a bare
    IP, open `http://<ip>` (plain HTTP).
 
-## Without a domain
+## Domain
 
 `DOMAIN` in `.env` drives the behaviour:
 
-| `DOMAIN` value                     | Result                                            |
-|------------------------------------|---------------------------------------------------|
-| `203.0.113.7` (bare IP)            | Caddy serves plain HTTP on `:80`, no cert needed. |
-| `203.0.113.7.sslip.io` (free)      | Real Let's Encrypt HTTPS cert, PWA-installable.   |
-| `vicinopoli.example.com` (yours)   | HTTPS cert, normal domain.                        |
+| `DOMAIN` value                  | Result                                         |
+|---------------------------------|------------------------------------------------|
+| `vicinopoli.it` (registered)    | Let's Encrypt HTTPS cert for the real domain.  |
+| `203.0.113.7.sslip.io` (free)   | Real Let's Encrypt HTTPS cert, PWA-installable.|
+| `203.0.113.7` (bare IP)         | Caddy serves plain HTTP on `:80`, no cert.     |
 
-`sslip.io` resolves any `<ip>.sslip.io` to that IP, so no DNS setup is needed;
-Caddy completes the ACME HTTP-01 challenge on port 80 automatically. HTTPS is
+The registered domain is `vicinopoli.it`; `.env.prod.example` ships with
+`DOMAIN=vicinopoli.it` and `MEDIA_PUBLIC_BASE_URL=https://vicinopoli.it/media`.
+Point a DNS A/AAAA record at the VPS public IP. `sslip.io` resolves any
+`<ip>.sslip.io` to that IP, so no DNS setup is needed for the fallback. HTTPS is
 required for PWA/service-worker install and for the browser's geolocation API
-used in later milestones — use `sslip.io` (or a real domain) for anything beyond
-a quick smoke test.
+used in later milestones.
 
 ## Redeploy after a change
 
 ```bash
-# push the latest code
-rsync -a --exclude '.git' --exclude 'node_modules' \
-    --exclude 'backend/.venv' --exclude 'frontend/dist' \
-    --exclude 'openapi' --exclude 'frontend/src/api/generated' \
-    ./ root@<VPS_IP>:/tmp/vicinopoli/
-
-# rebuild + restart on the server
-ssh root@<VPS_IP> 'cp -r /tmp/vicinopoli/* /opt/vicinopoli/ && bash /opt/vicinopoli/deploy/deploy.sh'
+. deploy/manual.dot
 ```
 
 Data lives in the named volumes (`db_data`, `minio_data`) and survives redeploys.
