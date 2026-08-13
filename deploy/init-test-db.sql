@@ -1,0 +1,1 @@
+CREATE DATABASE vicinopoli_test OWNER vicinopoli;

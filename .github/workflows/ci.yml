@@ -12,6 +12,8 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    env:
+      DATABASE_URL: postgresql+asyncpg://vicinopoli:vicinopoli@localhost:5432/vicinopoli_test
     services:
       postgres:
         image: postgis/postgis:16-3.4
@@ -35,6 +37,15 @@ jobs:
       - run: uv sync --all-extras --dev
       - run: uv run ruff check .
       - run: uv run mypy app
+      - name: Create test database
+        run: |
+          uv run python -c \
+            "import asyncio, asyncpg; \
+           async def main(): \
+             c = await asyncpg.connect(host='localhost', port=5432, user='vicinopoli', password='vicinopoli', database='postgres'); \
+             await c.execute('CREATE DATABASE vicinopoli_test OWNER vicinopoli'); \
+             await c.close() \
+           asyncio.run(main())"
       - run: uv run pytest
       - name: OpenAPI schema is in sync with the committed snapshot
         run: |

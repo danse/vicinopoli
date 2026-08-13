@@ -32,27 +32,6 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 ## To do
 
-github integration failed with the following backend error:
-
-==================================== ERRORS ====================================
-_______ ERROR at setup of test_device_exposes_segment_flags_and_consent ________
-
-request = <SubRequest 'engine' for <Coroutine test_device_exposes_segment_flags_and_consent>>
-kwargs = {}, func = <function engine at 0x7fecbe6463e0>
-event_loop_fixture_id = '_session_event_loop'
-setup = <function _wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.setup at 0x7fecbddfa0c0>
-setup_task = <Task finished name='Task-1' coro=<_wrap_asyncgen_fixture.<locals>._asyncgen_fixture_wrapper.<locals>.setup() done, de...exceptions: [Errno 111] Connect call failed ('::1', 5433, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 5433)")>
-
-    @functools.wraps(fixture)
-    def _asyncgen_fixture_wrapper(request: FixtureRequest, **kwargs: Any):
-        func = _perhaps_rebind_fixture_func(fixture, request.instance)
-        event_loop_fixture_id = _get_event_loop_fixture_id_for_async_fixture(
-            request, func
-        )
-        event_loop = request.getfixturevalue(event_loop_fixture_id)
-        kwargs.pop(event_loop_fixture_id, None)
-        gen_obj = func(**_add_kwargs(func, kwargs, event_loop, request))
-
 github integration failed with the following e2e error:
 
 [WebServer]  Container vicinopoli-caddy-1  Started
