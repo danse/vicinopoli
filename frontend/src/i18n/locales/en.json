@@ -32,7 +32,9 @@
     "scopeBuilding": "My building only",
     "scope500m": "500 metres",
     "scope1km": "1 km",
-    "scope5km": "5 km"
+    "scope5km": "5 km",
+    "addressSuggestionsLabel": "Address suggestions",
+    "addressNoResults": "No results"
   },
   "consent": {
     "title": "Analytics",

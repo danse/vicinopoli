@@ -12,6 +12,7 @@ import {
   updateMe,
 } from "@/api/client";
 import { Button } from "@/components/ui/button";
+import { AddressCombobox } from "@/components/address-combobox";
 import { hashAddress } from "@/lib/utils";
 
 interface ComposerProps {
@@ -203,12 +204,9 @@ export function Composer({
         >
           {t("composer.addressLabel")}
         </label>
-        <input
-          id="composer-address"
-          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          value={address}
-          placeholder={t("composer.addressPlaceholder")}
-          onChange={(e) => onAddressChange(e.target.value)}
+        <AddressCombobox
+          address={address}
+          onAddressChange={onAddressChange}
         />
       </div>
       <div className="mt-4 grid gap-2">

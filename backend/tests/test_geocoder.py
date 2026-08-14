@@ -108,3 +108,58 @@ async def test_nominatim_geocoder_caches_results() -> None:
     second = await geocoder.geocode("Via Roma 1, Roma")
     assert first == second
     assert calls["count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_static_geocoder_suggests_matching_addresses() -> None:
+    geocoder = StaticGeocoder()
+    assert await geocoder.suggest("milano") == ["Milano Centrale, Milano"]
+    assert await geocoder.suggest("piazza venezia") == ["Piazza Venezia, Roma"]
+    assert await geocoder.suggest("Via") == ["Via Roma 1, Roma"]
+
+
+@pytest.mark.asyncio
+async def test_static_geocoder_suggest_is_case_and_whitespace_insensitive() -> None:
+    geocoder = StaticGeocoder()
+    assert await geocoder.suggest("  MILANO ") == ["Milano Centrale, Milano"]
+
+
+@pytest.mark.asyncio
+async def test_static_geocoder_suggests_nothing_for_unknown_prefix() -> None:
+    geocoder = StaticGeocoder()
+    assert await geocoder.suggest("via inesistente") == []
+
+
+@pytest.mark.asyncio
+async def test_static_geocoder_suggest_respects_limit() -> None:
+    geocoder = StaticGeocoder()
+    assert await geocoder.suggest("via", limit=0) == []
+
+
+@pytest.mark.asyncio
+async def test_nominatim_geocoder_suggest_forwards_query_and_limit() -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return [
+                {"display_name": "Via Roma 1, Roma"},
+                {"display_name": "Via Roma 1, Milano"},
+            ]
+
+    captured: dict[str, str] = {}
+
+    async def fake_fetch(params):
+        captured.update(params)
+        return FakeResponse()
+
+    geocoder = NominatimGeocoder("https://nominatim.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    suggestions = await geocoder.suggest("via roma", limit=2)
+
+    assert suggestions == ["Via Roma 1, Roma", "Via Roma 1, Milano"]
+    assert captured["q"] == "via roma"
+    assert captured["limit"] == "2"
+    assert captured["format"] == "jsonv2"

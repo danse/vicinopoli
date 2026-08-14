@@ -124,6 +124,14 @@ class Geocoder(ABC):
     async def geocode(self, address: str) -> GeocodedAddress | None:
         """Resolve an address; ``None`` when it cannot be resolved."""
 
+    @abstractmethod
+    async def suggest(self, query: str, limit: int = 6) -> list[str]:
+        """Return display-address suggestions matching a partial query.
+
+        Only display strings come back — never coordinates or geohashes — so
+        the privacy stance of :mod:`app.core.geocoder` holds for autocomplete.
+        """
+
 
 class StaticGeocoder(Geocoder):
     """Deterministic geocoder for development and tests."""
@@ -144,6 +152,17 @@ class StaticGeocoder(Geocoder):
             longitude=longitude,
             geohash=geohash_encode(latitude, longitude),
         )
+
+    async def suggest(self, query: str, limit: int = 6) -> list[str]:
+        needle = normalize_address(query)
+        if limit <= 0:
+            return []
+        results = [
+            display
+            for key, (*_coords, display) in self._addresses.items()
+            if needle in key
+        ]
+        return results[:limit]
 
 
 class NominatimGeocoder(Geocoder):
@@ -187,6 +206,14 @@ class NominatimGeocoder(Geocoder):
         )
         self._cache[cache_key] = (time.monotonic(), result)
         return result
+
+    async def suggest(self, query: str, limit: int = 6) -> list[str]:
+        response = await self._fetch(
+            {"q": query, "format": "jsonv2", "limit": str(limit)}
+        )
+        response.raise_for_status()
+        results = response.json()
+        return [item.get("display_name") or query for item in results]
 
 
 def build_geocoder(mode: str, base_url: str, ttl_seconds: int) -> Geocoder:

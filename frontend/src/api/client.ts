@@ -118,10 +118,21 @@ export async function sendAnalyticsEvents(
 }
 
 export type GeocodeResponse = components["schemas"]["GeocodeResponse"];
+export type GeocodeSuggestResponse =
+  components["schemas"]["GeocodeSuggestResponse"];
 export type HeatmapTileResponse = components["schemas"]["HeatmapTileResponse"];
 
 export function geocode(address: string): Promise<GeocodeResponse> {
   return request(`/api/geocode?address=${encodeURIComponent(address)}`);
+}
+
+export function suggestGeocode(
+  q: string,
+  limit = 6,
+): Promise<GeocodeSuggestResponse> {
+  return request(
+    `/api/geocode/suggest?q=${encodeURIComponent(q)}&limit=${limit}`,
+  );
 }
 
 export function getHeatmapTile(

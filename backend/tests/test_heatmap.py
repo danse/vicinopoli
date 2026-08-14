@@ -42,6 +42,34 @@ async def test_geocode_returns_404_for_unknown(client) -> None:
     assert response.status_code == 404
 
 
+@pytest.mark.asyncio
+async def test_geocode_suggest_returns_matching_addresses(client) -> None:
+    response = await client.get("/api/geocode/suggest", params={"q": "milano"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["suggestions"] == ["Milano Centrale, Milano"]
+
+
+@pytest.mark.asyncio
+async def test_geocode_suggest_is_case_insensitive(client) -> None:
+    response = await client.get("/api/geocode/suggest", params={"q": "PIAZZA"})
+    assert response.status_code == 200
+    assert "Piazza Venezia, Roma" in response.json()["suggestions"]
+
+
+@pytest.mark.asyncio
+async def test_geocode_suggest_returns_empty_list_for_unknown(client) -> None:
+    response = await client.get("/api/geocode/suggest", params={"q": "via inesistente"})
+    assert response.status_code == 200
+    assert response.json()["suggestions"] == []
+
+
+@pytest.mark.asyncio
+async def test_geocode_suggest_validates_query(client) -> None:
+    assert (await client.get("/api/geocode/suggest", params={"q": ""})).status_code == 422
+    assert (await client.get("/api/geocode/suggest")).status_code == 422
+
+
 async def _post_at(client: object, address: str, body: str) -> None:
     response = await client.post(
         "/api/posts",

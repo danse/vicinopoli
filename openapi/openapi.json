@@ -555,6 +555,63 @@
         }
       }
     },
+    "/api/geocode/suggest": {
+      "get": {
+        "tags": [
+          "heatmap"
+        ],
+        "summary": "Suggest Geocode",
+        "description": "Autocomplete an address from a partial query (display strings only).",
+        "operationId": "suggest_geocode_api_geocode_suggest_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "title": "Q"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 6,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeocodeSuggestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/geocode": {
       "get": {
         "tags": [
@@ -952,6 +1009,23 @@
           "cell_center_longitude"
         ],
         "title": "GeocodeResponse"
+      },
+      "GeocodeSuggestResponse": {
+        "properties": {
+          "suggestions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Suggestions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "suggestions"
+        ],
+        "title": "GeocodeSuggestResponse",
+        "description": "Autocomplete results: display strings only, never coordinates."
       },
       "HTTPValidationError": {
         "properties": {

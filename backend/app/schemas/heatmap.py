@@ -21,3 +21,9 @@ class GeocodeResponse(BaseModel):
     cell: str
     cell_center_latitude: float
     cell_center_longitude: float
+
+
+class GeocodeSuggestResponse(BaseModel):
+    """Autocomplete results: display strings only, never coordinates."""
+
+    suggestions: list[str]

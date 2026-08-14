@@ -32,12 +32,12 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 ## To do
 
-- [x] send a sentry notification on "Non e` stato possibile pubblicare. Riprova" with details about the error (includes sha-256 of the address on address-not-found, never the raw address)
+Ordered by priority, remove from the list when done
+
 - add a script to tail server logs after a  `make up-manual`
-- autocomplete location
 - npm audit
+- replies and threading
+- send a notification upon a reply
 - search engine optimisation
 - connect the backend to sentry or to other notification service based on its logs (is that prometheus?)
 - blind accessibility test for audio content workflows
-
-Remove from the list when done

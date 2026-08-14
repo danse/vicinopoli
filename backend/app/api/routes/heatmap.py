@@ -14,7 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_geocoder, get_session
 from app.core.geocoder import Geocoder
-from app.schemas.heatmap import GeocodeResponse, HeatmapTileResponse
+from app.schemas.heatmap import (
+    GeocodeResponse,
+    GeocodeSuggestResponse,
+    HeatmapTileResponse,
+)
 from app.services.heatmap import CELL_PRECISION, MAX_ZOOM, cell_center, heatmap_tile
 
 router = APIRouter()
@@ -36,6 +40,17 @@ async def get_heatmap_tile(
     if not (0 <= x < limit and 0 <= y < limit):
         raise HTTPException(status_code=422, detail="tile coordinate out of range")
     return await heatmap_tile(session, z, x, y)
+
+
+@router.get("/geocode/suggest", response_model=GeocodeSuggestResponse)
+async def suggest_geocode(
+    geocoder: GeocoderDep,
+    q: str = Query(min_length=1, max_length=512),
+    limit: int = Query(default=6, ge=1, le=20),
+) -> GeocodeSuggestResponse:
+    """Autocomplete an address from a partial query (display strings only)."""
+    suggestions = await geocoder.suggest(q, limit)
+    return GeocodeSuggestResponse(suggestions=suggestions)
 
 
 @router.get("/geocode", response_model=GeocodeResponse)

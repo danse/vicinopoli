@@ -129,6 +129,14 @@ function mockFetch() {
         cell_center_latitude: 41.89,
         cell_center_longitude: 12.48,
       };
+    } else if (url.startsWith("/api/geocode/suggest")) {
+      const q = new URL(url, "http://localhost").searchParams.get("q") ?? "";
+      const all = ["Via Roma 1, Roma", "Piazza Venezia, Roma", "Milano Centrale, Milano"];
+      body = {
+        suggestions: all.filter((s) =>
+          s.toLowerCase().includes(q.toLowerCase()),
+        ),
+      };
     } else if (url.startsWith("/api/heatmap")) {
       body = {
         type: "FeatureCollection",
@@ -356,6 +364,44 @@ describe("App", () => {
       expect(
         screen.getByRole("img", { name: "Foto allegata" }),
       ).toBeInTheDocument();
+    });
+  });
+
+  it("shows address suggestions while typing and fills the input on select", async () => {
+    render(<App />);
+
+    const input = screen.getByLabelText("Il tuo indirizzo");
+    fireEvent.change(input, { target: { value: "milano" } });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("option", { name: "Milano Centrale, Milano" }),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.mouseDown(
+      screen.getByRole("option", { name: "Milano Centrale, Milano" }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Il tuo indirizzo")).toHaveValue(
+        "Milano Centrale, Milano",
+      );
+    });
+    expect(
+      screen.queryByRole("option", { name: "Milano Centrale, Milano" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows no suggestions for an unknown prefix", async () => {
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+      target: { value: "via inesistente" },
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     });
   });
 

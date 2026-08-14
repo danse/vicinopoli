@@ -32,7 +32,9 @@
     "scopeBuilding": "Solo il mio palazzo",
     "scope500m": "500 metri",
     "scope1km": "1 km",
-    "scope5km": "5 km"
+    "scope5km": "5 km",
+    "addressSuggestionsLabel": "Suggerimenti di indirizzi",
+    "addressNoResults": "Nessun risultato"
   },
   "consent": {
     "title": "Analisi statistiche",
