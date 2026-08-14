@@ -2,7 +2,10 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
-import { clearSuggestionCache } from "./components/address-combobox";
+import {
+  DEBOUNCE_MS,
+  clearSuggestionCache,
+} from "./components/address-combobox";
 import "./i18n";
 
 const sentryCapture = vi.fn();
@@ -375,11 +378,14 @@ describe("App", () => {
     const input = screen.getByTestId("composer-address");
     fireEvent.change(input, { target: { value: "milano" } });
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("option", { name: "Milano Centrale, Milano" }),
-      ).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByRole("option", { name: "Milano Centrale, Milano" }),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     fireEvent.mouseDown(
       screen.getByRole("option", { name: "Milano Centrale, Milano" }),
@@ -402,9 +408,12 @@ describe("App", () => {
       target: { value: "via inesistente" },
     });
 
-    await waitFor(() => {
-      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
   });
 
   it("debounces rapid typing to a single suggest request", async () => {
@@ -418,11 +427,21 @@ describe("App", () => {
     fireEvent.change(input, { target: { value: "milan" } });
     fireEvent.change(input, { target: { value: "milano" } });
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("option", { name: "Milano Centrale, Milano" }),
-      ).toBeInTheDocument();
-    });
+    // Nothing fires before the debounce elapses.
+    const suggestCallsBefore = store.mock.calls.filter(
+      ([path]: unknown[]) =>
+        typeof path === "string" && path.startsWith("/api/geocode/suggest"),
+    );
+    expect(suggestCallsBefore).toHaveLength(0);
+
+    await waitFor(
+      () => {
+        expect(
+          screen.getByRole("option", { name: "Milano Centrale, Milano" }),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const suggestCalls = store.mock.calls.filter(
       ([path]: unknown[]) =>
@@ -432,6 +451,13 @@ describe("App", () => {
     expect(String(suggestCalls[0][0])).toContain("milano");
   });
 
+  it("waits at least a second after typing stops before asking the geocoder", () => {
+    // The plan: a suggest request should fire only once the full address has
+    // been entered (1-2s debounce), so the production Nominatim rate limit is
+    // not hit while typing.
+    expect(DEBOUNCE_MS).toBeGreaterThanOrEqual(1000);
+  });
+
   it("caches suggestions so re-searching a prefix does not refetch", async () => {
     const store = mockFetch();
     vi.stubGlobal("fetch", store);
@@ -439,11 +465,14 @@ describe("App", () => {
 
     const input = screen.getByTestId("composer-address");
     fireEvent.change(input, { target: { value: "milano" } });
-    await waitFor(() => {
-      expect(
-        screen.getByRole("option", { name: "Milano Centrale, Milano" }),
-      ).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByRole("option", { name: "Milano Centrale, Milano" }),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     // Clear below the min length: no suggest request fires.
     fireEvent.change(input, { target: { value: "mi" } });
@@ -453,11 +482,14 @@ describe("App", () => {
 
     // Re-typing the same query must reuse the cache.
     fireEvent.change(input, { target: { value: "milano" } });
-    await waitFor(() => {
-      expect(
-        screen.getByRole("option", { name: "Milano Centrale, Milano" }),
-      ).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByRole("option", { name: "Milano Centrale, Milano" }),
+        ).toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
 
     const suggestCalls = store.mock.calls.filter(
       ([path]: unknown[]) =>
