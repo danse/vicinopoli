@@ -114,3 +114,10 @@ debugging, verify each layer is actually running what was just changed:
 
 See `backend/.env.example` and `frontend/.env.example`. Secrets are never
 committed.
+
+## Deployments
+
+- **The human runs deployments, never the agent.** Prepare and verify everything
+  locally (configs, `deploy/.env.prod`, images, tests), but do not rsync/ssh to
+  the VPS or run `deploy/manual.dot` / `setup-vps.sh` / `deploy.sh`. Hand off
+  with a short summary of what changed and what to run.

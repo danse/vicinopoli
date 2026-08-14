@@ -32,9 +32,7 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 ## To do
 
-
-
-- range-adjusting controls
+- send a sentry notification on "Non e` stato possibile pubblicare. Riprova" with details about the error
 - npm audit
 - search engine optimisation
 - connect the backend to sentry or to other notification service based on its logs (is that prometheus?)
