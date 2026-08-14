@@ -56,7 +56,6 @@ Three distinct concepts, never conflated:
 
 Ordered by priority, remove from the list when done
 
-- refreshing the page risks to keep stale cached assets. Do we produce fresh static assets identifiers at each build?
 - we want to have different pages in the app. Should we adopt some more abstract framework (for routing or state management), or you suggest keeping the frontend stack as is?
 - test a new user flow: landing page only asks for where the user is. With the address submitted, user is prompted to a feed page. In the feed page there is a `+ (post message/express yourself/say something)` button that leads to the composer page
 - replies and threading user experience
