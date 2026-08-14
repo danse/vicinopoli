@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import * as Sentry from "@sentry/react";
 
 import {
   ApiError,
@@ -11,6 +12,7 @@ import {
   updateMe,
 } from "@/api/client";
 import { Button } from "@/components/ui/button";
+import { hashAddress } from "@/lib/utils";
 
 interface ComposerProps {
   address: string;
@@ -180,7 +182,11 @@ export function Composer({
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
         setAddressError(true);
+        Sentry.captureException(err, {
+          extra: { addressHash: await hashAddress(address) },
+        });
       } else {
+        Sentry.captureException(err);
         setError(true);
       }
     } finally {

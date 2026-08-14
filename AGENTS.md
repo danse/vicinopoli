@@ -103,6 +103,9 @@ debugging, verify each layer is actually running what was just changed:
   Italian (`it`) is the default locale, `en` is maintained in parallel.
 - Generated API types live in `frontend/src/api/generated/` (produced by
   `make gen`) and are gitignored.
+- **No `console.log` troubleshooting.** When a test fails in a confusing way,
+  don't sprinkle logs — refactor and write finer-grained tests instead (a
+  single assertion per concern, at the smallest unit you can test directly).
 
 ### General
 

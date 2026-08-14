@@ -4,6 +4,11 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import "./i18n";
 
+const sentryCapture = vi.fn();
+vi.mock("@sentry/react", () => ({
+  captureException: (err: unknown, hint?: unknown) => sentryCapture(err, hint),
+}));
+
 vi.mock("maplibre-gl", () => ({
   default: {
     Map: vi.fn().mockImplementation(() => {
@@ -230,6 +235,75 @@ describe("App", () => {
       expect(screen.getByText("Ciao vicini!")).toBeInTheDocument();
     });
     expect(screen.getByText("Gino")).toBeInTheDocument();
+  });
+
+  it("reports a failed publish to Sentry with error details", async () => {
+    sentryCapture.mockClear();
+    const store = mockFetch();
+    store.mockImplementation((url: string, init?: RequestInit) => {
+      if (url === "/api/posts") {
+        return Promise.reject(new Error("boom: upstream geocoder timed out"));
+      }
+      return mockFetch()(url, init);
+    });
+    vi.stubGlobal("fetch", store);
+
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+      target: { value: "Via Roma 1, Roma" },
+    });
+    fireEvent.change(screen.getByLabelText("Scrivi un messaggio"), {
+      target: { value: "Ciao vicini!" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Non è stato possibile pubblicare. Riprova."))
+        .toBeInTheDocument();
+    });
+    expect(sentryCapture).toHaveBeenCalledTimes(1);
+    const reported = sentryCapture.mock.calls[0][0] as Error;
+    expect(reported.message).toContain("boom");
+  });
+
+  it("reports an address-not-found failure with a hashed address, not the raw string", async () => {
+    sentryCapture.mockClear();
+    const store = mockFetch();
+    store.mockImplementation((url: string, init?: RequestInit) => {
+      if (url === "/api/posts") {
+        return Promise.resolve({
+          ok: false,
+          status: 404,
+          json: () => Promise.resolve({ detail: "address not found" }),
+        });
+      }
+      return mockFetch()(url, init);
+    });
+    vi.stubGlobal("fetch", store);
+
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+      target: { value: "Via Inesistente 99, Città" },
+    });
+    fireEvent.change(screen.getByLabelText("Scrivi un messaggio"), {
+      target: { value: "ciao" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Indirizzo non trovato.")).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(sentryCapture).toHaveBeenCalledTimes(1);
+    });
+    const [, hint] = sentryCapture.mock.calls[0];
+    const extra = hint?.extra as Record<string, string>;
+    expect(extra.addressHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(JSON.stringify(sentryCapture.mock.calls)).not.toContain(
+      "Via Inesistente",
+    );
   });
 
   it("sends the selected scope with the post", async () => {
