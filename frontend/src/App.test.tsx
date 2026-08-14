@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
+import { clearSuggestionCache } from "./components/address-combobox";
 import "./i18n";
 
 const sentryCapture = vi.fn();
@@ -187,6 +188,7 @@ function mockFetch() {
 describe("App", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", mockFetch());
+    clearSuggestionCache();
   });
 
   it("renders the app title", () => {
@@ -403,6 +405,65 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     });
+  });
+
+  it("debounces rapid typing to a single suggest request", async () => {
+    const store = mockFetch();
+    vi.stubGlobal("fetch", store);
+    render(<App />);
+
+    const input = screen.getByLabelText("Il tuo indirizzo");
+    fireEvent.change(input, { target: { value: "mil" } });
+    fireEvent.change(input, { target: { value: "mila" } });
+    fireEvent.change(input, { target: { value: "milan" } });
+    fireEvent.change(input, { target: { value: "milano" } });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("option", { name: "Milano Centrale, Milano" }),
+      ).toBeInTheDocument();
+    });
+
+    const suggestCalls = store.mock.calls.filter(
+      ([path]: unknown[]) =>
+        typeof path === "string" && path.startsWith("/api/geocode/suggest"),
+    );
+    expect(suggestCalls).toHaveLength(1);
+    expect(String(suggestCalls[0][0])).toContain("milano");
+  });
+
+  it("caches suggestions so re-searching a prefix does not refetch", async () => {
+    const store = mockFetch();
+    vi.stubGlobal("fetch", store);
+    render(<App />);
+
+    const input = screen.getByLabelText("Il tuo indirizzo");
+    fireEvent.change(input, { target: { value: "milano" } });
+    await waitFor(() => {
+      expect(
+        screen.getByRole("option", { name: "Milano Centrale, Milano" }),
+      ).toBeInTheDocument();
+    });
+
+    // Clear below the min length: no suggest request fires.
+    fireEvent.change(input, { target: { value: "mi" } });
+    await waitFor(() => {
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    });
+
+    // Re-typing the same query must reuse the cache.
+    fireEvent.change(input, { target: { value: "milano" } });
+    await waitFor(() => {
+      expect(
+        screen.getByRole("option", { name: "Milano Centrale, Milano" }),
+      ).toBeInTheDocument();
+    });
+
+    const suggestCalls = store.mock.calls.filter(
+      ([path]: unknown[]) =>
+        typeof path === "string" && path.startsWith("/api/geocode/suggest"),
+    );
+    expect(suggestCalls).toHaveLength(1);
   });
 
   it("uploads a voice message and shows it in the feed", async () => {

@@ -3,8 +3,14 @@ import { useTranslation } from "react-i18next";
 
 import { suggestGeocode } from "@/api/client";
 
-const DEBOUNCE_MS = 200;
-const MIN_QUERY_LENGTH = 2;
+const DEBOUNCE_MS = 500;
+const MIN_QUERY_LENGTH = 3;
+
+const suggestionCache = new Map<string, string[]>();
+
+export function clearSuggestionCache() {
+  suggestionCache.clear();
+}
 
 interface AddressComboboxProps {
   address: string;
@@ -29,9 +35,17 @@ export function AddressCombobox({
     }
     let cancelled = false;
     const timer = window.setTimeout(() => {
+      const cached = suggestionCache.get(query);
+      if (cached) {
+        setSuggestions(cached);
+        setHighlighted(-1);
+        setOpen(cached.length > 0);
+        return;
+      }
       suggestGeocode(query)
         .then((response) => {
           if (cancelled) return;
+          suggestionCache.set(query, response.suggestions);
           setSuggestions(response.suggestions);
           setHighlighted(-1);
           setOpen(response.suggestions.length > 0);

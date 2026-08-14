@@ -177,6 +177,7 @@ class NominatimGeocoder(Geocoder):
             timeout=timeout,
         )
         self._cache: dict[str, tuple[float, GeocodedAddress]] = {}
+        self._suggest_cache: dict[str, tuple[float, list[str]]] = {}
 
     async def _fetch(self, params: dict[str, str]) -> httpx.Response:
         """Separated for testability."""
@@ -208,12 +209,26 @@ class NominatimGeocoder(Geocoder):
         return result
 
     async def suggest(self, query: str, limit: int = 6) -> list[str]:
-        response = await self._fetch(
-            {"q": query, "format": "jsonv2", "limit": str(limit)}
-        )
-        response.raise_for_status()
-        results = response.json()
-        return [item.get("display_name") or query for item in results]
+        cache_key = f"{normalize_address(query)}:{limit}"
+        cached = self._suggest_cache.get(cache_key)
+        if cached is not None and time.monotonic() - cached[0] < self._ttl_seconds:
+            return cached[1]
+
+        try:
+            response = await self._fetch(
+                {"q": query, "format": "jsonv2", "limit": str(limit)}
+            )
+            response.raise_for_status()
+            results = response.json()
+        except httpx.HTTPStatusError as exc:
+            # Rate-limited or transient upstream errors degrade to no
+            # suggestions instead of failing the whole request.
+            if exc.response.status_code == 429:
+                return []
+            raise
+        suggestions = [item.get("display_name") or query for item in results]
+        self._suggest_cache[cache_key] = (time.monotonic(), suggestions)
+        return suggestions
 
 
 def build_geocoder(mode: str, base_url: str, ttl_seconds: int) -> Geocoder:

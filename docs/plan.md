@@ -34,11 +34,14 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 Ordered by priority, remove from the list when done
 
+- i get a 500 error in production when trying to post, we should replicate this in tests, do you need more info from sentry?
 - about the cold start: users start with limited reach. Even if the feed gets up to 50 kilometers, each user's reach gets up to 5 kilometers so they will not be able to read each other
+- default reach is the longest
 - how does prometheus work?
 - verify backend connection to sentry
 - replies and threading
 - send a notification upon a reply
 - pages and routing
+- self-hosted nominatim/photon
 - search engine optimisation
 - blind accessibility test for audio content workflows

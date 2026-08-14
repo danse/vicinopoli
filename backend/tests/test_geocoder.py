@@ -163,3 +163,69 @@ async def test_nominatim_geocoder_suggest_forwards_query_and_limit() -> None:
     assert captured["q"] == "via roma"
     assert captured["limit"] == "2"
     assert captured["format"] == "jsonv2"
+
+
+@pytest.mark.asyncio
+async def test_nominatim_geocoder_suggest_caches_by_query() -> None:
+    """Repeated lookups must not hammer the upstream API (429 prevention)."""
+    calls: list[dict[str, str]] = []
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return [{"display_name": f"Via Roma {len(calls)}, Roma"}]
+
+    async def fake_fetch(params):
+        calls.append(params)
+        return FakeResponse()
+
+    geocoder = NominatimGeocoder("https://nominatim.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    first = await geocoder.suggest("via roma 1")
+    second = await geocoder.suggest("via roma 1")
+    third = await geocoder.suggest("via roma 1")
+
+    assert first == second == third
+    assert len(calls) == 1, "suggest must hit the upstream API only once"
+
+
+@pytest.mark.asyncio
+async def test_nominatim_geocoder_suggest_distinct_queries_not_deduped() -> None:
+    """Prefix keystrokes are distinct queries and must each be fetched once."""
+    calls: list[dict[str, str]] = []
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return [{"display_name": "Via Roma 1, Roma"}]
+
+    async def fake_fetch(params):
+        calls.append(params)
+        return FakeResponse()
+
+    geocoder = NominatimGeocoder("https://nominatim.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    await geocoder.suggest("via roma 1, r")
+    await geocoder.suggest("via roma 1, ro")
+    assert len(calls) == 2
+
+
+@pytest.mark.asyncio
+async def test_nominatim_geocoder_suggest_degrades_on_429() -> None:
+    """A rate-limited upstream must not crash: return no suggestions instead."""
+    import httpx
+
+    async def fake_fetch(params):
+        return httpx.Response(429, request=httpx.Request("GET", "http://x"))
+
+    geocoder = NominatimGeocoder("https://nominatim.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    suggestions = await geocoder.suggest("via roma")
+    assert suggestions == []
