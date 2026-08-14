@@ -57,13 +57,17 @@ async def test_post_carries_author_pseudonym_in_feed(client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_new_device_post_scope_is_capped(client) -> None:
-    """ADR 0005: new devices post with the smallest reach until trusted."""
+async def test_new_device_post_voice_is_city(client) -> None:
+    """ADR 0005: a new device's voice is kept; the trust cap limits K not km.
+
+    The legacy km ``scope`` is mapped onto the voice model.
+    """
     await _get_device(client)
     response = await client.post(
         "/api/posts",
         json={"address": "Via Roma 1, Roma", "body": "piano di sotto", "scope": "5km"},
     )
     assert response.status_code == 201
-    assert response.json()["scope"] == "500m"
+    # 5km -> ``area`` voice; the reach cap now gates neighbours, not distance.
+    assert response.json()["voice"] == "area"
     assert response.json()["new_neighbour"] is True

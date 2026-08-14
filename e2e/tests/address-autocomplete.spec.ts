@@ -5,7 +5,7 @@ test("address suggestions appear while typing and fill the input when selected",
 }) => {
   await page.goto("/");
 
-  const input = page.getByLabel("Il tuo indirizzo");
+  const input = page.getByTestId("composer-address");
   await input.fill("milano");
 
   await expect(
@@ -24,9 +24,9 @@ test("a post made with a selected suggestion reaches the feed", async ({
 
   await page.goto("/");
 
-  await page.getByLabel("Il tuo indirizzo").fill("piazza venezia");
+  await page.getByTestId("composer-address").fill("piazza venezia");
   await page.getByRole("option", { name: "Piazza Venezia, Roma" }).click();
-  await page.getByLabel("Scrivi un messaggio").fill(body);
+  await page.getByTestId("composer-message").fill(body);
   await page.getByRole("button", { name: "Pubblica" }).click();
 
   await expect(page.getByText(body)).toBeVisible();
@@ -35,7 +35,7 @@ test("a post made with a selected suggestion reaches the feed", async ({
 test("no suggestions are shown for an unknown prefix", async ({ page }) => {
   await page.goto("/");
 
-  await page.getByLabel("Il tuo indirizzo").fill("via inesistente");
+  await page.getByTestId("composer-address").fill("via inesistente");
 
   await expect(page.getByRole("listbox")).not.toBeVisible();
 });

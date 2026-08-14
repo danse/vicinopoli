@@ -5,8 +5,8 @@ test("an unknown address shows address-not-found instead of generic publish erro
 }) => {
   await page.goto("/");
 
-  await page.getByLabel("Il tuo indirizzo").fill("Via Inesistente 99, Città");
-  await page.getByLabel("Scrivi un messaggio").fill("ciao");
+  await page.getByTestId("composer-address").fill("Via Inesistente 99, Città");
+  await page.getByTestId("composer-message").fill("ciao");
   await page.getByRole("button", { name: "Pubblica" }).click();
 
   await expect(page.getByText("Indirizzo non trovato")).toBeVisible();

@@ -4,6 +4,7 @@ export type FeedItem = components["schemas"]["FeedItem"];
 export type FeedResponse = components["schemas"]["FeedResponse"];
 export type PostCreate = components["schemas"]["PostCreate"];
 export type PostScope = components["schemas"]["PostScope"];
+export type PostVoice = components["schemas"]["PostVoice"];
 export type PostResponse = components["schemas"]["PostResponse"];
 export type DeviceResponse = components["schemas"]["DeviceResponse"];
 export type DeviceUpdate = components["schemas"]["DeviceUpdate"];

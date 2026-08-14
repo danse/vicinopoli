@@ -7,7 +7,7 @@ import {
   createPost,
   presignMedia,
   registerMedia,
-  type PostScope,
+  type PostVoice,
   uploadPhotoToUrl,
   updateMe,
 } from "@/api/client";
@@ -23,16 +23,16 @@ interface ComposerProps {
   onPosted: () => void;
 }
 
-const SCOPE_OPTIONS: PostScope[] = ["building", "500m", "1km", "5km"];
+const VOICE_OPTIONS: PostVoice[] = ["building", "some", "area", "city"];
 
-function scopeLabel(scope: PostScope): string {
-  const key: Record<PostScope, string> = {
-    building: "composer.scopeBuilding",
-    "500m": "composer.scope500m",
-    "1km": "composer.scope1km",
-    "5km": "composer.scope5km",
+function voiceLabel(voice: PostVoice): string {
+  const key: Record<PostVoice, string> = {
+    building: "composer.voiceBuilding",
+    some: "composer.voiceSome",
+    area: "composer.voiceArea",
+    city: "composer.voiceCity",
   };
-  return key[scope];
+  return key[voice];
 }
 
 const MAX_DIMENSION = 1200;
@@ -68,7 +68,7 @@ export function Composer({
 }: ComposerProps) {
   const { t } = useTranslation();
   const [body, setBody] = useState("");
-  const [scope, setScope] = useState<PostScope>("1km");
+  const [scope, setScope] = useState<PostVoice>("city");
   const [photo, setPhoto] = useState<File | null>(null);
   const [voice, setVoice] = useState<Recording | null>(null);
   const [recording, setRecording] = useState(false);
@@ -172,7 +172,7 @@ export function Composer({
       await createPost({
         address: address.trim(),
         body: body.trim(),
-        scope,
+        voice: scope,
         media_ids: mediaIds,
       });
       setBody("");
@@ -208,8 +208,7 @@ export function Composer({
           address={address}
           onAddressChange={onAddressChange}
         />
-      </div>
-      <div className="mt-4 grid gap-2">
+      </div>      <div className="mt-4 grid gap-2">
         <label
           htmlFor="composer-pseudonym"
           className="text-sm font-medium text-foreground"
@@ -218,6 +217,7 @@ export function Composer({
         </label>
         <input
           id="composer-pseudonym"
+          data-testid="composer-pseudonym"
           className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           value={pseudonym}
           placeholder={t("composer.pseudonymPlaceholder")}
@@ -233,6 +233,7 @@ export function Composer({
         </label>
         <textarea
           id="composer-message"
+          data-testid="composer-message"
           className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           value={body}
           placeholder={t("composer.messagePlaceholder")}
@@ -244,7 +245,7 @@ export function Composer({
           {t("composer.scopeLabel")}
         </span>
         <div role="radiogroup" className="flex flex-wrap gap-2">
-          {SCOPE_OPTIONS.map((option) => (
+          {VOICE_OPTIONS.map((option) => (
             <label
               key={option}
               className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input px-3 py-1.5 text-sm text-foreground has-[:checked]:bg-accent"
@@ -252,12 +253,13 @@ export function Composer({
               <input
                 type="radio"
                 name="scope"
+                data-testid={`composer-voice-${option}`}
                 value={option}
                 checked={scope === option}
                 onChange={() => setScope(option)}
                 className="h-4 w-4"
               />
-              {t(scopeLabel(option))}
+              {t(voiceLabel(option))}
             </label>
           ))}
         </div>
@@ -271,6 +273,7 @@ export function Composer({
         </label>
         <input
           id="composer-photo"
+          data-testid="composer-photo"
           ref={fileInputRef}
           type="file"
           accept="image/*"
@@ -280,11 +283,21 @@ export function Composer({
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {recording ? (
-          <Button type="button" variant="outline" onClick={stopRecording}>
+          <Button
+            type="button"
+            variant="outline"
+            data-testid="composer-voice-stop"
+            onClick={stopRecording}
+          >
             {t("composer.voiceStop")}
           </Button>
         ) : (
-          <Button type="button" variant="outline" onClick={startRecording}>
+          <Button
+            type="button"
+            variant="outline"
+            data-testid="composer-voice-start"
+            onClick={startRecording}
+          >
             {t("composer.voiceLabel")}
           </Button>
         )}

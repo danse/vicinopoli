@@ -9,8 +9,8 @@ test("a user can post a text message and see it in the feed", async ({
 
   await page.goto("/");
 
-  await page.getByLabel("Il tuo indirizzo").fill("Via Roma 1, Roma");
-  await page.getByLabel("Scrivi un messaggio").fill(body);
+  await page.getByTestId("composer-address").fill("Via Roma 1, Roma");
+  await page.getByTestId("composer-message").fill(body);
   await page.getByRole("button", { name: "Pubblica" }).click();
 
   await expect(page.getByText(body)).toBeVisible();
@@ -24,9 +24,9 @@ test("a user can choose a pseudonym and it appears as the post author", async ({
 
   await page.goto("/");
 
-  await page.getByLabel("Il tuo indirizzo").fill("Via Roma 1, Roma");
-  await page.getByLabel("Scegli un nome").fill(pseudonym);
-  await page.getByLabel("Scrivi un messaggio").fill(body);
+  await page.getByTestId("composer-address").fill("Via Roma 1, Roma");
+  await page.getByTestId("composer-pseudonym").fill(pseudonym);
+  await page.getByTestId("composer-message").fill(body);
   await page.getByRole("button", { name: "Pubblica" }).click();
 
   await expect(page.getByText(body)).toBeVisible();

@@ -17,9 +17,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 from app.models.device import Device
 from app.models.location import Location
-from app.schemas.post import PostScope, PostStatus
+from app.schemas.post import PostScope, PostStatus, PostVoice
 
-__all__ = ["Post", "PostScope", "PostStatus"]
+__all__ = ["Post", "PostScope", "PostStatus", "PostVoice"]
 
 
 class Post(Base):
@@ -35,8 +35,11 @@ class Post(Base):
     )
     device: Mapped[Device | None] = relationship()
     body: Mapped[str] = mapped_column(Text)
-    scope: Mapped[PostScope] = mapped_column(
-        SAEnum(PostScope, native_enum=False, length=16), default=PostScope.r1km
+    scope: Mapped[PostScope | None] = mapped_column(
+        SAEnum(PostScope, native_enum=False, length=16), nullable=True
+    )
+    voice: Mapped[PostVoice] = mapped_column(
+        SAEnum(PostVoice, native_enum=False, length=16), default=PostVoice.city
     )
     status: Mapped[PostStatus] = mapped_column(
         SAEnum(PostStatus, native_enum=False, length=16), default=PostStatus.active

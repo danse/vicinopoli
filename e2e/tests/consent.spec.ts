@@ -30,8 +30,8 @@ test("accepting consent records onboarding and lets the user post", async ({
   ).not.toBeVisible();
 
   const body = `Messaggio consenso ${Date.now()}`;
-  await page.getByLabel("Il tuo indirizzo").fill("Via Roma 1, Roma");
-  await page.getByLabel("Scrivi un messaggio").fill(body);
+  await page.getByTestId("composer-address").fill("Via Roma 1, Roma");
+  await page.getByTestId("composer-message").fill(body);
   await page.getByRole("button", { name: "Pubblica" }).click();
 
   await expect(page.getByText(body)).toBeVisible();

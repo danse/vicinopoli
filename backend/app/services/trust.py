@@ -3,18 +3,26 @@
 New/unknown devices can post immediately but with reduced reach — their posts
 are capped to the smallest scope — until they accrue trust via age and a clean
 report history.
+
+The reach gate is expressed as a *neighbour-count* cap ``K`` (how many distinct
+other active posters a post may reach), replacing the old km cap — see the
+plan's Reach model. ``building`` voice is always honored (reach 0).
 """
 
 from datetime import UTC, datetime
 
 from app.models.device import Device
-from app.models.post import PostScope
 
 # Trust accrues with age: after ``trusted_after`` days the device is trusted.
 TRUSTED_AFTER_DAYS = 7
 
-# Reduced reach while untrusted: smallest scope only.
-UNTRUSTED_SCOPE = PostScope.r500m
+# Neighbour-count caps: ``UNTRUSTED_K`` = 1 other poster (cold-start guarantee),
+# ``TRUSTED_K`` = 25 other posters (a real community).
+UNTRUSTED_K = 1
+TRUSTED_K = 25
+
+# Optional capability for a fully-verified device in the future.
+VERIFIED_K = 100
 
 
 def device_age_days(device: Device, now: datetime | None = None) -> float:
@@ -28,23 +36,18 @@ def device_age_days(device: Device, now: datetime | None = None) -> float:
     return max(0.0, (reference - created).total_seconds() / 86400)
 
 
+def neighbour_cap(device: Device, now: datetime | None = None) -> int:
+    """How many distinct other active posters this device's posts may reach."""
+    if is_trusted(device, now):
+        return TRUSTED_K
+    return UNTRUSTED_K
+
+
 def is_trusted(device: Device, now: datetime | None = None) -> bool:
     """A device is trusted once it has aged past the threshold."""
     if device.status.value == "banned":
         return False
     return device_age_days(device, now) >= TRUSTED_AFTER_DAYS
-
-
-def effective_scope(device: Device, requested: PostScope, now: datetime | None = None) -> PostScope:
-    """Cap the requested scope for untrusted devices (ADR 0005).
-
-    ``building`` is the most restrictive scope (same normalized address), so it
-    is always honoured; radius scopes are capped to the smallest radius while
-    the device has not yet accrued trust.
-    """
-    if is_trusted(device, now) or requested == PostScope.building:
-        return requested
-    return UNTRUSTED_SCOPE
 
 
 def is_new_neighbour(device: Device, now: datetime | None = None) -> bool:

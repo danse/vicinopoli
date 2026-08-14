@@ -50,7 +50,7 @@ beforeAll(() => {
 const created = {
   id: "post-1",
   body: "Ciao vicini!",
-  scope: "1km",
+  voice: "city",
   location: {
     id: "loc-1",
     display_address: "Via Roma 1, Roma",
@@ -65,7 +65,7 @@ const feed = {
     {
       id: "post-1",
       body: "Ciao vicini!",
-      scope: "1km",
+      voice: "city",
       display_address: "Via Roma 1, Roma",
       geohash: "sr1x",
       distance_m: 0.0,
@@ -225,18 +225,18 @@ describe("App", () => {
 
   it("shows the composer with address and message inputs", () => {
     render(<App />);
-    expect(screen.getByLabelText("Il tuo indirizzo")).toBeInTheDocument();
-    expect(screen.getByLabelText("Scegli un nome")).toBeInTheDocument();
-    expect(screen.getByLabelText("Scrivi un messaggio")).toBeInTheDocument();
+    expect(screen.getByTestId("composer-address")).toBeInTheDocument();
+    expect(screen.getByTestId("composer-pseudonym")).toBeInTheDocument();
+    expect(screen.getByTestId("composer-message")).toBeInTheDocument();
   });
 
   it("posts a message and renders it in the feed", async () => {
     render(<App />);
 
-    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+    fireEvent.change(screen.getByTestId("composer-address"), {
       target: { value: "Via Roma 1, Roma" },
     });
-    fireEvent.change(screen.getByLabelText("Scrivi un messaggio"), {
+    fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "Ciao vicini!" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
@@ -260,10 +260,10 @@ describe("App", () => {
 
     render(<App />);
 
-    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+    fireEvent.change(screen.getByTestId("composer-address"), {
       target: { value: "Via Roma 1, Roma" },
     });
-    fireEvent.change(screen.getByLabelText("Scrivi un messaggio"), {
+    fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "Ciao vicini!" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
@@ -294,10 +294,10 @@ describe("App", () => {
 
     render(<App />);
 
-    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+    fireEvent.change(screen.getByTestId("composer-address"), {
       target: { value: "Via Inesistente 99, Città" },
     });
-    fireEvent.change(screen.getByLabelText("Scrivi un messaggio"), {
+    fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "ciao" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
@@ -316,19 +316,19 @@ describe("App", () => {
     );
   });
 
-  it("sends the selected scope with the post", async () => {
+  it("sends the selected voice with the post", async () => {
     const store = mockFetch();
     vi.stubGlobal("fetch", store);
 
     render(<App />);
 
-    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+    fireEvent.change(screen.getByTestId("composer-address"), {
       target: { value: "Via Roma 1, Roma" },
     });
-    fireEvent.change(screen.getByLabelText("Scrivi un messaggio"), {
+    fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "Messaggio per il palazzo" },
     });
-    fireEvent.click(screen.getByRole("radio", { name: "Solo il mio palazzo" }));
+    fireEvent.click(screen.getByTestId("composer-voice-building"));
     fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
 
     await waitFor(() => {
@@ -339,7 +339,7 @@ describe("App", () => {
     );
     expect(postCall).toBeDefined();
     const init = postCall![1] as RequestInit;
-    expect(JSON.parse(String(init.body))).toMatchObject({ scope: "building" });
+    expect(JSON.parse(String(init.body))).toMatchObject({ voice: "building" });
   });
 
   it("uploads a photo and shows it in the feed", async () => {
@@ -348,15 +348,15 @@ describe("App", () => {
 
     render(<App />);
 
-    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+    fireEvent.change(screen.getByTestId("composer-address"), {
       target: { value: "Via Roma 1, Roma" },
     });
-    fireEvent.change(screen.getByLabelText("Scrivi un messaggio"), {
+    fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "Foto del quartiere" },
     });
 
     const file = new File(["x"], "photo.png", { type: "image/png" });
-    fireEvent.change(screen.getByLabelText("Aggiungi una foto"), {
+    fireEvent.change(screen.getByTestId("composer-photo"), {
       target: { files: [file] },
     });
 
@@ -372,7 +372,7 @@ describe("App", () => {
   it("shows address suggestions while typing and fills the input on select", async () => {
     render(<App />);
 
-    const input = screen.getByLabelText("Il tuo indirizzo");
+    const input = screen.getByTestId("composer-address");
     fireEvent.change(input, { target: { value: "milano" } });
 
     await waitFor(() => {
@@ -386,7 +386,7 @@ describe("App", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Il tuo indirizzo")).toHaveValue(
+      expect(screen.getByTestId("composer-address")).toHaveValue(
         "Milano Centrale, Milano",
       );
     });
@@ -398,7 +398,7 @@ describe("App", () => {
   it("shows no suggestions for an unknown prefix", async () => {
     render(<App />);
 
-    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+    fireEvent.change(screen.getByTestId("composer-address"), {
       target: { value: "via inesistente" },
     });
 
@@ -412,7 +412,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", store);
     render(<App />);
 
-    const input = screen.getByLabelText("Il tuo indirizzo");
+    const input = screen.getByTestId("composer-address");
     fireEvent.change(input, { target: { value: "mil" } });
     fireEvent.change(input, { target: { value: "mila" } });
     fireEvent.change(input, { target: { value: "milan" } });
@@ -437,7 +437,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", store);
     render(<App />);
 
-    const input = screen.getByLabelText("Il tuo indirizzo");
+    const input = screen.getByTestId("composer-address");
     fireEvent.change(input, { target: { value: "milano" } });
     await waitFor(() => {
       expect(
@@ -556,19 +556,19 @@ describe("App", () => {
     });
 
     render(<App />);
-    fireEvent.change(screen.getByLabelText("Il tuo indirizzo"), {
+    fireEvent.change(screen.getByTestId("composer-address"), {
       target: { value: "Via Roma 1, Roma" },
     });
-    fireEvent.change(screen.getByLabelText("Scrivi un messaggio"), {
+    fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "Messaggio vocale" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Registra voce" }));
+    fireEvent.click(screen.getByTestId("composer-voice-start"));
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Ferma" })).toBeInTheDocument();
+      expect(screen.getByTestId("composer-voice-stop")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Ferma" }));
+    fireEvent.click(screen.getByTestId("composer-voice-stop"));
     fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
 
     await waitFor(() => {

@@ -20,6 +20,20 @@ class PostScope(StrEnum):
     r5km = "5km"
 
 
+class PostVoice(StrEnum):
+    """The author's voice intent (fuzzy, user-facing): who should read this.
+
+    Unlike ``PostScope`` (a fixed km), the voice is converted to a distance at
+    feed-serve time via the neighbour-count conversion (plan: Reach model).
+    ``building`` yields ``reach_m = 0`` (same normalized address key).
+    """
+
+    building = "building"
+    some = "some"
+    area = "area"
+    city = "city"
+
+
 class PostStatus(StrEnum):
     active = "active"
     auto_hidden = "auto_hidden"
@@ -29,7 +43,8 @@ class PostStatus(StrEnum):
 class PostCreate(BaseModel):
     address: str = Field(min_length=1, max_length=512)
     body: str = Field(min_length=1, max_length=5000)
-    scope: PostScope = PostScope.r1km
+    voice: PostVoice = PostVoice.city
+    scope: PostScope | None = None
     media_ids: list[uuid.UUID] = Field(default_factory=list, max_length=9)
 
 
@@ -42,7 +57,8 @@ class LocationInfo(BaseModel):
 class PostResponse(BaseModel):
     id: uuid.UUID
     body: str
-    scope: PostScope
+    scope: PostScope | None = None
+    voice: PostVoice
     location: LocationInfo
     distance_m: float | None = None
     created_at: datetime
@@ -54,7 +70,8 @@ class PostResponse(BaseModel):
 class FeedItem(BaseModel):
     id: uuid.UUID
     body: str
-    scope: PostScope
+    scope: PostScope | None = None
+    voice: PostVoice
     display_address: str
     geohash: str
     distance_m: float | None = None

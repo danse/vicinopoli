@@ -8,9 +8,9 @@ test("a building-scoped post is only visible to the same address", async ({
   const body = uniqueBody("Per il palazzo");
 
   await page.goto("/");
-  await page.getByLabel("Il tuo indirizzo").fill("Via Roma 1, Roma");
-  await page.getByLabel("Scrivi un messaggio").fill(body);
-  await page.getByRole("radio", { name: "Solo il mio palazzo" }).check();
+  await page.getByTestId("composer-address").fill("Via Roma 1, Roma");
+  await page.getByTestId("composer-message").fill(body);
+  await page.getByTestId("composer-voice-building").check();
   await page.getByRole("button", { name: "Pubblica" }).click();
   await expect(page.getByText(body)).toBeVisible();
 
@@ -18,12 +18,12 @@ test("a building-scoped post is only visible to the same address", async ({
   // browsing context: a new device without cookies.
   const neighbour = await page.context().newPage();
   await neighbour.goto("/");
-  await neighbour.getByLabel("Il tuo indirizzo").fill("Via Roma 1, Roma");
+  await neighbour.getByTestId("composer-address").fill("Via Roma 1, Roma");
   await expect(neighbour.getByText(body)).toBeVisible();
 
   // A different address (different normalized key) must NOT see it.
   const elsewhere = await page.context().newPage();
   await elsewhere.goto("/");
-  await elsewhere.getByLabel("Il tuo indirizzo").fill("Piazza Venezia, Roma");
+  await elsewhere.getByTestId("composer-address").fill("Piazza Venezia, Roma");
   await expect(elsewhere.getByText(body)).not.toBeVisible();
 });

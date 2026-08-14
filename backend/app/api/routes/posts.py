@@ -26,11 +26,14 @@ from app.schemas.post import (
     LocationInfo,
     PostCreate,
     PostResponse,
+    PostScope,
+    PostVoice,
 )
-from app.services.feed import MAX_RADIUS_M, expanding_radius_feed
+from app.services.feed import expanding_radius_feed
 from app.services.heatmap import bump_activity_cell
 from app.services.media import media_by_post, media_info
-from app.services.trust import effective_scope, is_new_neighbour
+from app.services.reach import MAX_RADIUS_M
+from app.services.trust import is_new_neighbour
 
 router = APIRouter()
 
@@ -70,6 +73,15 @@ async def _resolve_location(
     return location, geocoded
 
 
+def _scope_to_voice(scope: PostScope) -> PostVoice:
+    """Map a legacy km scope onto the voice intent model."""
+    if scope == PostScope.building:
+        return PostVoice.building
+    if scope == PostScope.r5km:
+        return PostVoice.area
+    return PostVoice.some
+
+
 @router.post("/posts", response_model=PostResponse, status_code=201)
 async def create_post(
     payload: PostCreate,
@@ -83,8 +95,17 @@ async def create_post(
 
     location, _ = await _resolve_location(session, geocoder, payload.address)
 
-    scope = effective_scope(device, payload.scope)
-    post = Post(location_id=location.id, body=payload.body, scope=scope, device_id=device.id)
+    # The author's voice is ``voice``; the trust ladder caps it as a
+    # neighbour-count, converted to distance only at feed-serve time.
+    if payload.scope is not None and payload.voice == PostVoice.city:
+        # Backwards-compat: a legacy km scope maps to the closest intent.
+        payload.voice = _scope_to_voice(payload.scope)
+    post = Post(
+        location_id=location.id,
+        body=payload.body,
+        voice=payload.voice,
+        device_id=device.id,
+    )
     session.add(post)
     await session.flush()
     await bump_activity_cell(session, location)
@@ -106,6 +127,7 @@ async def create_post(
         id=post.id,
         body=post.body,
         scope=post.scope,
+        voice=post.voice,
         location=LocationInfo(
             id=location.id,
             display_address=location.display_address,
@@ -143,7 +165,8 @@ async def get_feed(
             FeedItem(
                 id=post.id,
                 body=post.body,
-                scope=post.scope,
+                scope=None,
+                voice=post.voice,
                 display_address=post.display_address,
                 geohash=post.geohash,
                 distance_m=post.distance_m,

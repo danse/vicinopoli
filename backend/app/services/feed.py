@@ -16,29 +16,19 @@ from sqlalchemy.orm import selectinload
 
 from app.core.geocoder import GeocodedAddress
 from app.models.location import Location
-from app.models.post import Post, PostScope, PostStatus
-from app.services.trust import is_new_neighbour
+from app.models.post import Post, PostStatus
+from app.services.reach import MAX_RADIUS_M, RADIUS_STEPS, reach_for
+from app.services.trust import is_new_neighbour, neighbour_cap
 
 # Expanding-radius ladder (metres) per ADR 0007.
-RADIUS_STEPS = (500, 1_000, 5_000, 20_000, 50_000)
-
-# Hard ceiling for the expanding-radius search.
-MAX_RADIUS_M = 50_000
-
-# Scope -> max reach in metres (``building`` is handled separately).
-SCOPE_RADIUS_M: dict[PostScope, int | None] = {
-    PostScope.building: None,
-    PostScope.r500m: 500,
-    PostScope.r1km: 1_000,
-    PostScope.r5km: 5_000,
-}
+# (``RADIUS_STEPS``/``MAX_RADIUS_M`` live in ``reach`` to avoid a cycle.)
 
 
 @dataclass
 class FeedPost:
     id: str
     body: str
-    scope: PostScope
+    voice: str
     display_address: str
     geohash: str
     distance_m: float
@@ -76,26 +66,31 @@ async def _posts_within(
     return rows
 
 
-def _is_visible(
+async def _is_visible(
+    session: AsyncSession,
     post: Post,
     location: Location,
     distance_m: float,
     viewer: GeocodedAddress,
     search_radius_m: int,
 ) -> bool:
-    """ADR 0006: distance <= scope AND distance <= search_radius.
+    """Plan visibility: distance <= post.reach_m AND distance <= search_radius.
 
-    ``building`` scope additionally requires the viewer to resolve to the same
-    normalized address key.
+    ``reach_m`` is converted from the author's voice + trust cap at serve time
+    (neighbour-count -> distance). ``building`` yields reach 0 (same normalized
+    address key).
     """
     if distance_m > search_radius_m:
         return False
 
-    scope_radius = SCOPE_RADIUS_M[post.scope]
-    if post.scope == PostScope.building:
+    if post.voice == "building":
         return location.normalized_key == viewer.normalized_key
-    assert scope_radius is not None
-    return distance_m <= scope_radius
+
+    author = post.device
+    k = neighbour_cap(author) if author is not None else 1
+    exclude = {post.device_id} if post.device_id is not None else None
+    reach_m = await reach_for(session, location, k=k, exclude_device_ids=exclude)
+    return distance_m <= reach_m
 
 
 async def expanding_radius_feed(
@@ -111,11 +106,12 @@ async def expanding_radius_feed(
     for radius_m in RADIUS_STEPS:
         effective_radius = min(radius_m, search_radius_m)
         candidates = await _posts_within(session, viewer, radius_m, search_radius_m)
-        visible = [
-            (post, location, distance_m)
-            for post, location, distance_m in candidates
-            if _is_visible(post, location, distance_m, viewer, search_radius_m)
-        ]
+        visible = []
+        for post, location, distance_m in candidates:
+            if await _is_visible(
+                session, post, location, distance_m, viewer, search_radius_m
+            ):
+                visible.append((post, location, distance_m))
         if len(visible) >= target_count or radius_m == MAX_RADIUS_M:
             feed_posts = []
             for post, location, distance_m in visible:
@@ -124,7 +120,7 @@ async def expanding_radius_feed(
                     FeedPost(
                         id=str(post.id),
                         body=post.body,
-                        scope=post.scope,
+                        voice=post.voice,
                         display_address=location.display_address,
                         geohash=location.geohash,
                         distance_m=distance_m,

@@ -895,7 +895,17 @@
             "title": "Body"
           },
           "scope": {
-            "$ref": "#/components/schemas/PostScope"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostScope"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "voice": {
+            "$ref": "#/components/schemas/PostVoice"
           },
           "display_address": {
             "type": "string",
@@ -949,7 +959,7 @@
         "required": [
           "id",
           "body",
-          "scope",
+          "voice",
           "display_address",
           "geohash",
           "created_at"
@@ -1301,9 +1311,19 @@
             "minLength": 1,
             "title": "Body"
           },
+          "voice": {
+            "$ref": "#/components/schemas/PostVoice",
+            "default": "city"
+          },
           "scope": {
-            "$ref": "#/components/schemas/PostScope",
-            "default": "1km"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostScope"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "media_ids": {
             "items": {
@@ -1334,7 +1354,17 @@
             "title": "Body"
           },
           "scope": {
-            "$ref": "#/components/schemas/PostScope"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostScope"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "voice": {
+            "$ref": "#/components/schemas/PostVoice"
           },
           "location": {
             "$ref": "#/components/schemas/LocationInfo"
@@ -1383,7 +1413,7 @@
         "required": [
           "id",
           "body",
-          "scope",
+          "voice",
           "location",
           "created_at"
         ],
@@ -1407,6 +1437,17 @@
           "hidden"
         ],
         "title": "PostStatus"
+      },
+      "PostVoice": {
+        "type": "string",
+        "enum": [
+          "building",
+          "some",
+          "area",
+          "city"
+        ],
+        "title": "PostVoice",
+        "description": "The author's voice intent (fuzzy, user-facing): who should read this.\n\nUnlike ``PostScope`` (a fixed km), the voice is converted to a distance at\nfeed-serve time via the neighbour-count conversion (plan: Reach model).\n``building`` yields ``reach_m = 0`` (same normalized address key)."
       },
       "ReportResponse": {
         "properties": {

@@ -17,8 +17,8 @@ test("heatmap tiles expose aggregated density, never post bodies", async ({
 }) => {
   const body = `Densità in zona ${Date.now()}`;
   await page.goto("/");
-  await page.getByLabel("Il tuo indirizzo").fill("Via Roma 1, Roma");
-  await page.getByLabel("Scrivi un messaggio").fill(body);
+  await page.getByTestId("composer-address").fill("Via Roma 1, Roma");
+  await page.getByTestId("composer-message").fill(body);
   await page.getByRole("button", { name: "Pubblica" }).click();
   await expect(page.getByText(body)).toBeVisible();
 

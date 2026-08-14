@@ -28,6 +28,11 @@ make up
 make down
 
 # Generate TypeScript types from the backend OpenAPI schema
+# ALWAYS use `make gen`. Never hand-run the backend export in `backend/` and
+# `npm run gen:types` in `frontend/` as separate ad-hoc commands unless `make
+# gen` itself is broken; if it fails, suspect a stale Docker daemon first
+# (restart the rootless daemon, `docker compose up -d --build backend`) rather
+# than the script.
 make gen
 
 # Backend
@@ -106,6 +111,11 @@ debugging, verify each layer is actually running what was just changed:
 - **No `console.log` troubleshooting.** When a test fails in a confusing way,
   don't sprinkle logs — refactor and write finer-grained tests instead (a
   single assertion per concern, at the smallest unit you can test directly).
+- **Never query UI tests by copy/label text** — copy changes silently break
+  tests. Use stable `data-testid` attributes (e.g. `composer-address`,
+  `composer-voice-building`) instead of `getByLabelText`/`getByRole`/`getByText`
+  for anything whose string is user-facing and localized. Keep `data-testid`
+  values short, kebab-case, and unique per component.
 
 ### General
 

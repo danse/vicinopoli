@@ -7,10 +7,10 @@ test("a user can attach a photo and see it in the feed", async ({ page }) => {
 
   await page.goto("/");
 
-  await page.getByLabel("Il tuo indirizzo").fill("Via Roma 1, Roma");
-  await page.getByLabel("Scrivi un messaggio").fill(body);
+  await page.getByTestId("composer-address").fill("Via Roma 1, Roma");
+  await page.getByTestId("composer-message").fill(body);
   await page
-    .getByLabel("Aggiungi una foto")
+    .getByTestId("composer-photo")
     .setInputFiles("./test-photo.png");
   await page.getByRole("button", { name: "Pubblica" }).click();
 

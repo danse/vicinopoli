@@ -89,6 +89,7 @@ export function AddressCombobox({
     <div className="relative">
       <input
         id="composer-address"
+        data-testid="composer-address"
         className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         value={address}
         role="combobox"
