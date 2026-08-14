@@ -56,8 +56,7 @@ Three distinct concepts, never conflated:
 
 Ordered by priority, remove from the list when done
 
-- how does prometheus work?
-- verify backend connection to sentry
+- is the backend connected to sentry already, or does it need another DSN?
 - replies and threading
 - send a notification upon a reply
 - location from the browser

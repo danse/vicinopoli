@@ -73,6 +73,53 @@ used in later milestones.
 
 Data lives in the named volumes (`db_data`, `minio_data`) and survives redeploys.
 
+## Monitoring (production)
+
+Prometheus and Grafana run inside the prod stack (ADR 0012) and are **bound to
+`127.0.0.1` on the VPS only** — never exposed on the public interface, never
+proxied through Caddy, never opened on the firewall. To view them, open an SSH
+tunnel from your machine:
+
+```bash
+ssh -N -L 9090:127.0.0.1:9090 -L 3000:127.0.0.1:3000 root@<VPS_IP>
+```
+
+Then open http://localhost:9090 (Prometheus) and http://localhost:3000
+(Grafana; login `admin` / `GRAFANA_ADMIN_PASSWORD` from `.env`). Keep the
+terminal open — Ctrl-C closes the tunnel. Prometheus data is ephemeral (it
+resets on container recreation), so the dashboard shows live scrapes since the
+last start; the datasource/dashboard config itself lives in `monitoring/` and
+is provisioned on every start.
+
+### Ubuntu / Linux convenience
+
+`openssh-client` is preinstalled on Ubuntu, so the tunnel above works out of
+the box. For one-command browsing, put this in `~/.ssh/config`:
+
+```sshconfig
+Host vps
+  HostName <VPS_IP>
+  User root
+```
+
+and this in `~/.bashrc` (then `source ~/.bashrc`):
+
+```bash
+vicinopoli-monitor() {
+  ssh -f -N -L 9090:127.0.0.1:9090 -L 3000:127.0.0.1:3000 vps
+  echo "Prometheus: http://localhost:9090"
+  echo "Grafana:    http://localhost:3000"
+}
+vicinopoli-monitor-off() {
+  pkill -f "ssh -f -N -L 9090:127.0.0.1:9090 -L 3000:127.0.0.1:3000 vps"
+  echo "Tunnel closed."
+}
+```
+
+`ssh -f -N` backgrounds the tunnel after authenticating, so
+`vicinopoli-monitor` returns immediately; run `vicinopoli-monitor-off` to close
+it. Replace `vps` with `root@<VPS_IP>` if you skip the `~/.ssh/config` entry.
+
 ## What is NOT set up yet
 
 - **Backups** — automatic Postgres dumps + MinIO mirroring (planned in milestone 6).
@@ -88,4 +135,7 @@ Data lives in the named volumes (`db_data`, `minio_data`) and survives redeploys
 
 - Caddy: `80`→HTTPS redirect, `443`→TLS. Do **not** expose `9001` (MinIO console)
   or `5432` (Postgres) publicly — the prod compose keeps them internal.
+- Prometheus (`9090`) and Grafana (`3000`) listen on `127.0.0.1` only and are
+  reachable solely via an SSH tunnel (see Monitoring above). Keep them off the
+  Hetzner firewall.
 - MinIO console is intentionally not published on the host in prod.
