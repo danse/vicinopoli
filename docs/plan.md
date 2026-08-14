@@ -67,3 +67,4 @@ Ordered by priority, remove from the list when done
 - search engine optimisation
 - blind accessibility test for audio content workflows
 - monetization scheme, report commercial/advertisement/business
+- WARN: Detected default credentials 'minioadmin:minioadmin', we recommend that you change these values with 'MINIO_ROOT_USER' and 'MINIO_ROOT_PASSWORD' environment variables
