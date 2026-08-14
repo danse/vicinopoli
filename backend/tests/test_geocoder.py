@@ -111,6 +111,35 @@ async def test_nominatim_geocoder_caches_results() -> None:
 
 
 @pytest.mark.asyncio
+async def test_nominatim_geocoder_geocode_raises_on_non_429() -> None:
+    """A 5xx (not a rate limit) must still propagate as an error."""
+    import httpx
+
+    async def fake_fetch(params):
+        return httpx.Response(500, request=httpx.Request("GET", "http://x"))
+
+    geocoder = NominatimGeocoder("https://nominatim.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    with pytest.raises(httpx.HTTPStatusError):
+        await geocoder.geocode("via roma")
+
+
+@pytest.mark.asyncio
+async def test_nominatim_geocoder_geocode_degrades_on_429() -> None:
+    """A rate-limited geocode must degrade to None (treat as not found)."""
+    import httpx
+
+    async def fake_fetch(params):
+        return httpx.Response(429, request=httpx.Request("GET", "http://x"))
+
+    geocoder = NominatimGeocoder("https://nominatim.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    assert await geocoder.geocode("via roma") is None
+
+
+@pytest.mark.asyncio
 async def test_static_geocoder_suggests_matching_addresses() -> None:
     geocoder = StaticGeocoder()
     assert await geocoder.suggest("milano") == ["Milano Centrale, Milano"]

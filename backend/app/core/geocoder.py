@@ -190,7 +190,15 @@ class NominatimGeocoder(Geocoder):
             return cached[1]
 
         response = await self._fetch({"q": address, "format": "jsonv2", "limit": "1"})
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            # A rate-limited upstream (429) degrades to "not found" so the
+            # caller can degrade gracefully instead of returning a 500.
+            # Other errors (5xx, network) still propagate to the caller.
+            if exc.response.status_code == 429:
+                return None
+            raise
         results = response.json()
         if not results:
             return None

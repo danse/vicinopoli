@@ -45,6 +45,39 @@ async def test_create_post_unknown_address_returns_404(client) -> None:
 
 
 @pytest.mark.asyncio
+async def test_create_post_degrades_when_geocoder_rate_limited(client) -> None:
+    """A Nominatim 429 on geocode must not become a 500 when posting.
+
+    Reproduces the production 500: the upsteam rate limit is treated as an
+    unknown address so the client can show a recoverable error, not a crash.
+    """
+
+    import httpx
+
+    from app.api.deps import get_geocoder
+    from app.core.geocoder import NominatimGeocoder
+    from app.main import app
+
+    async def fake_fetch(params):
+        return httpx.Response(429, request=httpx.Request("GET", "http://x"))
+
+    geocoder = NominatimGeocoder("https://nominatim.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+    app.dependency_overrides[get_geocoder] = lambda: geocoder
+
+    try:
+        response = await client.post(
+            "/api/posts",
+            json={"address": "Via Roma 1, Roma", "body": "x", "scope": "1km"},
+        )
+    finally:
+        del app.dependency_overrides[get_geocoder]
+
+    # Not a 500/201; degrade the same way as an unknown address.
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_feed_shows_post_at_same_address(client) -> None:
     await client.post(
         "/api/posts",
