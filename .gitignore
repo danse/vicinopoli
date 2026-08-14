@@ -9,6 +9,7 @@ venv/
 .pytest_cache/
 .coverage
 htmlcov/
+frontend/coverage/
 
 # Node / frontend
 node_modules/

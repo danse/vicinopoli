@@ -47,6 +47,11 @@ make lint-frontend       # eslint + tsc --noEmit
 # End-to-end
 make test-e2e            # Playwright against the running stack
 
+# Coverage (backend 89%, frontend ~88% at time of writing)
+make coverage            # both reports
+make coverage-backend    # pytest-cov, HTML in backend/htmlcov/, .coverage
+make coverage-frontend   # vitest --coverage (v8), HTML in frontend/coverage/
+
 # Format
 make format
 ```

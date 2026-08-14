@@ -2,7 +2,8 @@ SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
 .PHONY: help up up-manual down monitoring build gen migrate test-backend lint-backend \
-        test-frontend build-frontend lint-frontend test-e2e format backup
+        test-frontend build-frontend lint-frontend test-e2e coverage-backend coverage-frontend \
+        coverage format backup
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
@@ -43,6 +44,15 @@ test-frontend: ## Run frontend tests (vitest)
 
 test-e2e: ## Run end-to-end tests against the running stack (Playwright)
 	cd e2e && npm run test
+
+coverage-backend: ## Backend coverage report (HTML in backend/htmlcov/, .coverage data file)
+	cd backend && .venv/bin/python -m pytest --cov=app --cov-report=term-missing --cov-report=html:htmlcov
+
+coverage-frontend: ## Frontend coverage report (HTML in frontend/coverage/)
+	cd frontend && npm run coverage
+
+coverage: ## Full coverage report (backend + frontend)
+	$(MAKE) coverage-backend && $(MAKE) coverage-frontend
 
 build-frontend: ## Build frontend (vite build, also typechecks)
 	cd frontend && npm run build

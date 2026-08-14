@@ -27,6 +27,7 @@ dev = [
     "polyfactory>=2.16,<3",
     "ruff>=0.6,<1",
     "mypy>=1.11,<2",
+    "pytest-cov>=7.1.0",
 ]
 
 [build-system]
@@ -53,3 +54,9 @@ warn_unused_ignores = true
 asyncio_mode = "auto"
 asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["app"]
+
+[tool.coverage.report]
+show_missing = true
