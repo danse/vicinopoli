@@ -7,6 +7,7 @@ export default tseslint.config(
   {
     ignores: [
       "dist",
+      "coverage",
       "node_modules",
       "src/api/generated",
       "*.config.ts",

@@ -1,3 +1,4 @@
+git rev-parse --short HEAD > .commit
 rsync -a --exclude '.git' --exclude 'node_modules' \
     --exclude 'backend/.venv' --exclude 'frontend/dist' \
     --exclude 'frontend/src/api/generated' \

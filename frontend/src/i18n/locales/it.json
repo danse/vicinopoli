@@ -2,7 +2,8 @@
   "app": {
     "title": "vicinopoli",
     "tagline": "La piazza dei tuoi vicini",
-    "switchLanguage": "English"
+    "switchLanguage": "English",
+    "version": "versione"
   },
   "composer": {
     "addressLabel": "Dove ti trovi?",

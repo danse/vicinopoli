@@ -52,6 +52,7 @@ install -m 600 "${ENV_FILE}" "${APP_DIR}/.env"
 
 echo "[4/5] Building images and starting the stack..."
 cd "${APP_DIR}"
+export VITE_COMMIT_HASH="$(cat "${APP_DIR}/.commit" 2>/dev/null || echo dev)"
 docker compose \
   -f deploy/docker-compose.prod.yml \
   --env-file .env \

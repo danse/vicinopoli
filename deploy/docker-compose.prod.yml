@@ -78,6 +78,7 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         VITE_SENTRY_DSN: ${SENTRY_DSN:-}
+        VITE_COMMIT_HASH: ${VITE_COMMIT_HASH:-dev}
     restart: unless-stopped
     expose:
       - "80"

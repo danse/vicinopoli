@@ -56,16 +56,17 @@ Three distinct concepts, never conflated:
 
 Ordered by priority, remove from the list when done
 
+- refreshing the page risks to keep stale cached assets. Do we produce fresh static assets identifiers at each build?
 - we want to have different pages in the app. Should we adopt some more abstract framework (for routing or state management), or you suggest keeping the frontend stack as is?
 - test a new user flow: landing page only asks for where the user is. With the address submitted, user is prompted to a feed page. In the feed page there is a `+ (post message/express yourself/say something)` button that leads to the composer page
-- replies and threading
-- show a short commit hash in an app footer, as a makeshift version number
-- fresh static assets identifiers for page updates
+- replies and threading user experience
 - send a notification upon a reply
 - location from the browser
 - user experience for updating the address: does it expose abuse scenarios?
+- frontend app auto-updated on new versions
+- campaign "la tua voce a ragusa"
+
 - address geocoded on the client and shown on map with the range (unsure whether on the address page or post page)
-- frontend app auto-updated on new version
 - search engine optimisation
 - self-hosted photon
 - monetization scheme, report commercial/advertisement/business

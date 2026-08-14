@@ -10,6 +10,7 @@ venv/
 .coverage
 htmlcov/
 frontend/coverage/
+.commit
 
 # Node / frontend
 node_modules/

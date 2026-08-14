@@ -19,6 +19,11 @@ if [ -d .git ]; then
 fi
 
 echo "[2/3] Building images..."
+if [ -d .git ]; then
+  export VITE_COMMIT_HASH="$(git rev-parse --short HEAD)"
+else
+  export VITE_COMMIT_HASH="$(cat .commit 2>/dev/null || echo dev)"
+fi
 docker compose \
   -f deploy/docker-compose.prod.yml \
   --env-file .env \

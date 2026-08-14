@@ -2,7 +2,8 @@
   "app": {
     "title": "vicinopoli",
     "tagline": "Your neighbours' square",
-    "switchLanguage": "Italiano"
+    "switchLanguage": "Italiano",
+    "version": "version"
   },
   "composer": {
     "addressLabel": "Your address",

@@ -201,6 +201,14 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows a build version footer with a short commit hash", () => {
+    render(<App />);
+    const footer = screen.getByTestId("app-footer");
+    expect(footer).toBeInTheDocument();
+    const version = screen.getByTestId("app-footer-version");
+    expect(version.textContent).toMatch(/^(dev|[0-9a-f]{7,})$/);
+  });
+
   it("shows the consent banner and sends onboarding events when accepted", async () => {
     render(<App />);
 

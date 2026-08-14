@@ -68,6 +68,15 @@ export default function App() {
         refreshTick={feedTick}
         analyticsConsented={analyticsConsented}
       />
+      <footer
+        data-testid="app-footer"
+        className="mt-auto flex items-center justify-center border-t pt-4 text-xs text-muted-foreground"
+      >
+        <p>
+          {t("app.version")}{" "}
+          <span data-testid="app-footer-version">{__APP_COMMIT__}</span>
+        </p>
+      </footer>
     </main>
   );
 }
