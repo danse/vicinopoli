@@ -34,9 +34,11 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 Ordered by priority, remove from the list when done
 
-- npm audit
+- about the cold start: users start with limited reach. Even if the feed gets up to 50 kilometers, each user's reach gets up to 5 kilometers so they will not be able to read each other
+- how does prometheus work?
+- verify backend connection to sentry
 - replies and threading
 - send a notification upon a reply
+- pages and routing
 - search engine optimisation
-- connect the backend to sentry or to other notification service based on its logs (is that prometheus?)
 - blind accessibility test for audio content workflows
