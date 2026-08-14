@@ -63,6 +63,8 @@ services:
     build:
       context: ..
       dockerfile: frontend/Dockerfile
+      args:
+        VITE_SENTRY_DSN: ${SENTRY_DSN:-}
     restart: unless-stopped
     expose:
       - "80"

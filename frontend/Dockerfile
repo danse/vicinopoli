@@ -8,6 +8,9 @@ RUN npm install
 COPY frontend/ .
 COPY openapi/ ../openapi/
 RUN npm run gen:types
+
+ARG VITE_SENTRY_DSN
+ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
 RUN npm run build
 
 FROM nginx:alpine
