@@ -239,8 +239,108 @@ class NominatimGeocoder(Geocoder):
         return suggestions
 
 
+class PhotonGeocoder(Geocoder):
+    """Photon (OSM autocomplete/search) geocoder with an in-memory TTL cache.
+
+    Used against the public ``photon.komoot.io`` API while self-hosting lands
+    (plan: self-hosted photon); the same class serves a self-hosted instance by
+    pointing ``base_url`` at it. Photon answers both autocomplete (suggest) and
+    search (geocode) on ``/api``.
+    """
+
+    def __init__(self, base_url: str, ttl_seconds: int = 86400, timeout: float = 10.0) -> None:
+        self._base_url = base_url.rstrip("/")
+        self._ttl_seconds = ttl_seconds
+        self._client = httpx.AsyncClient(
+            base_url=self._base_url,
+            headers={"User-Agent": "vicinopoli/0.1 (https://github.com/vicinopoli/vicinopoli)"},
+            timeout=timeout,
+        )
+        self._cache: dict[str, tuple[float, GeocodedAddress]] = {}
+        self._suggest_cache: dict[str, tuple[float, list[str]]] = {}
+
+    async def _fetch(self, params: dict[str, str]) -> httpx.Response:
+        """Separated for testability."""
+        return await self._client.get("/api", params=params)
+
+    @staticmethod
+    def _display_name(query: str, properties: dict[str, object]) -> str:
+        """Compose a human-readable display string from Photon properties."""
+        housenumber = properties.get("housenumber")
+        street = properties.get("street") or properties.get("name")
+        parts: list[str] = []
+        if isinstance(housenumber, str) and isinstance(street, str):
+            parts.append(f"{housenumber} {street}")
+        elif isinstance(street, str):
+            parts.append(street)
+        last = parts[-1] if parts else None
+        for key in ("district", "city", "postcode", "state", "country"):
+            value = properties.get(key)
+            if isinstance(value, str) and value != last:
+                parts.append(value)
+                last = value
+        return ", ".join(parts) or query
+
+    async def geocode(self, address: str) -> GeocodedAddress | None:
+        cache_key = normalize_address(address)
+        cached = self._cache.get(cache_key)
+        if cached is not None and time.monotonic() - cached[0] < self._ttl_seconds:
+            return cached[1]
+
+        response = await self._fetch({"q": address, "limit": "1"})
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            # A rate-limited upstream (429) degrades to "not found" so the
+            # caller can degrade gracefully; other errors still propagate.
+            if exc.response.status_code == 429:
+                return None
+            raise
+        features = response.json().get("features", [])
+        if not features:
+            return None
+
+        feature = features[0]
+        lon, lat = feature["geometry"]["coordinates"]
+        properties = feature.get("properties", {})
+        result = GeocodedAddress(
+            normalized_key=cache_key,
+            display_address=self._display_name(address, properties),
+            latitude=lat,
+            longitude=lon,
+            geohash=geohash_encode(lat, lon),
+        )
+        self._cache[cache_key] = (time.monotonic(), result)
+        return result
+
+    async def suggest(self, query: str, limit: int = 6) -> list[str]:
+        cache_key = f"{normalize_address(query)}:{limit}"
+        cached = self._suggest_cache.get(cache_key)
+        if cached is not None and time.monotonic() - cached[0] < self._ttl_seconds:
+            return cached[1]
+
+        try:
+            response = await self._fetch({"q": query, "limit": str(limit)})
+            response.raise_for_status()
+            features = response.json().get("features", [])
+        except httpx.HTTPStatusError as exc:
+            # Rate-limited or transient upstream errors degrade to no
+            # suggestions instead of failing the whole request.
+            if exc.response.status_code == 429:
+                return []
+            raise
+        suggestions = [
+            self._display_name(query, feature.get("properties", {}))
+            for feature in features
+        ]
+        self._suggest_cache[cache_key] = (time.monotonic(), suggestions)
+        return suggestions
+
+
 def build_geocoder(mode: str, base_url: str, ttl_seconds: int) -> Geocoder:
     """Factory used by the FastAPI dependency."""
     if mode == "nominatim":
         return NominatimGeocoder(base_url, ttl_seconds=ttl_seconds)
+    if mode == "photon":
+        return PhotonGeocoder(base_url, ttl_seconds=ttl_seconds)
     return StaticGeocoder()

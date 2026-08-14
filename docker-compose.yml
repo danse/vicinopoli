@@ -44,10 +44,12 @@ services:
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: media
       # Dev/tests use the deterministic static geocoder by default. For manual
-      # testing against the real geocoder, run: GEOCODER_MODE=nominatim make up
-      # (Production always sets GEOCODER_MODE=nominatim).
+      # testing against a live provider, run with GEOCODER_MODE=photon (public
+      # photon.komoot.io) or GEOCODER_MODE=nominatim.
+      # Production always sets GEOCODER_MODE=photon.
       GEOCODER_MODE: ${GEOCODER_MODE:-static}
       NOMINATIM_BASE_URL: https://nominatim.openstreetmap.org
+      PHOTON_BASE_URL: ${PHOTON_BASE_URL:-https://photon.komoot.io}
       SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:
       db:

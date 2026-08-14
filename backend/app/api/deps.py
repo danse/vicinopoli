@@ -21,9 +21,14 @@ _post_rate_limiter: RateLimiter | None = None
 def get_geocoder() -> Geocoder:
     global _geocoder
     if _geocoder is None:
+        base_url = (
+            settings.photon_base_url
+            if settings.geocoder_mode == "photon"
+            else settings.nominatim_base_url
+        )
         _geocoder = build_geocoder(
             settings.geocoder_mode,
-            settings.nominatim_base_url,
+            base_url,
             settings.geocoder_cache_ttl,
         )
     return _geocoder

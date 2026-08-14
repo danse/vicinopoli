@@ -24,9 +24,13 @@ class Settings(BaseSettings):
     media_public_base_url: str = "http://localhost:8080/media"
 
     nominatim_base_url: str = "https://nominatim.openstreetmap.org"
+    # Photon (OSM autocomplete/search). Used in "photon" mode; point this at
+    # the self-hosted instance later (plan: self-hosted photon).
+    photon_base_url: str = "https://photon.komoot.io"
     # "static" is the deterministic dev/test mode (a handful of hardcoded
-    # addresses). Production MUST set GEOCODER_MODE=nominatim — otherwise real
-    # addresses fail to geocode and posts cannot be published.
+    # addresses). Production MUST set GEOCODER_MODE to a live provider
+    # ("photon" or "nominatim") — otherwise real addresses fail to geocode and
+    # posts cannot be published.
     geocoder_mode: str = "static"
     geocoder_cache_ttl: int = 86400
 

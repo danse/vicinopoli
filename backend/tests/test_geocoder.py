@@ -5,7 +5,9 @@ import pytest
 from app.core.geocoder import (
     GeocodedAddress,
     NominatimGeocoder,
+    PhotonGeocoder,
     StaticGeocoder,
+    build_geocoder,
     geohash_decode,
     geohash_encode,
     normalize_address,
@@ -258,3 +260,181 @@ async def test_nominatim_geocoder_suggest_degrades_on_429() -> None:
 
     suggestions = await geocoder.suggest("via roma")
     assert suggestions == []
+
+
+def _photon_feature(lon: float, lat: float, **properties) -> dict:
+    return {
+        "geometry": {"type": "Point", "coordinates": [lon, lat]},
+        "properties": properties,
+    }
+
+
+def _photon_response(*features: dict) -> object:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return {"features": list(features)}
+
+    return FakeResponse()
+
+
+@pytest.mark.asyncio
+async def test_photon_geocoder_geocode_parses_feature() -> None:
+    async def fake_fetch(params):
+        return _photon_response(
+            _photon_feature(
+                12.4829,
+                41.8933,
+                name="Via Roma",
+                street="Via Roma",
+                housenumber="1",
+                city="Roma",
+                state="Lazio",
+                country="Italia",
+            )
+        )
+
+    geocoder = PhotonGeocoder("https://photon.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    result = await geocoder.geocode("Via Roma 1, Roma")
+
+    assert isinstance(result, GeocodedAddress)
+    assert result.normalized_key == "via roma 1, roma"
+    assert result.latitude == pytest.approx(41.8933)
+    assert result.longitude == pytest.approx(12.4829)
+    assert result.geohash
+    assert "1 Via Roma" in result.display_address
+    assert "Roma" in result.display_address
+
+
+@pytest.mark.asyncio
+async def test_photon_geocoder_geocode_caches_results() -> None:
+    calls = {"count": 0}
+
+    async def fake_fetch(params):
+        calls["count"] += 1
+        return _photon_response(_photon_feature(12.4829, 41.8933, name="Via Roma"))
+
+    geocoder = PhotonGeocoder("https://photon.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    first = await geocoder.geocode("Via Roma 1, Roma")
+    second = await geocoder.geocode("Via Roma 1, Roma")
+    assert first == second
+    assert calls["count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_photon_geocoder_geocode_returns_none_without_features() -> None:
+    async def fake_fetch(params):
+        return _photon_response()
+
+    geocoder = PhotonGeocoder("https://photon.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    assert await geocoder.geocode("Via Inesistente 99, Nowhere") is None
+
+
+@pytest.mark.asyncio
+async def test_photon_geocoder_geocode_degrades_on_429() -> None:
+    import httpx
+
+    async def fake_fetch(params):
+        return httpx.Response(429, request=httpx.Request("GET", "http://x"))
+
+    geocoder = PhotonGeocoder("https://photon.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    assert await geocoder.geocode("via roma") is None
+
+
+@pytest.mark.asyncio
+async def test_photon_geocoder_geocode_raises_on_non_429() -> None:
+    import httpx
+
+    async def fake_fetch(params):
+        return httpx.Response(500, request=httpx.Request("GET", "http://x"))
+
+    geocoder = PhotonGeocoder("https://photon.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    with pytest.raises(httpx.HTTPStatusError):
+        await geocoder.geocode("via roma")
+
+
+@pytest.mark.asyncio
+async def test_photon_geocoder_suggest_forwards_query_and_limit() -> None:
+    captured: dict[str, str] = {}
+
+    async def fake_fetch(params):
+        captured.update(params)
+        return _photon_response(
+            _photon_feature(12.4829, 41.8933, name="Via Roma", city="Roma"),
+            _photon_feature(9.2, 45.4861, name="Via Roma", city="Milano"),
+        )
+
+    geocoder = PhotonGeocoder("https://photon.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    suggestions = await geocoder.suggest("via roma", limit=2)
+
+    assert suggestions == ["Via Roma, Roma", "Via Roma, Milano"]
+    assert captured["q"] == "via roma"
+    assert captured["limit"] == "2"
+
+
+@pytest.mark.asyncio
+async def test_photon_geocoder_suggest_caches_by_query() -> None:
+    """Repeated lookups must not hammer the upstream API (429 prevention)."""
+    calls: list[dict[str, str]] = []
+
+    async def fake_fetch(params):
+        calls.append(params)
+        return _photon_response(_photon_feature(12.4829, 41.8933, name="Via Roma"))
+
+    geocoder = PhotonGeocoder("https://photon.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    first = await geocoder.suggest("via roma")
+    second = await geocoder.suggest("via roma")
+    third = await geocoder.suggest("via roma")
+
+    assert first == second == third
+    assert len(calls) == 1, "suggest must hit the upstream API only once"
+
+
+@pytest.mark.asyncio
+async def test_photon_geocoder_suggest_degrades_on_429() -> None:
+    import httpx
+
+    async def fake_fetch(params):
+        return httpx.Response(429, request=httpx.Request("GET", "http://x"))
+
+    geocoder = PhotonGeocoder("https://photon.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    assert await geocoder.suggest("via roma") == []
+
+
+def test_photon_geocoder_display_name_uses_housenumber_and_street() -> None:
+    display = PhotonGeocoder._display_name(
+        "via roma 1",
+        {"housenumber": "1", "street": "Via Roma", "city": "Roma", "country": "Italia"},
+    )
+    assert display == "1 Via Roma, Roma, Italia"
+
+
+def test_photon_geocoder_display_name_avoids_city_duplication() -> None:
+    display = PhotonGeocoder._display_name(
+        "roma",
+        {"name": "Roma", "city": "Roma", "state": "Lazio", "country": "Italia"},
+    )
+    assert display == "Roma, Lazio, Italia"
+
+
+def test_build_geocoder_returns_photon_for_photon_mode() -> None:
+    geocoder = build_geocoder("photon", "https://photon.komoot.io", 86400)
+    assert isinstance(geocoder, PhotonGeocoder)

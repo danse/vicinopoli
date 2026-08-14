@@ -56,16 +56,18 @@ Three distinct concepts, never conflated:
 
 Ordered by priority, remove from the list when done
 
-- is the backend connected to sentry already, or does it need another DSN?
+- i would like to have a coverage report script
 - we want to have different pages in the app. Should we adopt some more abstract framework (for routing or state management), or you suggest keeping the frontend stack as is?
 - test a new user flow: landing page only asks for where the user is. With the address submitted, user is prompted to a feed page. In the feed page there is a `+ (post message/express yourself/say something)` button that leads to the composer page
 - replies and threading
+- show a short commit hash in an app footer, as a makeshift version number
 - fresh static assets identifiers for page updates
 - send a notification upon a reply
 - location from the browser
+- user experience for updating the address: does it expose abuse scenarios?
 - address geocoded on the client and shown on map with the range (unsure whether on the address page or post page)
-- self-hosted nominatim/photon
 - search engine optimisation
-- blind accessibility test for audio content workflows
+- self-hosted photon
 - monetization scheme, report commercial/advertisement/business
 - WARN: Detected default credentials 'minioadmin:minioadmin', we recommend that you change these values with 'MINIO_ROOT_USER' and 'MINIO_ROOT_PASSWORD' environment variables
+- blind accessibility test for audio content workflows

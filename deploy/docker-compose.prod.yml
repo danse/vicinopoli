@@ -48,8 +48,9 @@ services:
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET: media
       MEDIA_PUBLIC_BASE_URL: https://${DOMAIN}/media
-      GEOCODER_MODE: ${GEOCODER_MODE:-nominatim}
+      GEOCODER_MODE: ${GEOCODER_MODE:-photon}
       NOMINATIM_BASE_URL: https://nominatim.openstreetmap.org
+      PHOTON_BASE_URL: ${PHOTON_BASE_URL:-https://photon.komoot.io}
       SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:
       db:
