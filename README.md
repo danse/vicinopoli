@@ -18,6 +18,20 @@ The PWA is served at `http://localhost:8080` (via Caddy, rootless Docker on
 this machine). Backend API and docs are proxied at `http://localhost:8080/api`
 and `http://localhost:8080/api/docs`.
 
+## Tailing server logs
+
+The stack runs under docker compose, so use `docker compose logs` to watch a
+service — handy after `make up-manual` in a second terminal:
+
+```bash
+docker compose logs -f backend    # follow the FastAPI/uvicorn logs
+docker compose logs -f frontend   # follow the Vite server logs
+docker compose logs -f --tail=100 backend  # last 100 lines, no follow
+```
+
+Service names match the `docker-compose.yml` services (`backend`, `frontend`,
+`db`, `minio`, `caddy`).
+
 ## Geocoding modes
 
 `GEOCODER_MODE` selects which address geocoder the backend uses:

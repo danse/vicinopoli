@@ -34,7 +34,6 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 Ordered by priority, remove from the list when done
 
-- add a script to tail server logs after a  `make up-manual`
 - npm audit
 - replies and threading
 - send a notification upon a reply
