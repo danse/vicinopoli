@@ -341,12 +341,12 @@ describe("App", () => {
     expect(screen.getByTestId("composer-message")).toBeInTheDocument();
   });
 
-  it("the composer shows the address read-only with a change link back to the address page", async () => {
+  it("the feed shows the address with a change link back to the address page", async () => {
     renderApp();
-    await openComposer();
-    expect(screen.getByText("Via Roma 1, Roma")).toBeInTheDocument();
-    const change = screen.getByTestId("composer-change-address");
+    await submitAddress();
+    const change = screen.getByTestId("feed-change-address");
     expect(change).toBeInTheDocument();
+    expect(change.closest("div")?.textContent).toContain("Via Roma 1, Roma");
     fireEvent.click(change);
     await waitFor(() => {
       expect(screen.getByTestId("address-input")).toBeInTheDocument();

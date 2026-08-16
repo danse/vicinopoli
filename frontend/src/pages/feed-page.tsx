@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { Feed } from "@/components/feed";
 import { Heatmap } from "@/components/heatmap";
@@ -13,6 +13,18 @@ export function FeedPage() {
 
   return (
     <section>
+      <div className="mb-4 flex items-center justify-between rounded-md border border-input bg-card px-3 py-2 text-sm text-card-foreground">
+        <span>
+          {t("feed.viewingNear")} <strong>{address}</strong>
+        </span>
+        <Link
+          to="/address"
+          data-testid="feed-change-address"
+          className="text-sm text-primary hover:underline"
+        >
+          {t("feed.changeAddress")}
+        </Link>
+      </div>
       {address.trim() !== "" && <Heatmap address={address} />}
       <Feed
         address={address}

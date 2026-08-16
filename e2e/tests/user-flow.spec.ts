@@ -39,12 +39,11 @@ test("a full cycle: address, feed, composer, publish, back to feed", async ({
   await expect(page.getByText(body)).toBeVisible();
 });
 
-test("the composer change-address link returns to the address page", async ({
+test("the feed change-address link returns to the address page", async ({
   page,
 }) => {
   await setAddress(page, "Via Roma 1, Roma");
-  await page.getByTestId("feed-compose").click();
-  await page.getByTestId("composer-change-address").click();
+  await page.getByTestId("feed-change-address").click();
   await expect(page).toHaveURL(/\/address$/);
 });
 

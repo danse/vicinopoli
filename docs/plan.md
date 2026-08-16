@@ -60,8 +60,6 @@ Ordered by priority, remove from the list when done
 
 #### Monday
 
-- the address survives refresh (persisted in `localStorage` under `vicinopoli.address`)
-- remove the "Stai scrivendo da" from composer and put it in the feed with suited copy
 - the heatmap does not render, hide it behind a feature flag
 - new guideline: gendered words: always use feminine when a word has to be gendered. Change existing localisations
 - pseudonym updated in its own page like the address
@@ -85,6 +83,7 @@ Ordered by priority, remove from the list when done
 
 - campaign: ${ibla,ragusa}-${eventi,events,chat}
 
+- equalise
 - range map in composer
 - distance UX: colour-code post cards by distance band and/or a small proximity visualisation (rings/intensity), as a future enhancement
 - address geocoded on the client and shown on map with the range (unsure whether on the address page or post page)
@@ -92,3 +91,4 @@ Ordered by priority, remove from the list when done
 - monetization scheme, report commercial/advertisement/business
 - WARN: Detected default credentials 'minioadmin:minioadmin', we recommend that you change these values with 'MINIO_ROOT_USER' and 'MINIO_ROOT_PASSWORD' environment variables
 - blind accessibility test for audio content workflows
+- add arabic

@@ -11,11 +11,11 @@
     "enter": "Entra in zona"
   },
   "feed": {
-    "compose": "Scrivi un messaggio"
+    "compose": "Scrivi un messaggio",
+    "viewingNear": "Stai vedendo i messaggi da",
+    "changeAddress": "Cambia indirizzo"
   },
   "composer": {
-    "postingNear": "Stai scrivendo da",
-    "changeAddress": "Cambia indirizzo",
     "addressLabel": "Dove ti trovi?",
     "addressPlaceholder": "Es. Via Roma 1, Roma",
     "pseudonymLabel": "Scegli un nome",

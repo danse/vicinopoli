@@ -11,11 +11,11 @@
     "enter": "Enter the area"
   },
   "feed": {
-    "compose": "Write a message"
+    "compose": "Write a message",
+    "viewingNear": "Viewing messages near",
+    "changeAddress": "Change address"
   },
   "composer": {
-    "postingNear": "Posting from",
-    "changeAddress": "Change address",
     "addressLabel": "Your address",
     "addressPlaceholder": "E.g. Via Roma 1, Roma",
     "pseudonymLabel": "Choose a name",
