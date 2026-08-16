@@ -17,3 +17,5 @@ is added, renamed, or removed. Keep it short.
 - `data-testid` values are short, kebab-case, unique per component, and never
   tied to user-facing copy.
 - `feed` and `composer` redirect to `address` when no address is set.
+- The address persists in `localStorage` (`vicinopoli.address`), so `feed` and
+  `composer` survive a refresh; clear it via the `address` page.

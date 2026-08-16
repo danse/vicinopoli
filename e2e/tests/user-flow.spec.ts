@@ -48,6 +48,14 @@ test("the composer change-address link returns to the address page", async ({
   await expect(page).toHaveURL(/\/address$/);
 });
 
+test("the address survives a page refresh", async ({ page }) => {
+  await setAddress(page, "Via Roma 1, Roma");
+  await expect(page.getByTestId("feed-compose")).toBeVisible();
+  await page.reload();
+  await expect(page).toHaveURL(/\/feed$/);
+  await expect(page.getByTestId("feed-compose")).toBeVisible();
+});
+
 test("feed and composer redirect to the address page when no address is set", async ({
   page,
 }) => {

@@ -8,6 +8,24 @@ import {
 
 import { getMe } from "@/api/client";
 
+const ADDRESS_STORAGE_KEY = "vicinopoli.address";
+
+function readStoredAddress(): string {
+  try {
+    return window.localStorage.getItem(ADDRESS_STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeStoredAddress(address: string) {
+  try {
+    window.localStorage.setItem(ADDRESS_STORAGE_KEY, address);
+  } catch {
+    // Privacy mode or storage full: the address just won't survive a refresh.
+  }
+}
+
 interface AppContextValue {
   address: string;
   setAddress: (address: string) => void;
@@ -23,7 +41,7 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState(readStoredAddress);
   const [pseudonym, setPseudonym] = useState("");
   const [consentDecided, setConsentDecided] = useState(true);
   const [analyticsConsented, setAnalyticsConsented] = useState(false);
@@ -47,13 +65,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAnalyticsConsented(consented);
   };
 
+  const handleSetAddress = (next: string) => {
+    setAddress(next);
+    writeStoredAddress(next);
+  };
+
   const bumpFeedTick = () => setFeedTick((tick) => tick + 1);
 
   return (
     <AppContext.Provider
       value={{
         address,
-        setAddress,
+        setAddress: handleSetAddress,
         pseudonym,
         setPseudonym,
         consentDecided,

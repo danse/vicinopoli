@@ -60,16 +60,17 @@ Ordered by priority, remove from the list when done
 
 #### Monday
 
+- the address survives refresh (persisted in `localStorage` under `vicinopoli.address`)
 - remove the "Stai scrivendo da" from composer and put it in the feed with suited copy
-
 - the heatmap does not render, hide it behind a feature flag
 - new guideline: gendered words: always use feminine when a word has to be gendered. Change existing localisations
 - pseudonym updated in its own page like the address
 - message type becomes a choice like voice, and the composer would update accordingly
 - text is opt-in when entering a picture
+- test that two users can read each other in a rural area from a 45 kilometers distance
 - message cycle test for pictures and audios as well
-- location from the browser
 - migration from docker to nix?
+- location from the browser
 - replies and threading user experience
 - send a notification upon a reply
 

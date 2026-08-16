@@ -296,6 +296,26 @@ describe("App", () => {
     expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
   });
 
+  it("persists the address so a refresh restores it", async () => {
+    renderApp();
+    await submitAddress("Via Roma 1, Roma");
+    expect(localStorage.getItem("vicinopoli.address")).toBe("Via Roma 1, Roma");
+  });
+
+  it("restores a persisted address and skips the address page", async () => {
+    localStorage.setItem("vicinopoli.address", "Via Roma 1, Roma");
+    const { unmount } = render(
+      <MemoryRouter initialEntries={["/feed"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    unmount();
+    expect(localStorage.getItem("vicinopoli.address")).toBe("Via Roma 1, Roma");
+  });
+
   it("redirects the feed and composer pages to the address page when no address is set", async () => {
     const { rerender } = render(
       <MemoryRouter initialEntries={["/feed"]}>
