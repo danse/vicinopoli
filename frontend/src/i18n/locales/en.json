@@ -5,7 +5,17 @@
     "switchLanguage": "Italiano",
     "version": "version"
   },
+  "address": {
+    "title": "Where are you?",
+    "hint": "Enter your address to see your neighbours' messages.",
+    "enter": "Enter the area"
+  },
+  "feed": {
+    "compose": "Write a message"
+  },
   "composer": {
+    "postingNear": "Posting from",
+    "changeAddress": "Change address",
     "addressLabel": "Your address",
     "addressPlaceholder": "E.g. Via Roma 1, Roma",
     "pseudonymLabel": "Choose a name",

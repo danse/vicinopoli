@@ -12,12 +12,10 @@ import {
   updateMe,
 } from "@/api/client";
 import { Button } from "@/components/ui/button";
-import { AddressCombobox } from "@/components/address-combobox";
 import { hashAddress } from "@/lib/utils";
 
 interface ComposerProps {
   address: string;
-  onAddressChange: (address: string) => void;
   pseudonym: string;
   onPseudonymChange: (pseudonym: string) => void;
   onPosted: () => void;
@@ -45,7 +43,10 @@ interface Recording {
 
 async function resizeImage(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+  const scale = Math.min(
+    1,
+    MAX_DIMENSION / Math.max(bitmap.width, bitmap.height),
+  );
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(bitmap.width * scale);
   canvas.height = Math.round(bitmap.height * scale);
@@ -61,7 +62,6 @@ async function resizeImage(file: File): Promise<Blob> {
 
 export function Composer({
   address,
-  onAddressChange,
   pseudonym,
   onPseudonymChange,
   onPosted,
@@ -81,8 +81,7 @@ export function Composer({
   const tracksRef = useRef<MediaStreamTrack[]>([]);
   const startTimeRef = useRef<number>(0);
 
-  const canSubmit =
-    address.trim() !== "" && body.trim() !== "" && !submitting;
+  const canSubmit = address.trim() !== "" && body.trim() !== "" && !submitting;
 
   const handlePhotoChange = (file: File | null) => {
     setPhoto(file);
@@ -197,18 +196,7 @@ export function Composer({
 
   return (
     <section aria-label={t("composer.feedTitle")}>
-      <div className="grid gap-2">
-        <label
-          htmlFor="composer-address"
-          className="text-sm font-medium text-foreground"
-        >
-          {t("composer.addressLabel")}
-        </label>
-        <AddressCombobox
-          address={address}
-          onAddressChange={onAddressChange}
-        />
-      </div>      <div className="mt-4 grid gap-2">
+      <div className="mt-4 grid gap-2">
         <label
           htmlFor="composer-pseudonym"
           className="text-sm font-medium text-foreground"
@@ -308,7 +296,9 @@ export function Composer({
         )}
         {!recording && voice && (
           <span className="text-sm text-muted-foreground">
-            {t("composer.voiceReady", { duration: voice.duration_s.toFixed(1) })}
+            {t("composer.voiceReady", {
+              duration: voice.duration_s.toFixed(1),
+            })}
           </span>
         )}
         {recordingError && (

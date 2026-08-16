@@ -1,11 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+import { openComposer } from "./helpers";
+
 test("an unknown address shows address-not-found instead of generic publish error", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openComposer(page, "Via Inesistente 99, Città");
 
-  await page.getByTestId("composer-address").fill("Via Inesistente 99, Città");
   await page.getByTestId("composer-message").fill("ciao");
   await page.getByRole("button", { name: "Pubblica" }).click();
 

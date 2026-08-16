@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { openComposer, publish, setAddress } from "./helpers";
+
 test("one user posts hello world and a second user reads it", async ({
   browser,
 }) => {
@@ -10,14 +12,11 @@ test("one user posts hello world and a second user reads it", async ({
 
   const body = `hello world ${Date.now()}`;
 
-  await userA.goto("/");
-  await userA.getByTestId("composer-address").fill("Via Roma 1, Roma");
-  await userA.getByTestId("composer-message").fill(body);
-  await userA.getByRole("button", { name: "Pubblica" }).click();
+  await openComposer(userA);
+  await publish(userA, body);
   await expect(userA.getByText(body)).toBeVisible();
 
-  await userB.goto("/");
-  await userB.getByTestId("composer-address").fill("Via Roma 1, Roma");
+  await setAddress(userB, "Via Roma 1, Roma");
   await expect(userB.getByText(body)).toBeVisible();
 
   await contextB.close();

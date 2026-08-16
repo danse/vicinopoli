@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { openComposer, publish } from "./helpers";
+
 const VIA_ROMA = { lat: 41.8933, lon: 12.4829 };
 
 function slippyTile(lat: number, lon: number, z: number) {
@@ -16,10 +18,8 @@ test("heatmap tiles expose aggregated density, never post bodies", async ({
   page,
 }) => {
   const body = `Densità in zona ${Date.now()}`;
-  await page.goto("/");
-  await page.getByTestId("composer-address").fill("Via Roma 1, Roma");
-  await page.getByTestId("composer-message").fill(body);
-  await page.getByRole("button", { name: "Pubblica" }).click();
+  await openComposer(page);
+  await publish(page, body);
   await expect(page.getByText(body)).toBeVisible();
 
   // The heatmap tile endpoint must return density cells (counts per geohash

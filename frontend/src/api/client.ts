@@ -9,7 +9,8 @@ export type PostResponse = components["schemas"]["PostResponse"];
 export type DeviceResponse = components["schemas"]["DeviceResponse"];
 export type DeviceUpdate = components["schemas"]["DeviceUpdate"];
 export type MediaPresignRequest = components["schemas"]["MediaPresignRequest"];
-export type MediaPresignResponse = components["schemas"]["MediaPresignResponse"];
+export type MediaPresignResponse =
+  components["schemas"]["MediaPresignResponse"];
 export type MediaRegistered = components["schemas"]["MediaRegistered"];
 export type MediaInfo = components["schemas"]["MediaInfo"];
 
@@ -32,9 +33,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     },
   });
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as
-      | { detail?: unknown }
-      | null;
+    const body = (await response.json().catch(() => null)) as {
+      detail?: unknown;
+    } | null;
     throw new ApiError(response.status, body?.detail);
   }
   return (await response.json()) as T;
@@ -69,7 +70,9 @@ export function getMe(): Promise<DeviceResponse> {
   return request("/api/me");
 }
 
-export function presignMedia(payload: MediaPresignRequest): Promise<MediaPresignResponse> {
+export function presignMedia(
+  payload: MediaPresignRequest,
+): Promise<MediaPresignResponse> {
   return request("/api/media/presign", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -107,7 +110,8 @@ export function updateMe(payload: DeviceUpdate): Promise<DeviceResponse> {
   });
 }
 
-export type AnalyticsEventName = "post_viewed" | "post_created" | "onboarding_completed";
+export type AnalyticsEventName =
+  "post_viewed" | "post_created" | "onboarding_completed";
 
 export async function sendAnalyticsEvents(
   events: { name: AnalyticsEventName; geohash?: string; post_id?: string }[],

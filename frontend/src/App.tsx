@@ -1,32 +1,24 @@
-import { useEffect, useState } from "react";
+import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
+import { Navigate, Route, Routes } from "react-router-dom";
 
-import { getMe } from "@/api/client";
-import { Composer } from "@/components/composer";
 import { ConsentBanner } from "@/components/consent-banner";
-import { Feed } from "@/components/feed";
-import { Heatmap } from "@/components/heatmap";
+import { AppProvider, useApp } from "@/context/app-context";
+import { AddressPage } from "@/pages/address-page";
+import { ComposerPage } from "@/pages/composer-page";
+import { FeedPage } from "@/pages/feed-page";
 
-export default function App() {
+function RequireAddress({ children }: { children: ReactElement }) {
+  const { address } = useApp();
+  if (address.trim() === "") {
+    return <Navigate to="/address" replace />;
+  }
+  return children;
+}
+
+function AppRoutes() {
   const { t, i18n } = useTranslation();
-  const [address, setAddress] = useState("");
-  const [pseudonym, setPseudonym] = useState("");
-  const [feedTick, setFeedTick] = useState(0);
-  const [consentDecided, setConsentDecided] = useState(true);
-  const [analyticsConsented, setAnalyticsConsented] = useState(false);
-
-  useEffect(() => {
-    getMe()
-      .then((me) => {
-        setPseudonym(me.pseudonym ?? "");
-        if (me.analytics_consent === null) {
-          setConsentDecided(false);
-        } else {
-          setAnalyticsConsented(me.analytics_consent === true);
-        }
-      })
-      .catch(() => {});
-  }, []);
+  const { consentDecided, decideConsent } = useApp();
 
   const toggleLanguage = () => {
     const next = i18n.language === "it" ? "en" : "it";
@@ -48,26 +40,29 @@ export default function App() {
         </button>
       </header>
       {!consentDecided && (
-        <ConsentBanner
-          onDecide={(consented) => {
-            setConsentDecided(true);
-            setAnalyticsConsented(consented);
-          }}
-        />
+        <ConsentBanner onDecide={(consented) => decideConsent(consented)} />
       )}
-      <Composer
-        address={address}
-        onAddressChange={setAddress}
-        pseudonym={pseudonym}
-        onPseudonymChange={setPseudonym}
-        onPosted={() => setFeedTick((tick) => tick + 1)}
-      />
-      {address.trim() !== "" && <Heatmap address={address} />}
-      <Feed
-        address={address}
-        refreshTick={feedTick}
-        analyticsConsented={analyticsConsented}
-      />
+      <Routes>
+        <Route path="/" element={<Navigate to="/address" replace />} />
+        <Route path="/address" element={<AddressPage />} />
+        <Route
+          path="/feed"
+          element={
+            <RequireAddress>
+              <FeedPage />
+            </RequireAddress>
+          }
+        />
+        <Route
+          path="/composer"
+          element={
+            <RequireAddress>
+              <ComposerPage />
+            </RequireAddress>
+          }
+        />
+        <Route path="*" element={<Navigate to="/address" replace />} />
+      </Routes>
       <footer
         data-testid="app-footer"
         className="mt-auto flex items-center justify-center border-t pt-4 text-xs text-muted-foreground"
@@ -78,5 +73,13 @@ export default function App() {
         </p>
       </footer>
     </main>
+  );
+}
+
+export default function App() {
+  return (
+    <AppProvider>
+      <AppRoutes />
+    </AppProvider>
   );
 }

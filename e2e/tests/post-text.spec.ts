@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { openComposer, publish } from "./helpers";
+
 const uniqueBody = (prefix: string) => `${prefix} ${Date.now()}`;
 
 test("a user can post a text message and see it in the feed", async ({
@@ -7,11 +9,8 @@ test("a user can post a text message and see it in the feed", async ({
 }) => {
   const body = uniqueBody("Ciao vicini");
 
-  await page.goto("/");
-
-  await page.getByTestId("composer-address").fill("Via Roma 1, Roma");
-  await page.getByTestId("composer-message").fill(body);
-  await page.getByRole("button", { name: "Pubblica" }).click();
+  await openComposer(page);
+  await publish(page, body);
 
   await expect(page.getByText(body)).toBeVisible();
 });
@@ -22,12 +21,8 @@ test("a user can choose a pseudonym and it appears as the post author", async ({
   const body = uniqueBody("Ciao a tutti");
   const pseudonym = `Gino${Date.now() % 10000}`;
 
-  await page.goto("/");
-
-  await page.getByTestId("composer-address").fill("Via Roma 1, Roma");
-  await page.getByTestId("composer-pseudonym").fill(pseudonym);
-  await page.getByTestId("composer-message").fill(body);
-  await page.getByRole("button", { name: "Pubblica" }).click();
+  await openComposer(page);
+  await publish(page, body, { pseudonym });
 
   await expect(page.getByText(body)).toBeVisible();
   await expect(page.getByText(pseudonym)).toBeVisible();

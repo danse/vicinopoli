@@ -56,17 +56,28 @@ Three distinct concepts, never conflated:
 
 Ordered by priority, remove from the list when done
 
-- we want to have different pages in the app. Should we adopt some more abstract framework (for routing or state management), or you suggest keeping the frontend stack as is?
 - test a new user flow: landing page only asks for where the user is. With the address submitted, user is prompted to a feed page. In the feed page there is a `+ (post message/express yourself/say something)` button that leads to the composer page
+- new guideline: gendered words
+- feed should be reversed
+- the heatmap does not render, hide it behind a feature flag
+- pseudonym updated in its own page like the address
+- message type becomes a choice like voice, and the composer would update accordingly
+- text is opt-in when entering a picture
+- message cycle test for pictures and audios as well
+- location from the browser
+- migration from docker to nix?
 - replies and threading user experience
 - send a notification upon a reply
-- location from the browser
-- user experience for updating the address: does it expose abuse scenarios?
+
 - frontend app auto-updated on new versions
-- campaign "la tua voce a ragusa"
+- search engine optimisation
+- previews from youtube, instagram, facebook, twitter, reddit, soundcloud etcetera
+
+### September
+
+- campaign: ${ibla,ragusa}-${eventi,events,chat}
 
 - address geocoded on the client and shown on map with the range (unsure whether on the address page or post page)
-- search engine optimisation
 - self-hosted photon
 - monetization scheme, report commercial/advertisement/business
 - WARN: Detected default credentials 'minioadmin:minioadmin', we recommend that you change these values with 'MINIO_ROOT_USER' and 'MINIO_ROOT_PASSWORD' environment variables

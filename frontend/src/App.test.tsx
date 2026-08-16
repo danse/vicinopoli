@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
@@ -102,7 +103,12 @@ const feedWithMedia = {
     {
       ...feed.posts[0],
       media: [
-        { id: "media-1", kind: "image", url: "https://x.test/abc.jpg", duration_s: null },
+        {
+          id: "media-1",
+          kind: "image",
+          url: "https://x.test/abc.jpg",
+          duration_s: null,
+        },
       ],
     },
   ],
@@ -135,7 +141,11 @@ function mockFetch() {
       };
     } else if (url.startsWith("/api/geocode/suggest")) {
       const q = new URL(url, "http://localhost").searchParams.get("q") ?? "";
-      const all = ["Via Roma 1, Roma", "Piazza Venezia, Roma", "Milano Centrale, Milano"];
+      const all = [
+        "Via Roma 1, Roma",
+        "Piazza Venezia, Roma",
+        "Milano Centrale, Milano",
+      ];
       body = {
         suggestions: all.filter((s) =>
           s.toLowerCase().includes(q.toLowerCase()),
@@ -188,6 +198,33 @@ function mockFetch() {
     });
   });
 }
+
+function renderApp(initialEntry = "/") {
+  return render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <App />
+    </MemoryRouter>,
+  );
+}
+
+async function submitAddress(value = "Via Roma 1, Roma") {
+  fireEvent.change(screen.getByTestId("address-input"), {
+    target: { value },
+  });
+  fireEvent.click(screen.getByTestId("address-submit"));
+  await waitFor(() => {
+    expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+  });
+}
+
+async function openComposer() {
+  await submitAddress();
+  fireEvent.click(screen.getByTestId("feed-compose"));
+  await waitFor(() => {
+    expect(screen.getByTestId("composer-message")).toBeInTheDocument();
+  });
+}
+
 describe("App", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", mockFetch());
@@ -195,14 +232,14 @@ describe("App", () => {
   });
 
   it("renders the app title", () => {
-    render(<App />);
+    renderApp();
     expect(
       screen.getByRole("heading", { name: "vicinopoli" }),
     ).toBeInTheDocument();
   });
 
   it("shows a build version footer with a short commit hash", () => {
-    render(<App />);
+    renderApp();
     const footer = screen.getByTestId("app-footer");
     expect(footer).toBeInTheDocument();
     const version = screen.getByTestId("app-footer-version");
@@ -210,7 +247,7 @@ describe("App", () => {
   });
 
   it("shows the consent banner and sends onboarding events when accepted", async () => {
-    render(<App />);
+    renderApp();
 
     await waitFor(() => {
       expect(
@@ -234,28 +271,109 @@ describe("App", () => {
     );
   });
 
-  it("shows the composer with address and message inputs", () => {
-    render(<App />);
-    expect(screen.getByTestId("composer-address")).toBeInTheDocument();
-    expect(screen.getByTestId("composer-pseudonym")).toBeInTheDocument();
+  it("redirects the root to the address page", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+  });
+
+  it("keeps the submit disabled until an address is entered", async () => {
+    renderApp();
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("address-submit")).toBeDisabled();
+    fireEvent.change(screen.getByTestId("address-input"), {
+      target: { value: "Via Roma 1, Roma" },
+    });
+    expect(screen.getByTestId("address-submit")).toBeEnabled();
+  });
+
+  it("submitting an address shows the feed page", async () => {
+    renderApp();
+    await submitAddress();
+    expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+  });
+
+  it("redirects the feed and composer pages to the address page when no address is set", async () => {
+    const { rerender } = render(
+      <MemoryRouter initialEntries={["/feed"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    rerender(
+      <MemoryRouter initialEntries={["/composer"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+  });
+
+  it("the feed plus button leads to the composer page", async () => {
+    renderApp();
+    await openComposer();
     expect(screen.getByTestId("composer-message")).toBeInTheDocument();
   });
 
-  it("posts a message and renders it in the feed", async () => {
-    render(<App />);
-
-    fireEvent.change(screen.getByTestId("composer-address"), {
-      target: { value: "Via Roma 1, Roma" },
+  it("the composer shows the address read-only with a change link back to the address page", async () => {
+    renderApp();
+    await openComposer();
+    expect(screen.getByText("Via Roma 1, Roma")).toBeInTheDocument();
+    const change = screen.getByTestId("composer-change-address");
+    expect(change).toBeInTheDocument();
+    fireEvent.click(change);
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
     });
+  });
+
+  it("posts a message and renders it in the feed", async () => {
+    renderApp();
+
+    await openComposer();
     fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "Ciao vicini!" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
 
     await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    await waitFor(() => {
       expect(screen.getByText("Ciao vicini!")).toBeInTheDocument();
     });
     expect(screen.getByText("Gino")).toBeInTheDocument();
+  });
+
+  it("publishing navigates back to the feed page", async () => {
+    renderApp();
+    await openComposer();
+    fireEvent.change(screen.getByTestId("composer-message"), {
+      target: { value: "ciao" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("composer-message")).not.toBeInTheDocument();
+  });
+
+  it("the publish button stays enabled once a message is typed", async () => {
+    renderApp();
+    await openComposer();
+    const publish = () =>
+      screen.getByRole("button", { name: "Pubblica" }) as HTMLButtonElement;
+    expect(publish().disabled).toBe(true);
+    fireEvent.change(screen.getByTestId("composer-message"), {
+      target: { value: "ciao" },
+    });
+    expect(publish().disabled).toBe(false);
   });
 
   it("reports a failed publish to Sentry with error details", async () => {
@@ -269,19 +387,18 @@ describe("App", () => {
     });
     vi.stubGlobal("fetch", store);
 
-    render(<App />);
+    renderApp();
 
-    fireEvent.change(screen.getByTestId("composer-address"), {
-      target: { value: "Via Roma 1, Roma" },
-    });
+    await openComposer();
     fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "Ciao vicini!" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Non è stato possibile pubblicare. Riprova."))
-        .toBeInTheDocument();
+      expect(
+        screen.getByText("Non è stato possibile pubblicare. Riprova."),
+      ).toBeInTheDocument();
     });
     expect(sentryCapture).toHaveBeenCalledTimes(1);
     const reported = sentryCapture.mock.calls[0][0] as Error;
@@ -303,11 +420,9 @@ describe("App", () => {
     });
     vi.stubGlobal("fetch", store);
 
-    render(<App />);
+    renderApp();
 
-    fireEvent.change(screen.getByTestId("composer-address"), {
-      target: { value: "Via Inesistente 99, Città" },
-    });
+    await openComposer();
     fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "ciao" },
     });
@@ -331,11 +446,9 @@ describe("App", () => {
     const store = mockFetch();
     vi.stubGlobal("fetch", store);
 
-    render(<App />);
+    renderApp();
 
-    fireEvent.change(screen.getByTestId("composer-address"), {
-      target: { value: "Via Roma 1, Roma" },
-    });
+    await openComposer();
     fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "Messaggio per il palazzo" },
     });
@@ -343,7 +456,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Messaggio per il palazzo")).toBeInTheDocument();
+      expect(screen.getByText("Ciao vicini!")).toBeInTheDocument();
     });
     const postCall = store.mock.calls.find(
       ([path]: unknown[]) => path === "/api/posts",
@@ -357,11 +470,9 @@ describe("App", () => {
     const store = mockFetch();
     vi.stubGlobal("fetch", store);
 
-    render(<App />);
+    renderApp();
 
-    fireEvent.change(screen.getByTestId("composer-address"), {
-      target: { value: "Via Roma 1, Roma" },
-    });
+    await openComposer();
     fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "Foto del quartiere" },
     });
@@ -381,9 +492,9 @@ describe("App", () => {
   });
 
   it("shows address suggestions while typing and fills the input on select", async () => {
-    render(<App />);
+    renderApp();
 
-    const input = screen.getByTestId("composer-address");
+    const input = screen.getByTestId("address-input");
     fireEvent.change(input, { target: { value: "milano" } });
 
     await waitFor(
@@ -400,7 +511,7 @@ describe("App", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("composer-address")).toHaveValue(
+      expect(screen.getByTestId("address-input")).toHaveValue(
         "Milano Centrale, Milano",
       );
     });
@@ -410,9 +521,9 @@ describe("App", () => {
   });
 
   it("shows no suggestions for an unknown prefix", async () => {
-    render(<App />);
+    renderApp();
 
-    fireEvent.change(screen.getByTestId("composer-address"), {
+    fireEvent.change(screen.getByTestId("address-input"), {
       target: { value: "via inesistente" },
     });
 
@@ -427,9 +538,9 @@ describe("App", () => {
   it("debounces rapid typing to a single suggest request", async () => {
     const store = mockFetch();
     vi.stubGlobal("fetch", store);
-    render(<App />);
+    renderApp();
 
-    const input = screen.getByTestId("composer-address");
+    const input = screen.getByTestId("address-input");
     fireEvent.change(input, { target: { value: "mil" } });
     fireEvent.change(input, { target: { value: "mila" } });
     fireEvent.change(input, { target: { value: "milan" } });
@@ -469,9 +580,9 @@ describe("App", () => {
   it("caches suggestions so re-searching a prefix does not refetch", async () => {
     const store = mockFetch();
     vi.stubGlobal("fetch", store);
-    render(<App />);
+    renderApp();
 
-    const input = screen.getByTestId("composer-address");
+    const input = screen.getByTestId("address-input");
     fireEvent.change(input, { target: { value: "milano" } });
     await waitFor(
       () => {
@@ -528,7 +639,9 @@ describe("App", () => {
         let body: Record<string, unknown>;
         if (url === "/api/me") {
           body =
-            method === "PATCH" ? { ...device, pseudonym: "Gino" } : { ...device };
+            method === "PATCH"
+              ? { ...device, pseudonym: "Gino" }
+              : { ...device };
         } else if (url.startsWith("/api/feed")) {
           body = {
             ...feedWithMedia,
@@ -583,8 +696,11 @@ describe("App", () => {
         },
       };
     });
-    (FakeMediaRecorder as unknown as { isTypeSupported: (t: string) => boolean })
-      .isTypeSupported = vi.fn().mockReturnValue(true);
+    (
+      FakeMediaRecorder as unknown as {
+        isTypeSupported: (t: string) => boolean;
+      }
+    ).isTypeSupported = vi.fn().mockReturnValue(true);
     vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
     Object.defineProperty(window.navigator, "mediaDevices", {
       configurable: true,
@@ -595,10 +711,9 @@ describe("App", () => {
       },
     });
 
-    render(<App />);
-    fireEvent.change(screen.getByTestId("composer-address"), {
-      target: { value: "Via Roma 1, Roma" },
-    });
+    renderApp();
+
+    await openComposer();
     fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "Messaggio vocale" },
     });

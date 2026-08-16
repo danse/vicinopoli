@@ -13,11 +13,13 @@ export function clearSuggestionCache() {
 }
 
 interface AddressComboboxProps {
+  testId: string;
   address: string;
   onAddressChange: (address: string) => void;
 }
 
 export function AddressCombobox({
+  testId,
   address,
   onAddressChange,
 }: AddressComboboxProps) {
@@ -88,14 +90,14 @@ export function AddressCombobox({
   return (
     <div className="relative">
       <input
-        id="composer-address"
-        data-testid="composer-address"
+        id={testId}
+        data-testid={testId}
         className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         value={address}
         role="combobox"
         aria-label={t("composer.addressLabel")}
         aria-expanded={open}
-        aria-controls="composer-address-suggestions"
+        aria-controls={`${testId}-suggestions`}
         aria-autocomplete="list"
         placeholder={t("composer.addressPlaceholder")}
         onChange={(e) => {
@@ -107,7 +109,7 @@ export function AddressCombobox({
       />
       {open && (
         <ul
-          id="composer-address-suggestions"
+          id={`${testId}-suggestions`}
           role="listbox"
           aria-label={t("composer.addressSuggestionsLabel")}
           className="absolute z-10 mt-1 w-full rounded-md border border-input bg-background py-1 shadow-lg"

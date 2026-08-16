@@ -5,7 +5,17 @@
     "switchLanguage": "English",
     "version": "versione"
   },
+  "address": {
+    "title": "Dove ti trovi?",
+    "hint": "Inserisci il tuo indirizzo per vedere i messaggi dei vicini.",
+    "enter": "Entra in zona"
+  },
+  "feed": {
+    "compose": "Scrivi un messaggio"
+  },
   "composer": {
+    "postingNear": "Stai scrivendo da",
+    "changeAddress": "Cambia indirizzo",
     "addressLabel": "Dove ti trovi?",
     "addressPlaceholder": "Es. Via Roma 1, Roma",
     "pseudonymLabel": "Scegli un nome",

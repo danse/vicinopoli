@@ -72,7 +72,10 @@ export function Heatmap({ address }: HeatmapProps) {
                   },
                 ],
               },
-              center: [center.cell_center_longitude, center.cell_center_latitude],
+              center: [
+                center.cell_center_longitude,
+                center.cell_center_latitude,
+              ],
               zoom: ZOOM,
             });
           mapRef.current = map;
@@ -80,14 +83,18 @@ export function Heatmap({ address }: HeatmapProps) {
             if (map.getSource("activity")) {
               (map.getSource("activity") as maplibregl.GeoJSONSource).setData({
                 type: "FeatureCollection",
-                features: toHeatmapPoints(tile.features as unknown as CellFeature[]),
+                features: toHeatmapPoints(
+                  tile.features as unknown as CellFeature[],
+                ),
               });
             } else {
               map.addSource("activity", {
                 type: "geojson",
                 data: {
                   type: "FeatureCollection",
-                  features: toHeatmapPoints(tile.features as unknown as CellFeature[]),
+                  features: toHeatmapPoints(
+                    tile.features as unknown as CellFeature[],
+                  ),
                 },
               });
               map.addLayer({

@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import {
-  type FeedResponse,
-  getFeed,
-  sendAnalyticsEvents,
-} from "@/api/client";
+import { type FeedResponse, getFeed, sendAnalyticsEvents } from "@/api/client";
 
 interface FeedProps {
   address: string;
