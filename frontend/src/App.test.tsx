@@ -351,6 +351,43 @@ describe("App", () => {
     expect(screen.getByText("Gino")).toBeInTheDocument();
   });
 
+  it("shows the distance from the viewer on each feed post", async () => {
+    const store = mockFetch();
+    store.mockImplementation((url: string, init?: RequestInit) => {
+      if (url.startsWith("/api/feed")) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              posts: [
+                { ...feed.posts[0], distance_m: 0.0 },
+                {
+                  ...feed.posts[0],
+                  id: "post-2",
+                  body: "Dal quartiere",
+                  distance_m: 1200,
+                },
+              ],
+              effective_radius_m: 5000,
+              target_count: 10,
+            }),
+        });
+      }
+      return mockFetch()(url, init);
+    });
+    vi.stubGlobal("fetch", store);
+
+    renderApp();
+    await submitAddress();
+
+    await waitFor(() => {
+      const distances = screen.getAllByTestId("feed-post-distance");
+      expect(distances).toHaveLength(2);
+      expect(distances[0].textContent).toContain("0 m da te");
+      expect(distances[1].textContent).toContain("1.2 km da te");
+    });
+  });
+
   it("publishing navigates back to the feed page", async () => {
     renderApp();
     await openComposer();

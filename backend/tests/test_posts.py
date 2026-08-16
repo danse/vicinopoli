@@ -93,6 +93,42 @@ async def test_feed_shows_post_at_same_address(client) -> None:
 
 
 @pytest.mark.asyncio
+async def test_feed_is_newest_first(client, session_factory) -> None:
+    """The feed is reverse-chronological: newest posts come first.
+
+    ``created_at`` is a server default, so the two posts are backdated in the
+    DB to force a deterministic order regardless of execution speed.
+    """
+    await client.post(
+        "/api/posts",
+        json={"address": "Via Roma 1, Roma", "body": "più vecchio", "scope": "5km"},
+    )
+    await client.post(
+        "/api/posts",
+        json={"address": "Via Roma 1, Roma", "body": "più nuovo", "scope": "5km"},
+    )
+
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import text
+
+    async with session_factory() as session:
+        await session.execute(
+            text(
+                "UPDATE posts SET created_at = :older "
+                "WHERE body = 'più vecchio'"
+            ),
+            {"older": datetime.now(UTC) - timedelta(hours=1)},
+        )
+        await session.commit()
+
+    response = await client.get("/api/feed", params={"address": "Via Roma 1, Roma"})
+    assert response.status_code == 200
+    bodies = [post["body"] for post in response.json()["posts"]]
+    assert bodies == ["più nuovo", "più vecchio"]
+
+
+@pytest.mark.asyncio
 async def test_feed_respects_scope_distance(client) -> None:
     """A post with scope 500m must NOT be visible from ~3.5km away."""
     await client.post(

@@ -14,6 +14,11 @@ function formatRadius(meters: number): string {
   return `${meters} m`;
 }
 
+function formatDistance(meters: number): string {
+  if (meters >= 1000) return `${(meters / 1000).toFixed(1)} km`;
+  return `${Math.round(meters)} m`;
+}
+
 export function Feed({
   address,
   refreshTick = 0,
@@ -113,6 +118,15 @@ export function Feed({
             )}
             <p className="mt-2 text-xs text-muted-foreground">
               {post.display_address}
+              {post.distance_m != null && (
+                <span data-testid="feed-post-distance">
+                  {" "}
+                  ·{" "}
+                  {t("composer.distanceFrom", {
+                    distance: formatDistance(post.distance_m),
+                  })}
+                </span>
+              )}
             </p>
           </li>
         ))}

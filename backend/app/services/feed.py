@@ -59,7 +59,7 @@ async def _posts_within(
         .join(Location, Post.location_id == Location.id)
         .options(selectinload(Post.device))
         .where(within, Post.status == PostStatus.active)
-        .order_by(distance.asc())
+        .order_by(Post.created_at.desc(), distance.asc())
     )
     result = await session.execute(stmt)
     rows = [(post, location, float(distance_m)) for post, location, distance_m in result.all()]

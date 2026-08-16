@@ -29,6 +29,7 @@
     "feedTitle": "Cosa succede in zona",
     "empty": "Nessun messaggio nei dintorni. Sii il primo!",
     "radius": "Entro {{radius}}",
+    "distanceFrom": "{{distance}} da te",
     "anonymous": "Vicino anonimo",
     "newNeighbour": "Nuovo vicino",
     "photoLabel": "Aggiungi una foto",

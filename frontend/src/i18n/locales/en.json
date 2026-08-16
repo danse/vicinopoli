@@ -29,6 +29,7 @@
     "feedTitle": "What's happening nearby",
     "empty": "No messages nearby. Be the first!",
     "radius": "Within {{radius}}",
+    "distanceFrom": "{{distance}} from you",
     "anonymous": "Anonymous neighbour",
     "newNeighbour": "New neighbour",
     "photoLabel": "Add a photo",

@@ -56,10 +56,14 @@ Three distinct concepts, never conflated:
 
 Ordered by priority, remove from the list when done
 
-- test a new user flow: landing page only asks for where the user is. With the address submitted, user is prompted to a feed page. In the feed page there is a `+ (post message/express yourself/say something)` button that leads to the composer page
-- new guideline: gendered words
-- feed should be reversed
+#### 17-21
+
+#### Monday
+
+- remove the "Stai scrivendo da" from composer and put it in the feed with suited copy
+
 - the heatmap does not render, hide it behind a feature flag
+- new guideline: gendered words: always use feminine when a word has to be gendered. Change existing localisations
 - pseudonym updated in its own page like the address
 - message type becomes a choice like voice, and the composer would update accordingly
 - text is opt-in when entering a picture
@@ -69,14 +73,19 @@ Ordered by priority, remove from the list when done
 - replies and threading user experience
 - send a notification upon a reply
 
+#### 24-28
+
+- functional reactive programming (new posts and realtime mode)
 - frontend app auto-updated on new versions
 - search engine optimisation
 - previews from youtube, instagram, facebook, twitter, reddit, soundcloud etcetera
 
-### September
+### Moon
 
 - campaign: ${ibla,ragusa}-${eventi,events,chat}
 
+- range map in composer
+- distance UX: colour-code post cards by distance band and/or a small proximity visualisation (rings/intensity), as a future enhancement
 - address geocoded on the client and shown on map with the range (unsure whether on the address page or post page)
 - self-hosted photon
 - monetization scheme, report commercial/advertisement/business
