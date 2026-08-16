@@ -12,6 +12,8 @@ N_SEGMENTS = 100
 
 EXPERIMENT_FEATURE_FLAGS: dict[str, list[bool]] = {
     # A toggle is on for exactly the segments listed.
+    # The heatmap UI is hidden pending a working render; off for all segments.
+    "heatmap": [],
 }
 
 

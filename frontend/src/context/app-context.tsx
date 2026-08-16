@@ -34,6 +34,7 @@ interface AppContextValue {
   consentDecided: boolean;
   analyticsConsented: boolean;
   decideConsent: (consented: boolean) => void;
+  experimentFlags: Record<string, boolean>;
   feedTick: number;
   bumpFeedTick: () => void;
 }
@@ -45,12 +46,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pseudonym, setPseudonym] = useState("");
   const [consentDecided, setConsentDecided] = useState(true);
   const [analyticsConsented, setAnalyticsConsented] = useState(false);
+  const [experimentFlags, setExperimentFlags] = useState<Record<string, boolean>>(
+    {},
+  );
   const [feedTick, setFeedTick] = useState(0);
 
   useEffect(() => {
     getMe()
       .then((me) => {
         setPseudonym(me.pseudonym ?? "");
+        setExperimentFlags(me.experiment_flags);
         if (me.analytics_consent === null) {
           setConsentDecided(false);
         } else {
@@ -82,6 +87,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         consentDecided,
         analyticsConsented,
         decideConsent,
+        experimentFlags,
         feedTick,
         bumpFeedTick,
       }}

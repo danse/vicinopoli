@@ -15,25 +15,23 @@ vi.mock("@sentry/react", () => ({
 }));
 
 vi.mock("maplibre-gl", () => ({
-  default: {
-    Map: vi.fn().mockImplementation(() => {
-      const handlers: Record<string, () => void> = {};
-      const map = {
-        on: (event: string, cb: () => void) => {
-          handlers[event] = cb;
-          return map;
-        },
-        fire: (event: string) => handlers[event]?.(),
-        addSource: vi.fn(),
-        addLayer: vi.fn(),
-        getSource: vi.fn().mockReturnValue({
-          setData: vi.fn(),
-        }),
-      };
-      return map;
-    }),
-    GeoJSONSource: class {},
-  },
+  Map: vi.fn().mockImplementation(() => {
+    const handlers: Record<string, () => void> = {};
+    const map = {
+      on: (event: string, cb: () => void) => {
+        handlers[event] = cb;
+        return map;
+      },
+      fire: (event: string) => handlers[event]?.(),
+      addSource: vi.fn(),
+      addLayer: vi.fn(),
+      getSource: vi.fn().mockReturnValue({
+        setData: vi.fn(),
+      }),
+    };
+    return map;
+  }),
+  GeoJSONSource: class {},
 }));
 
 beforeAll(() => {
@@ -294,6 +292,36 @@ describe("App", () => {
     renderApp();
     await submitAddress();
     expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+  });
+
+  it("hides the heatmap when its feature flag is off", async () => {
+    renderApp();
+    await submitAddress();
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("heatmap")).not.toBeInTheDocument();
+  });
+
+  it("shows the heatmap when its feature flag is on", async () => {
+    const store = mockFetch();
+    store.mockImplementation((url: string, init?: RequestInit) => {
+      if (url === "/api/me") {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({ ...device, experiment_flags: { heatmap: true } }),
+        });
+      }
+      return mockFetch()(url, init);
+    });
+    vi.stubGlobal("fetch", store);
+
+    renderApp();
+    await submitAddress();
+    await waitFor(() => {
+      expect(screen.getByTestId("heatmap")).toBeInTheDocument();
+    });
   });
 
   it("persists the address so a refresh restores it", async () => {

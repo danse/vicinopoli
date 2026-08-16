@@ -6,6 +6,8 @@ Analytics events are only stored when the device has consented.
 
 import pytest
 
+from app.services.experiments import feature_flags
+
 
 @pytest.mark.asyncio
 async def test_device_exposes_segment_flags_and_consent(client) -> None:
@@ -15,6 +17,14 @@ async def test_device_exposes_segment_flags_and_consent(client) -> None:
     assert 0 <= data["experiment_segment"] < 100
     assert isinstance(data["experiment_flags"], dict)
     assert data["analytics_consent"] is None or isinstance(data["analytics_consent"], bool)
+
+
+def test_heatmap_flag_off_for_all_segments() -> None:
+    """The heatmap UI is hidden behind a feature flag, off everywhere for now."""
+    for segment in range(100):
+        flags = feature_flags(segment)
+        assert "heatmap" in flags
+        assert flags["heatmap"] is False
 
 
 @pytest.mark.asyncio

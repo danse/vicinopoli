@@ -9,7 +9,7 @@ import { useApp } from "@/context/app-context";
 export function FeedPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { address, analyticsConsented, feedTick } = useApp();
+  const { address, analyticsConsented, experimentFlags, feedTick } = useApp();
 
   return (
     <section>
@@ -25,7 +25,9 @@ export function FeedPage() {
           {t("feed.changeAddress")}
         </Link>
       </div>
-      {address.trim() !== "" && <Heatmap address={address} />}
+      {address.trim() !== "" && experimentFlags["heatmap"] && (
+        <Heatmap address={address} />
+      )}
       <Feed
         address={address}
         refreshTick={feedTick}

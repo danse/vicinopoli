@@ -60,11 +60,14 @@ Ordered by priority, remove from the list when done
 
 #### Monday
 
-- the heatmap does not render, hide it behind a feature flag
 - new guideline: gendered words: always use feminine when a word has to be gendered. Change existing localisations
 - pseudonym updated in its own page like the address
+
 - message type becomes a choice like voice, and the composer would update accordingly
 - text is opt-in when entering a picture
+
+#### Tuesday
+
 - test that two users can read each other in a rural area from a 45 kilometers distance
 - message cycle test for pictures and audios as well
 - migration from docker to nix?
@@ -72,17 +75,24 @@ Ordered by priority, remove from the list when done
 - replies and threading user experience
 - send a notification upon a reply
 
+#### Wednesday
+
+- picture page
+
 #### 24-28
 
+- re-enable the feed heatmap
 - functional reactive programming (new posts and realtime mode)
 - frontend app auto-updated on new versions
 - search engine optimisation
 - previews from youtube, instagram, facebook, twitter, reddit, soundcloud etcetera
+- content-spike detection with coordinates
 
 ### Moon
 
 - campaign: ${ibla,ragusa}-${eventi,events,chat}
 
+- content-control interface
 - equalise
 - range map in composer
 - distance UX: colour-code post cards by distance band and/or a small proximity visualisation (rings/intensity), as a future enhancement
