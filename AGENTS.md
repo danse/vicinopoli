@@ -111,6 +111,9 @@ debugging, verify each layer is actually running what was just changed:
 - Tailwind CSS + shadcn/ui (Radix) components.
 - All user-facing strings go through `react-i18next`; never hardcode copy.
   Italian (`it`) is the default locale, `en` is maintained in parallel.
+- **Gendered words (it locale):** when a word has to be gendered in Italian,
+  always use the feminine form (e.g. "vicina", "la prima", "anonima", "alguien"
+  → "alcune"). Apply to existing localisations and to all new copy.
 - Generated API types live in `frontend/src/api/generated/` (produced by
   `make gen`) and are gitignored.
 - **No `console.log` troubleshooting.** When a test fails in a confusing way,

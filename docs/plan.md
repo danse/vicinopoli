@@ -60,9 +60,7 @@ Ordered by priority, remove from the list when done
 
 #### Monday
 
-- new guideline: gendered words: always use feminine when a word has to be gendered. Change existing localisations
 - pseudonym updated in its own page like the address
-
 - message type becomes a choice like voice, and the composer would update accordingly
 - text is opt-in when entering a picture
 
@@ -82,6 +80,7 @@ Ordered by priority, remove from the list when done
 #### 24-28
 
 - re-enable the feed heatmap
+- definition of a read message
 - functional reactive programming (new posts and realtime mode)
 - frontend app auto-updated on new versions
 - search engine optimisation
