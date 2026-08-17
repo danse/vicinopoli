@@ -18,7 +18,8 @@ a more capable state architecture.
   The de-facto standard, small, typed. Deep links already work: nginx
   (`frontend/nginx.conf`) falls back to `/index.html` and the PWA service
   worker uses `navigateFallback`, so no server changes are required.
-- **Routes:** `/` redirects to `/address`; `address`, `feed`, `composer`.
+- **Routes:** `/` redirects to `/address`; `address`, `feed`, `composer`,
+  `pseudonym` (set/clear the pseudonym, reached from the composer).
   `feed` and `composer` redirect back to `address` when no address is set.
   Routes are maintained in `docs/pages.md`.
 - **Shared state: a small React Context** (`AppProvider` + `useApp()`)

@@ -7,6 +7,7 @@ import { AppProvider, useApp } from "@/context/app-context";
 import { AddressPage } from "@/pages/address-page";
 import { ComposerPage } from "@/pages/composer-page";
 import { FeedPage } from "@/pages/feed-page";
+import { PseudonymPage } from "@/pages/pseudonym-page";
 
 function RequireAddress({ children }: { children: ReactElement }) {
   const { address } = useApp();
@@ -45,6 +46,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Navigate to="/address" replace />} />
         <Route path="/address" element={<AddressPage />} />
+        <Route path="/pseudonym" element={<PseudonymPage />} />
         <Route
           path="/feed"
           element={

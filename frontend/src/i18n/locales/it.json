@@ -18,10 +18,10 @@
   "composer": {
     "addressLabel": "Dove ti trovi?",
     "addressPlaceholder": "Es. Via Roma 1, Roma",
-    "pseudonymLabel": "Scegli un nome",
-    "pseudonymPlaceholder": "Anonima",
     "messageLabel": "Scrivi un messaggio",
     "messagePlaceholder": "Ciao vicinə!",
+    "postingAs": "Pubblicando come",
+    "changePseudonym": "Cambia",
     "publish": "Pubblica",
     "publishing": "Pubblicazione...",
     "error": "Non è stato possibile pubblicare. Riprova.",
@@ -47,6 +47,12 @@
     "voiceCity": "Tutta la città",
     "addressSuggestionsLabel": "Suggerimenti di indirizzi",
     "addressNoResults": "Nessun risultato"
+  },
+  "pseudonym": {
+    "title": "Come vuoi chiamarti?",
+    "hint": "Un nome per firmare i tuoi messaggi. Nessuno scoprirà chi sei.",
+    "save": "Salva",
+    "error": "Non è stato possibile salvare. Riprova."
   },
   "consent": {
     "title": "Analisi statistiche",

@@ -18,10 +18,10 @@
   "composer": {
     "addressLabel": "Your address",
     "addressPlaceholder": "E.g. Via Roma 1, Roma",
-    "pseudonymLabel": "Choose a name",
-    "pseudonymPlaceholder": "E.g. Gino",
     "messageLabel": "Write a message",
     "messagePlaceholder": "Hello neighbours!",
+    "postingAs": "Posting as",
+    "changePseudonym": "Change",
     "publish": "Publish",
     "publishing": "Publishing...",
     "error": "Could not publish. Try again.",
@@ -47,6 +47,12 @@
     "voiceCity": "The whole city",
     "addressSuggestionsLabel": "Address suggestions",
     "addressNoResults": "No results"
+  },
+  "pseudonym": {
+    "title": "What should we call you?",
+    "hint": "A name to sign your messages. No one will find out who you are.",
+    "save": "Save",
+    "error": "Could not save. Try again."
   },
   "consent": {
     "title": "Analytics",

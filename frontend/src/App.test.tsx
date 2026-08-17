@@ -125,11 +125,12 @@ const device = {
 };
 function mockFetch() {
   let consented: boolean | null = null;
+  let pseudonym: string | null = null;
   return vi.fn().mockImplementation((url: string, init?: RequestInit) => {
     const method = init?.method ?? "GET";
     let body: Record<string, unknown>;
     if (url === "/api/me") {
-      body = { ...device, analytics_consent: consented };
+      body = { ...device, analytics_consent: consented, pseudonym };
     } else if (url === "/api/geocode") {
       body = {
         display_address: "Via Roma 1, Roma",
@@ -187,8 +188,12 @@ function mockFetch() {
     if (method === "PATCH" && url === "/api/me") {
       const payload = JSON.parse(String(init?.body ?? "{}")) as {
         analytics_consent?: boolean | null;
+        pseudonym?: string;
       };
       consented = payload.analytics_consent ?? null;
+      if (payload.pseudonym !== undefined) {
+        pseudonym = payload.pseudonym || null;
+      }
     }
     return Promise.resolve({
       ok: true,
@@ -367,6 +372,45 @@ describe("App", () => {
     renderApp();
     await openComposer();
     expect(screen.getByTestId("composer-message")).toBeInTheDocument();
+  });
+
+  it("the composer shows the current pseudonym with a link to change it", async () => {
+    renderApp();
+    await openComposer();
+    expect(screen.getByText("Pubblicando come")).toBeInTheDocument();
+    expect(screen.getByText("Vicina anonima")).toBeInTheDocument();
+    const change = screen.getByTestId("composer-change-pseudonym");
+    fireEvent.click(change);
+    await waitFor(() => {
+      expect(screen.getByTestId("pseudonym-input")).toBeInTheDocument();
+    });
+  });
+
+  it("saving a pseudonym on its own page sends it and navigates back", async () => {
+    const store = mockFetch();
+    vi.stubGlobal("fetch", store);
+    renderApp();
+    await openComposer();
+    fireEvent.click(screen.getByTestId("composer-change-pseudonym"));
+    await waitFor(() => {
+      expect(screen.getByTestId("pseudonym-input")).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByTestId("pseudonym-input"), {
+      target: { value: "Gina" },
+    });
+    fireEvent.click(screen.getByTestId("pseudonym-submit"));
+    await waitFor(() => {
+      expect(screen.getByTestId("composer-message")).toBeInTheDocument();
+    });
+    const mePatch = store.mock.calls.find(
+      ([path, init]: unknown[]) =>
+        path === "/api/me" && (init as RequestInit)?.method === "PATCH",
+    );
+    expect(mePatch).toBeDefined();
+    const init = mePatch![1] as RequestInit;
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      pseudonym: "Gina",
+    });
   });
 
   it("the feed shows the address with a change link back to the address page", async () => {

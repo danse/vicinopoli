@@ -15,14 +15,15 @@ export async function openComposer(page: Page, address: string = ADDRESS) {
   await expect(page).toHaveURL(/\/composer$/);
 }
 
-export async function publish(
-  page: Page,
-  body: string,
-  options: { pseudonym?: string } = {},
-) {
-  if (options.pseudonym) {
-    await page.getByTestId("composer-pseudonym").fill(options.pseudonym);
-  }
+export async function setPseudonym(page: Page, pseudonym: string) {
+  await page.getByTestId("composer-change-pseudonym").click();
+  await expect(page).toHaveURL(/\/pseudonym$/);
+  await page.getByTestId("pseudonym-input").fill(pseudonym);
+  await page.getByTestId("pseudonym-submit").click();
+  await expect(page).toHaveURL(/\/composer$/);
+}
+
+export async function publish(page: Page, body: string) {
   await page.getByTestId("composer-message").fill(body);
   await page.getByRole("button", { name: "Pubblica" }).click();
   await expect(page).toHaveURL(/\/feed$/);

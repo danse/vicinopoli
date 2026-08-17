@@ -8,7 +8,8 @@ is added, renamed, or removed. Keep it short.
 | `/` | - | Redirects to `address` |
 | `address` | `address-submit` | Ask only "where are you?" -> `feed` |
 | `feed` | `feed-compose`, `feed-change-address` | Feed + heatmap + `+` button -> `composer`; address bar -> `address` |
-| `composer` | `composer-*` | Compose/publish |
+| `composer` | `composer-*`, `composer-change-pseudonym` | Compose/publish; "posting as" link -> `pseudonym` |
+| `pseudonym` | `pseudonym-input`, `pseudonym-submit` | Set/clear the pseudonym; on save goes back to the previous page |
 
 ## Conventions
 

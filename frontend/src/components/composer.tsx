@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react";
+import { Link } from "react-router-dom";
 
 import {
   ApiError,
@@ -9,7 +10,6 @@ import {
   registerMedia,
   type PostVoice,
   uploadPhotoToUrl,
-  updateMe,
 } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { hashAddress } from "@/lib/utils";
@@ -17,7 +17,6 @@ import { hashAddress } from "@/lib/utils";
 interface ComposerProps {
   address: string;
   pseudonym: string;
-  onPseudonymChange: (pseudonym: string) => void;
   onPosted: () => void;
 }
 
@@ -60,12 +59,7 @@ async function resizeImage(file: File): Promise<Blob> {
   return blob;
 }
 
-export function Composer({
-  address,
-  pseudonym,
-  onPseudonymChange,
-  onPosted,
-}: ComposerProps) {
+export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
   const { t } = useTranslation();
   const [body, setBody] = useState("");
   const [scope, setScope] = useState<PostVoice>("city");
@@ -129,10 +123,6 @@ export function Composer({
     setError(false);
     setAddressError(false);
     try {
-      if (pseudonym.trim() !== "") {
-        await updateMe({ pseudonym: pseudonym.trim() });
-      }
-
       const mediaIds: string[] = [];
       if (photo) {
         const resized = await resizeImage(photo);
@@ -196,21 +186,18 @@ export function Composer({
 
   return (
     <section aria-label={t("composer.feedTitle")}>
-      <div className="mt-4 grid gap-2">
-        <label
-          htmlFor="composer-pseudonym"
-          className="text-sm font-medium text-foreground"
+      <div className="mt-4 flex items-center justify-between rounded-md border border-input bg-card px-3 py-2 text-sm text-card-foreground">
+        <span>
+          {t("composer.postingAs")}{" "}
+          <strong>{pseudonym.trim() !== "" ? pseudonym : t("composer.anonymous")}</strong>
+        </span>
+        <Link
+          to="/pseudonym"
+          data-testid="composer-change-pseudonym"
+          className="text-sm text-primary hover:underline"
         >
-          {t("composer.pseudonymLabel")}
-        </label>
-        <input
-          id="composer-pseudonym"
-          data-testid="composer-pseudonym"
-          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          value={pseudonym}
-          placeholder={t("composer.pseudonymPlaceholder")}
-          onChange={(e) => onPseudonymChange(e.target.value)}
-        />
+          {t("composer.changePseudonym")}
+        </Link>
       </div>
       <div className="mt-4 grid gap-2">
         <label

@@ -60,7 +60,7 @@ Ordered by priority, remove from the list when done
 
 #### Monday
 
-- pseudonym updated in its own page like the address
+- pseudonym updated in its own page like the address [done: `/pseudonym`, reached from the composer "posting as" link]
 - message type becomes a choice like voice, and the composer would update accordingly
 - text is opt-in when entering a picture
 
@@ -101,3 +101,4 @@ Ordered by priority, remove from the list when done
 - WARN: Detected default credentials 'minioadmin:minioadmin', we recommend that you change these values with 'MINIO_ROOT_USER' and 'MINIO_ROOT_PASSWORD' environment variables
 - blind accessibility test for audio content workflows
 - add arabic
+- diffusione

@@ -5,14 +5,13 @@ import { useApp } from "@/context/app-context";
 
 export function ComposerPage() {
   const navigate = useNavigate();
-  const { address, pseudonym, setPseudonym, bumpFeedTick } = useApp();
+  const { address, pseudonym, bumpFeedTick } = useApp();
 
   return (
     <section>
       <Composer
         address={address}
         pseudonym={pseudonym}
-        onPseudonymChange={setPseudonym}
         onPosted={() => {
           bumpFeedTick();
           navigate("/feed");
