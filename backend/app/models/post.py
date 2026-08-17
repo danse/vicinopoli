@@ -5,7 +5,6 @@ feed applies the asymmetric intersection rule in a single query. The enums are
 defined in ``app.schemas.post`` (source of truth for the API contract) and
 reused here for the DB columns.
 """
-
 import uuid
 from datetime import datetime
 

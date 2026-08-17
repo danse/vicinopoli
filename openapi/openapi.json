@@ -1518,7 +1518,7 @@
       "PostScope": {
         "type": "string",
         "enum": [
-          "building",
+          "street",
           "500m",
           "1km",
           "5km"
@@ -1537,13 +1537,13 @@
       "PostVoice": {
         "type": "string",
         "enum": [
-          "building",
+          "street",
           "some",
           "area",
           "city"
         ],
         "title": "PostVoice",
-        "description": "The author's voice intent (fuzzy, user-facing): who should read this.\n\nUnlike ``PostScope`` (a fixed km), the voice is converted to a distance at\nfeed-serve time via the neighbour-count conversion (plan: Reach model).\n``building`` yields ``reach_m = 0`` (same normalized address key)."
+        "description": "The author's voice intent (fuzzy, user-facing): who should read this.\n\nUnlike ``PostScope`` (a fixed km), the voice is converted to a distance at\nfeed-serve time via the neighbour-count conversion (plan: Reach model).\n``street`` yields ``reach_m = 0`` (same normalized address key)."
       },
       "ReportResponse": {
         "properties": {

@@ -19,7 +19,7 @@ area.
 Three concepts, never conflated:
 
 - **Voice** = the author's fuzzy intent about how far the post should travel,
-  chosen in the composer: `building` | `some` | `area` | `city`. Default is
+  chosen in the composer: `street` | `some` | `area` | `city`. Default is
   `city`.
 - **Trust cap `K`** = how many distinct *other* active posters a post may
   reach. `UNTRUSTED_K = 1`, `TRUSTED_K = 25`. The author's own device is
@@ -29,7 +29,7 @@ Three concepts, never conflated:
 
 Conversion:
 
-- `building` voice -> `reach_m = 0` (visible only to the same normalized
+- `street` voice -> `reach_m = 0` (visible only to the same normalized
   address key).
 - Otherwise `reach_m` = the smallest radius stepping through
   `500m -> 1km -> 5km -> 20km -> 50km` that contains at least `K` distinct
@@ -45,7 +45,7 @@ ADR 0006):
 ## Consequences
 
 - Backwards compatibility: `scope` is kept nullable on posts; new posts write
-  `voice`; legacy km `scope` values map to a voice (`building`->`building`,
+  `voice`; legacy km `scope` values map to a voice (`street`->`street`,
   `5km`->`area`, else `some`) via `_scope_to_voice`.
 - Reach is recomputed when a feed page is served, so an old post's effective
   radius drifts as area density and author trust change. This is intentional

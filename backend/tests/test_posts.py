@@ -1,7 +1,7 @@
 """Post creation and feed visibility tests (DB-backed, real PostGIS).
 
 These exercise the API contract and the ADR 0006 visibility semantics:
-visibility = distance <= scope AND distance <= search_radius; ``building``
+visibility = distance <= scope AND distance <= search_radius; ``street``
 matches on the normalized address key.
 """
 
@@ -214,14 +214,14 @@ async def test_feed_respects_scope_distance(client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_feed_building_scope_requires_same_address(client) -> None:
-    """building scope matches the normalized address key only."""
+async def test_feed_street_scope_requires_same_address(client) -> None:
+    """street scope matches the normalized address key only."""
     await client.post(
         "/api/posts",
         json={
             "address": "Via Roma 1, Roma",
             "body": "dalla stessa via",
-            "scope": "building",
+            "scope": "street",
         },
     )
     # Same address -> visible.

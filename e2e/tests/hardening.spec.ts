@@ -34,7 +34,7 @@ test("a single device is rate-limited when posting in a burst (abuse)", async ({
       data: {
         address: "Via Roma 1, Roma",
         body: `burst ${i} ${Date.now()}`,
-        scope: "building",
+        scope: "street",
       },
     });
     statuses.push(response.status());

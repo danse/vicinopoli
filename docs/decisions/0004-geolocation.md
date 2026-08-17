@@ -6,7 +6,7 @@
 ## Context
 
 Posts must be matched to neighbours by location, starting from a user-entered
-address, with a later option to share only within the same building.
+address, with a later option to share only within the same street.
 
 ## Decision
 
@@ -17,9 +17,9 @@ address, with a later option to share only within the same building.
   initially, self-hosted later); Nominatim was replaced because the public
   nominatim.openstreetmap.org endpoint rate-limits production apps and its
   usage policy forbids them.
-- Radius scopes (`building`, `500m`, `1km`, `5km`) are queried with
+- Radius scopes (`street`, `500m`, `1km`, `5km`) are queried with
   `ST_DWithin` on a GiST-indexed geography column.
-- **Same-building** scope matches on the *normalized address key*, stored from
+- **Same-street** scope matches on the *normalized address key*, stored from
   day one so it is a filter flag, not a schema change.
 
 ## Consequences

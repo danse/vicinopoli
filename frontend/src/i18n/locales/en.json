@@ -47,7 +47,7 @@
     "voiceAlt": "Attached voice message",
     "voiceError": "Voice recording failed.",
     "scopeLabel": "Who do you want to reach",
-    "voiceBuilding": "My building only",
+    "voiceStreet": "My street only",
     "voiceSome": "Some neighbours",
     "voiceArea": "The neighbourhood",
     "voiceCity": "The whole city",

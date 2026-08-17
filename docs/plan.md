@@ -17,9 +17,9 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 Three distinct concepts, never conflated:
 
-- **Voice** — the author's fuzzy intent when composing: `building`, `some`,
+- **Voice** — the author's fuzzy intent when composing: `street`, `some`,
   `area`, `city`. User-facing string; it is what the composer offers
-  (`building` / some neighbours / the neighbourhood / the whole city).
+  (`street` / some neighbours / the neighbourhood / the whole city).
 - **Trust cap** — the neighbour-count `K` an author may reach, set by the trust
   ladder: `UNTRUSTED_K = 1`, `TRUSTED_K = 25` (distinct *other* active posters).
   This replaces the old km-based cap on scope.
@@ -31,7 +31,7 @@ Three distinct concepts, never conflated:
 
 - A viewer carries `search_radius`.
 - Visibility = `distance <= post.reach_m` AND `distance <= search_radius`;
-  `building` voice yields `reach_m = 0` (requires matching normalized address key).
+  `street` voice yields `reach_m = 0` (requires matching normalized address key).
 - Conversion (per feed request): `reach_m` = the smallest radius, walking
   `500m -> 1km -> 5km -> 20km -> 50km`, that contains `K` distinct *other*
   active posters relative to the post's location. If fewer than `K` others
@@ -58,22 +58,22 @@ Ordered by priority, remove from the list when done
 
 #### Monday 17
 
-- photon does not provide street numbers. Rename `building` -> `street` throughout code and docs
-- frontend app auto-updated on new versions
-- message page, activated on clicking. Image shows full-screen in there
-- post editing
+- frontend app asks to update on new versions
+- i get "Upload failed: 405" on sentry when trying to post media messages. Add some troubleshooting info to that error response
+- simple content-control interface: how to add an interface for an administrator to check all the submitted contents (firehose)?
+- support interface pointing at info@<domain>
 
 #### Tuesday 18
 
+- message page, activated on clicking. Image shows full-screen in there
+- post editing
+
 #### Wednesday 19
-
 #### Thursday 20
-
 #### Friday 21
 
 #### 24-28
 
-- simple content-control interface
 - re-enable the feed heatmap
 - definition of a read message
 - functional reactive programming (new posts and realtime mode)
@@ -97,3 +97,4 @@ Ordered by priority, remove from the list when done
 - blind accessibility test for audio content workflows
 - add arabic
 - diffusione
+- street numbers

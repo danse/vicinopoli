@@ -727,9 +727,9 @@ describe("App", () => {
 
     await openComposer();
     fireEvent.change(screen.getByTestId("composer-message"), {
-      target: { value: "Messaggio per il palazzo" },
+      target: { value: "Messaggio per la mia via" },
     });
-    fireEvent.click(screen.getByTestId("composer-voice-building"));
+    fireEvent.click(screen.getByTestId("composer-voice-street"));
     fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
 
     await waitFor(() => {
@@ -740,7 +740,7 @@ describe("App", () => {
     );
     expect(postCall).toBeDefined();
     const init = postCall![1] as RequestInit;
-    expect(JSON.parse(String(init.body))).toMatchObject({ voice: "building" });
+    expect(JSON.parse(String(init.body))).toMatchObject({ voice: "street" });
   });
 
   it("uploads a photo and shows it in the feed", async () => {

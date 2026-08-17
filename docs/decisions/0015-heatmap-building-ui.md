@@ -1,13 +1,13 @@
-# 0015 — Heatmap tile endpoint and building scope in UI
+# 0015 — Heatmap tile endpoint and street scope in UI
 
 - Status: accepted
 - Date: 2026-08-13
 
 ## Context
 
-Milestone 5 requires a density heatmap and building-level visibility. ADR 0008
+Milestone 5 requires a density heatmap and street-level visibility. ADR 0008
 left the tile-serving mechanism open ("PostGIS + a tile endpoint, or Martin"),
-and the `building` scope (ADR 0006) was already implemented in the feed service
+and the `street` scope (ADR 0006) was already implemented in the feed service
 but had no UI to choose it.
 
 ## Decision
@@ -29,9 +29,9 @@ but had no UI to choose it.
   precise location.
 - **MapLibre GL JS** renders the heatmap on the client from the tile features
   (cell polygon centroids weighted by `count`). No pins, no bodies.
-- **Building scope in the UI.** The composer gains a scope selector
-  (`building` / `500m` / `1km` / `5km`). The backend already honoured
-  `building` per ADR 0006; this merely exposes it.
+- **Street scope in the UI.** The composer gains a scope selector
+  (`street` / `500m` / `1km` / `5km`). The backend already honoured
+  `street` per ADR 0006; this merely exposes it.
 
 ## Consequences
 

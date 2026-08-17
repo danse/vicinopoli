@@ -14,7 +14,7 @@ from app.schemas.media import MediaInfo
 
 
 class PostScope(StrEnum):
-    building = "building"
+    street = "street"
     r500m = "500m"
     r1km = "1km"
     r5km = "5km"
@@ -25,10 +25,10 @@ class PostVoice(StrEnum):
 
     Unlike ``PostScope`` (a fixed km), the voice is converted to a distance at
     feed-serve time via the neighbour-count conversion (plan: Reach model).
-    ``building`` yields ``reach_m = 0`` (same normalized address key).
+    ``street`` yields ``reach_m = 0`` (same normalized address key).
     """
 
-    building = "building"
+    street = "street"
     some = "some"
     area = "area"
     city = "city"

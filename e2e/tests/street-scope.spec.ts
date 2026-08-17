@@ -4,13 +4,13 @@ import { openComposer, publish, setAddress } from "./helpers";
 
 const uniqueBody = (prefix: string) => `${prefix} ${Date.now()}`;
 
-test("a building-scoped post is only visible to the same address", async ({
+test("a street-scoped post is only visible to the same address", async ({
   page,
 }) => {
-  const body = uniqueBody("Per il palazzo");
+  const body = uniqueBody("Per la mia via");
 
   await openComposer(page);
-  await page.getByTestId("composer-voice-building").check();
+  await page.getByTestId("composer-voice-street").check();
   await publish(page, body);
   await expect(page.getByText(body)).toBeVisible();
 

@@ -1,7 +1,7 @@
 """Feed service: expanding-radius feed honouring scope/visibility semantics.
 
 Implements ADR 0006 (visibility = distance <= scope AND distance <=
-search_radius; ``building`` matches on the normalized address key) and ADR 0007
+search_radius; ``street`` matches on the normalized address key) and ADR 0007
 (expand radius until ~target_count posts, hard ceiling ~50km).
 
 Pagination is keyset-based: each page carries a ``next_cursor`` encoding the
@@ -106,13 +106,13 @@ async def _is_visible(
     """Plan visibility: distance <= post.reach_m AND distance <= search_radius.
 
     ``reach_m`` is converted from the author's voice + trust cap at serve time
-    (neighbour-count -> distance). ``building`` yields reach 0 (same normalized
+    (neighbour-count -> distance). ``street`` yields reach 0 (same normalized
     address key).
     """
     if distance_m > search_radius_m:
         return False
 
-    if post.voice == "building":
+    if post.voice == "street":
         return location.normalized_key == viewer.normalized_key
 
     author = post.device

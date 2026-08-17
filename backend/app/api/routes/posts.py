@@ -75,8 +75,8 @@ async def _resolve_location(
 
 def _scope_to_voice(scope: PostScope) -> PostVoice:
     """Map a legacy km scope onto the voice intent model."""
-    if scope == PostScope.building:
-        return PostVoice.building
+    if scope == PostScope.street:
+        return PostVoice.street
     if scope == PostScope.r5km:
         return PostVoice.area
     return PostVoice.some

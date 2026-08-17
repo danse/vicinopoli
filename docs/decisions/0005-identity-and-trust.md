@@ -17,7 +17,7 @@ scale.
   reach until they accrue trust (age, no reports, engagement). The reach gate
   is a *neighbour-count* cap `K` (how many distinct other active posters a post
   may reach): `UNTRUSTED_K = 1`, `TRUSTED_K = 25` (plan: Reach model). This
-  replaces the old km-based cap on scope; the `building` voice is always
+  replaces the old km-based cap on scope; the `street` voice is always
   honoured.
 - Phone/email verification is a later, optional *reach* gate — never a read gate.
 

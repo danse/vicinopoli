@@ -33,11 +33,11 @@ function messageTypeLabel(type: MessageType): string {
   return key[type];
 }
 
-const VOICE_OPTIONS: PostVoice[] = ["building", "some", "area", "city"];
+const VOICE_OPTIONS: PostVoice[] = ["street", "some", "area", "city"];
 
 function voiceLabel(voice: PostVoice): string {
   const key: Record<PostVoice, string> = {
-    building: "composer.voiceBuilding",
+    street: "composer.voiceStreet",
     some: "composer.voiceSome",
     area: "composer.voiceArea",
     city: "composer.voiceCity",

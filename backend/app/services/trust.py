@@ -6,7 +6,7 @@ report history.
 
 The reach gate is expressed as a *neighbour-count* cap ``K`` (how many distinct
 other active posters a post may reach), replacing the old km cap — see the
-plan's Reach model. ``building`` voice is always honored (reach 0).
+plan's Reach model. ``street`` voice is always honored (reach 0).
 """
 
 from datetime import UTC, datetime

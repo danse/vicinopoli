@@ -11,10 +11,10 @@ choose a range.
 
 ## Decision (original)
 
-- A post carries `scope` = author's max reach (`building`, `500m`, `1km`, `5km`).
+- A post carries `scope` = author's max reach (`street`, `500m`, `1km`, `5km`).
 - A viewer carries `search_radius` = how far they browse.
 - **Visibility = `distance <= scope` AND `distance <= search_radius`.**
-- `building` scope requires the viewer to resolve to the same normalized
+- `street` scope requires the viewer to resolve to the same normalized
   address key.
 
 ## Consequences
