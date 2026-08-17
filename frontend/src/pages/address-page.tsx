@@ -1,6 +1,6 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { AddressCombobox } from "@/components/address-combobox";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,20 @@ import { useBrowserAddress } from "@/lib/use-browser-address";
 export function AddressPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { address, setAddress } = useApp();
+
+  // A ?address= query param (e.g. from the admin "jump into the zone" link)
+  // wins over any stored address: it is applied once on mount and replaces the
+  // current value, so moderators land in the zone they picked.
+  const queryPrefill = useRef(searchParams.get("address"));
+  useEffect(() => {
+    const fromQuery = queryPrefill.current;
+    if (fromQuery !== null && fromQuery.trim() !== "") {
+      setAddress(fromQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Pre-fill from the browser location only when nothing is set yet, and never
   // clobber an address the user has already typed.

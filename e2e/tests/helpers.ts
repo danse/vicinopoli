@@ -20,18 +20,21 @@ export async function seedPosts(
   request: APIRequestContext,
   address: string,
   count: number,
+  body?: string,
 ) {
   const bodies: string[] = [];
+  const ids: string[] = [];
   for (let i = 0; i < count; i++) {
-    const body = `seed ${i} ${Date.now()}`;
+    const text = body ?? `seed ${i} ${Date.now()}`;
     const response = await request.post("/api/posts", {
-      data: { address, body },
+      data: { address, body: text },
       headers: { Cookie: `device_id=${crypto.randomUUID()}` },
     });
     expect(response.status()).toBe(201);
-    bodies.push(body);
+    bodies.push(text);
+    ids.push((await response.json()).id as string);
   }
-  return bodies;
+  return { bodies, ids };
 }
 
 export async function openComposer(page: Page, address: string = ADDRESS) {

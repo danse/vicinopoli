@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 
 import { type FeedItem, getFeed, sendAnalyticsEvents } from "@/api/client";
 
+import { PostMedia } from "@/components/post-media";
+
 interface FeedProps {
   address: string;
   refreshTick?: number;
@@ -146,28 +148,7 @@ export function Feed({
               )}
             </div>
             {post.body.trim() !== "" && <p>{post.body}</p>}
-            {post.media && post.media.length > 0 && (
-              <div className="mt-2 flex flex-col gap-2">
-                {post.media.map((item) =>
-                  item.kind === "image" ? (
-                    <img
-                      key={item.id}
-                      src={item.url}
-                      alt={t("composer.photoAlt")}
-                      className="w-full rounded-md object-cover"
-                    />
-                  ) : (
-                    <audio
-                      key={item.id}
-                      controls
-                      src={item.url}
-                      aria-label={t("composer.voiceAlt")}
-                      className="max-w-full"
-                    />
-                  ),
-                )}
-              </div>
-            )}
+            <PostMedia media={post.media} />
             <p className="mt-2 text-xs text-muted-foreground">
               {post.display_address}
               {post.distance_m != null && (

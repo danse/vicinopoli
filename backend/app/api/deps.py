@@ -1,10 +1,11 @@
 """Dependency injection helpers."""
 
+import hmac
 from collections.abc import AsyncIterator
 from typing import Annotated
 from uuid import UUID, uuid4
 
-from fastapi import Cookie, Depends, Response
+from fastapi import Cookie, Depends, Header, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -86,3 +87,19 @@ def get_post_rate_limiter() -> RateLimiter | None:
             enabled=True,
         )
     return _post_rate_limiter
+
+
+def require_admin(
+    x_admin_token: Annotated[str | None, Header()] = None,
+) -> None:
+    """Gate the internal admin API behind the shared ``ADMIN_TOKEN`` (ADR 0021).
+
+    The token is compared in constant time. When ``ADMIN_TOKEN`` is not set the
+    admin surface is disabled entirely (401), so a misconfigured deployment
+    fails closed rather than exposing the firehose.
+    """
+    expected = settings.admin_token
+    if expected is None or x_admin_token is None:
+        raise HTTPException(status_code=401, detail="unauthorized")
+    if not hmac.compare_digest(x_admin_token, expected):
+        raise HTTPException(status_code=401, detail="unauthorized")

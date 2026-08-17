@@ -76,5 +76,14 @@
     "title": "Support",
     "hint": "Write to {{email}} to report a problem or ask a question.",
     "back": "Back to the start"
+  },
+  "admin": {
+    "title": "Content control",
+    "subtitle": "All submitted messages, for review",
+    "login": "Sign in",
+    "tokenLabel": "Administration code",
+    "tokenError": "Invalid code. Try again.",
+    "reports": "reports",
+    "zone": "Open the zone"
   }
 }

@@ -24,6 +24,9 @@ export default defineConfig({
     VitePWA({
       registerType: "prompt",
       injectRegister: "auto",
+      // The admin entry is a separate internal tool: it must not be part of the
+      // PWA manifest or precache, and must never be served publicly. Keep the
+      // service worker scoped to the public app's entry only.
       manifest: {
         name: "vicinopoli",
         short_name: "vicinopoli",
@@ -55,6 +58,9 @@ export default defineConfig({
       workbox: {
         navigateFallback: "/index.html",
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
+        // The admin entry is an internal tool: it must never be served or
+        // precached by the public service worker.
+        globIgnores: ["admin.html", "assets/admin-*"],
         // Prompt mode does not claim clients by default; without this the first
         // visit never gets controlled by the SW and offline does not work until
         // a manual reload. Updates still wait for user confirmation (no
@@ -73,11 +79,20 @@ export default defineConfig({
       "/api": "http://localhost:8000",
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL("./index.html", import.meta.url)),
+        admin: fileURLToPath(new URL("./admin.html", import.meta.url)),
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
     env: {
       VITE_SUPPORT_EMAIL: "info@vicinopoli.it",
+      VITE_PUBLIC_BASE_URL: "http://localhost:8080",
     },
     coverage: {
       provider: "v8",

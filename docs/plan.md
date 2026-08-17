@@ -1,6 +1,6 @@
 # Plan
 
-Roadmap and milestones for **vicinopoli**.
+Roadmap and todos for **vicinopoli**.
 
 ## Vision
 
@@ -58,16 +58,15 @@ Ordered by priority, remove from the list when done
 
 #### Monday 17
 
-- simple content-control interface: how to add an interface for an administrator to check all the submitted contents (firehose)?
-
 #### Tuesday 18
 
 - message page, activated on clicking. Image shows full-screen in there
-- post editing
+- post removal
+- post editing: should happen within a time window
 
 #### Wednesday 19
 
-- re-enable the feed heatmap
+- app version in sentry reports
 - definition of a read message
 
 #### Thursday 20
@@ -77,11 +76,12 @@ Ordered by priority, remove from the list when done
 
 #### Friday 21
 
-- previews from youtube, instagram, facebook, twitter, reddit, soundcloud etcetera
-- content-spike detection with address
+- rendering of links and previews from youtube, instagram, facebook, twitter, reddit, soundcloud etcetera
+- re-enable the feed heatmap
 
 #### 24-28
 
+- push notifications
 - denial of service surface with changing device id, like we do in pagination tests
 
 ### Moon
@@ -101,3 +101,6 @@ Ordered by priority, remove from the list when done
 - add arabic
 - diffusione
 - street numbers
+- content-spike detection with address
+
+- crowfunding campaign

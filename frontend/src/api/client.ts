@@ -165,3 +165,23 @@ export function getHeatmapTile(
 ): Promise<HeatmapTileResponse> {
   return request(`/api/heatmap/${z}/${x}/${y}`);
 }
+
+export type AdminPost = components["schemas"]["AdminPost"];
+export type AdminFeedResponse = components["schemas"]["AdminFeedResponse"];
+
+export function getAdminFeed(
+  token: string,
+  params: { limit?: number; cursor?: string | null } = {},
+): Promise<AdminFeedResponse> {
+  const searchParams = new URLSearchParams();
+  if (params.limit !== undefined) {
+    searchParams.set("limit", String(params.limit));
+  }
+  if (params.cursor !== undefined && params.cursor !== null) {
+    searchParams.set("cursor", params.cursor);
+  }
+  const query = searchParams.toString();
+  return request(`/api/admin/posts${query ? `?${query}` : ""}`, {
+    headers: { "X-Admin-Token": token },
+  });
+}

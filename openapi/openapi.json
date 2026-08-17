@@ -5,6 +5,84 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/admin/posts": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Get Admin Posts",
+        "description": "Return a page of all posts, newest first, with report counts.\n\nKeyset pagination mirrors the public feed: ``next_cursor`` encodes the last\npost's ``(created_at, id)`` and the next request resumes strictly after it.",
+        "operationId": "get_admin_posts_api_admin_posts_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "x-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminFeedResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "tags": [
@@ -777,6 +855,116 @@
   },
   "components": {
     "schemas": {
+      "AdminFeedResponse": {
+        "properties": {
+          "posts": {
+            "items": {
+              "$ref": "#/components/schemas/AdminPost"
+            },
+            "type": "array",
+            "title": "Posts"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "posts"
+        ],
+        "title": "AdminFeedResponse"
+      },
+      "AdminPost": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "voice": {
+            "$ref": "#/components/schemas/PostVoice"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PostStatus"
+          },
+          "display_address": {
+            "type": "string",
+            "title": "Display Address"
+          },
+          "geohash": {
+            "type": "string",
+            "title": "Geohash"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "pseudonym": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pseudonym"
+          },
+          "new_neighbour": {
+            "type": "boolean",
+            "title": "New Neighbour",
+            "default": true
+          },
+          "report_count": {
+            "type": "integer",
+            "title": "Report Count",
+            "default": 0
+          },
+          "device_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Id"
+          },
+          "media": {
+            "items": {
+              "$ref": "#/components/schemas/MediaInfo"
+            },
+            "type": "array",
+            "title": "Media"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "body",
+          "voice",
+          "status",
+          "display_address",
+          "geohash",
+          "created_at"
+        ],
+        "title": "AdminPost"
+      },
       "AnalyticsEventBatch": {
         "properties": {
           "events": {

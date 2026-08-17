@@ -2,9 +2,19 @@
 
 from fastapi import APIRouter
 
-from app.api.routes import experiments, health, heatmap, identity, media, posts, reports
+from app.api.routes import (
+    admin,
+    experiments,
+    health,
+    heatmap,
+    identity,
+    media,
+    posts,
+    reports,
+)
 
 api_router = APIRouter()
+api_router.include_router(admin.router, tags=["admin"])
 api_router.include_router(health.router, tags=["health"])
 api_router.include_router(identity.router, tags=["identity"])
 api_router.include_router(media.router, tags=["media"])

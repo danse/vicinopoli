@@ -76,5 +76,14 @@
     "title": "Supporto",
     "hint": "Scrivi a {{email}} per segnalare un problema o fare una domanda.",
     "back": "Torna all'inizio"
+  },
+  "admin": {
+    "title": "Controllo contenuti",
+    "subtitle": "Tutti i messaggi inviati, per la revisione",
+    "login": "Accedi",
+    "tokenLabel": "Codice di amministrazione",
+    "tokenError": "Codice non valido. Riprova.",
+    "reports": "segnalazioni",
+    "zone": "Apri la zona"
   }
 }

@@ -12,6 +12,7 @@ os.environ.setdefault(
     "postgresql+asyncpg://vicinopoli:vicinopoli@localhost:5433/vicinopoli_test",
 )
 os.environ.setdefault("GEOCODER_MODE", "static")
+os.environ.setdefault("ADMIN_TOKEN", "test-admin-token")
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient

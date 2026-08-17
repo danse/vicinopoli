@@ -52,6 +52,7 @@ services:
       NOMINATIM_BASE_URL: https://nominatim.openstreetmap.org
       PHOTON_BASE_URL: ${PHOTON_BASE_URL:-https://photon.komoot.io}
       SENTRY_DSN: ${SENTRY_DSN:-}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?set ADMIN_TOKEN in .env}
     depends_on:
       db:
         condition: service_healthy
@@ -80,9 +81,29 @@ services:
         VITE_SENTRY_DSN: ${SENTRY_DSN:-}
         VITE_COMMIT_HASH: ${VITE_COMMIT_HASH:-dev}
         VITE_SUPPORT_EMAIL: ${VITE_SUPPORT_EMAIL:-info@vicinopoli.it}
+        VITE_PUBLIC_BASE_URL: https://${DOMAIN:?set DOMAIN in .env}
     restart: unless-stopped
     expose:
       - "80"
+
+  # Internal admin firehose: bound to localhost only, never exposed publicly.
+  admin:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_SENTRY_DSN: ${SENTRY_DSN:-}
+        VITE_COMMIT_HASH: ${VITE_COMMIT_HASH:-dev}
+        VITE_SUPPORT_EMAIL: ${VITE_SUPPORT_EMAIL:-info@vicinopoli.it}
+        VITE_PUBLIC_BASE_URL: https://${DOMAIN:?set DOMAIN in .env}
+    restart: unless-stopped
+    volumes:
+      - ../frontend/admin-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "127.0.0.1:8081:80"
+    depends_on:
+      backend:
+        condition: service_healthy
 
   prometheus:
     image: prom/prometheus:latest
