@@ -93,7 +93,7 @@ export function Feed({
                 </span>
               )}
             </div>
-            <p>{post.body}</p>
+            {post.body.trim() !== "" && <p>{post.body}</p>}
             {post.media && post.media.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
                 {post.media.map((item) =>

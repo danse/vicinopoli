@@ -60,20 +60,25 @@ Ordered by priority, remove from the list when done
 
 #### Monday
 
-- text is opt-in when entering a picture
+- test that two users can read each other from 45 kilometers distance in a rural area
+- have the address pre-filled from the browser location
 
 #### Tuesday
 
-- test that two users can read each other from 45 kilometers distance in a rural area
 - do we have message cycle tests for pictures and audios?
-- migration from docker to nix?
-- location from the browser
+- i am considering a migration from docker to nix, what do you think about it?
 - replies and threading user experience
 - send a notification upon a reply
 
 #### Wednesday
 
-- picture page
+- message page, activated on clicking. Image shows full-screen in there
+- feed pagination with endless scrolling
+- post editing
+
+#### Thursday
+
+#### Friday
 
 #### 24-28
 

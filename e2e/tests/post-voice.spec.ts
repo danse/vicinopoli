@@ -1,8 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-import { openComposer, publish } from "./helpers";
+import { openComposer, publish, publishWithoutText } from "./helpers";
 
 const uniqueBody = (prefix: string) => `${prefix} ${Date.now()}`;
+
+async function recordVoice(page: import("@playwright/test").Page) {
+  await page.getByTestId("composer-type-voice").click();
+  await page.getByTestId("composer-voice-start").click();
+  await expect(page.getByTestId("composer-voice-stop")).toBeVisible();
+  await page.getByTestId("composer-voice-stop").click();
+}
 
 test("a user can record a voice message and see it in the feed", async ({
   page,
@@ -15,13 +22,9 @@ test("a user can record a voice message and see it in the feed", async ({
   await context.grantPermissions(["microphone"], { origin: "http://localhost:8080" });
 
   await openComposer(page);
-  await page.getByTestId("composer-type-voice").click();
+  await recordVoice(page);
 
-  await page.getByTestId("composer-voice-start").click();
-  await expect(page.getByTestId("composer-voice-stop")).toBeVisible();
-  await page.getByTestId("composer-voice-stop").click();
-
-  await publish(page, body);
+  await publish(page, body, "caption");
 
   await expect(page.getByText(body)).toBeVisible();
   await expect(
@@ -29,5 +32,20 @@ test("a user can record a voice message and see it in the feed", async ({
       .getByRole("listitem")
       .filter({ hasText: body })
       .getByLabel("Messaggio vocale allegato"),
+  ).toBeVisible();
+});
+
+test("a voice message can be published without any text", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["microphone"], { origin: "http://localhost:8080" });
+
+  await openComposer(page);
+  await recordVoice(page);
+  await publishWithoutText(page);
+
+  await expect(
+    page.getByLabel("Messaggio vocale allegato").first(),
   ).toBeVisible();
 });

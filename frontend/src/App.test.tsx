@@ -379,6 +379,7 @@ describe("App", () => {
     await openComposer();
 
     expect(screen.getByTestId("composer-message")).toBeInTheDocument();
+    expect(screen.queryByTestId("composer-caption")).not.toBeInTheDocument();
     expect(screen.queryByTestId("composer-photo")).not.toBeInTheDocument();
     expect(
       screen.queryByTestId("composer-voice-start"),
@@ -386,12 +387,15 @@ describe("App", () => {
 
     fireEvent.click(screen.getByTestId("composer-type-photo"));
     expect(screen.getByTestId("composer-photo")).toBeInTheDocument();
+    expect(screen.getByTestId("composer-caption")).toBeInTheDocument();
+    expect(screen.queryByTestId("composer-message")).not.toBeInTheDocument();
     expect(
       screen.queryByTestId("composer-voice-start"),
     ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("composer-type-voice"));
     expect(screen.getByTestId("composer-voice-start")).toBeInTheDocument();
+    expect(screen.getByTestId("composer-caption")).toBeInTheDocument();
     expect(screen.queryByTestId("composer-photo")).not.toBeInTheDocument();
   });
 
@@ -526,6 +530,24 @@ describe("App", () => {
     expect(publish().disabled).toBe(false);
   });
 
+  it("a photo can be published without any text", async () => {
+    renderApp();
+    await openComposer();
+    fireEvent.click(screen.getByTestId("composer-type-photo"));
+    const publish = () =>
+      screen.getByRole("button", { name: "Pubblica" }) as HTMLButtonElement;
+    expect(publish().disabled).toBe(true);
+    const file = new File(["x"], "photo.png", { type: "image/png" });
+    fireEvent.change(screen.getByTestId("composer-photo"), {
+      target: { files: [file] },
+    });
+    expect(publish().disabled).toBe(false);
+    fireEvent.click(publish());
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+  });
+
   it("reports a failed publish to Sentry with error details", async () => {
     sentryCapture.mockClear();
     const store = mockFetch();
@@ -624,7 +646,7 @@ describe("App", () => {
 
     await openComposer();
     fireEvent.click(screen.getByTestId("composer-type-photo"));
-    fireEvent.change(screen.getByTestId("composer-message"), {
+    fireEvent.change(screen.getByTestId("composer-caption"), {
       target: { value: "Foto del quartiere" },
     });
 
@@ -826,26 +848,21 @@ describe("App", () => {
       });
     vi.stubGlobal("fetch", store);
 
-    let recorder: {
-      state: string;
-      ondataavailable: ((e: { data: Blob }) => void) | null;
-      onstop: (() => void) | null;
-    } = { state: "inactive", ondataavailable: null, onstop: null };
     const FakeMediaRecorder = vi.fn().mockImplementation(() => {
-      recorder = { state: "inactive", ondataavailable: null, onstop: null };
-      return {
-        get state() {
-          return recorder.state;
-        },
+      const instance = {
+        state: "inactive",
+        ondataavailable: null as ((e: { data: Blob }) => void) | null,
+        onstop: null as (() => void) | null,
         start: () => {
-          recorder.state = "recording";
+          instance.state = "recording";
         },
         stop: () => {
-          recorder.state = "inactive";
-          recorder.ondataavailable?.({ data: new Blob(["voice"]) });
-          recorder.onstop?.();
+          instance.state = "inactive";
+          instance.ondataavailable?.({ data: new Blob(["voice"]) });
+          instance.onstop?.();
         },
       };
+      return instance;
     });
     (
       FakeMediaRecorder as unknown as {
@@ -866,7 +883,7 @@ describe("App", () => {
 
     await openComposer();
     fireEvent.click(screen.getByTestId("composer-type-voice"));
-    fireEvent.change(screen.getByTestId("composer-message"), {
+    fireEvent.change(screen.getByTestId("composer-caption"), {
       target: { value: "Messaggio vocale" },
     });
 
@@ -876,7 +893,12 @@ describe("App", () => {
     });
 
     fireEvent.click(screen.getByTestId("composer-voice-stop"));
-    fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
+    const publishButton = () =>
+      screen.getByRole("button", { name: "Pubblica" }) as HTMLButtonElement;
+    await waitFor(() => {
+      expect(publishButton().disabled).toBe(false);
+    });
+    fireEvent.click(publishButton());
 
     await waitFor(() => {
       expect(

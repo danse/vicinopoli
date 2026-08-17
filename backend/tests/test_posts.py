@@ -46,6 +46,52 @@ async def test_create_post_unknown_address_returns_404(client) -> None:
 
 
 @pytest.mark.asyncio
+async def test_create_post_without_body_or_media_rejected(client) -> None:
+    """Text is opt-in only when media is present: an empty body with no media
+    is still rejected."""
+    response = await client.post(
+        "/api/posts",
+        json={"address": "Via Roma 1, Roma", "body": "", "scope": "1km"},
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_post_with_media_and_no_body(client) -> None:
+    """A photo or voice post can skip the text entirely (plan: 'text is
+    opt-in when entering a picture')."""
+    media = await client.post(
+        "/api/media/register",
+        json={
+            "kind": "image",
+            "object_key": "images/2026/08/abc-no-text.jpg",
+            "content_type": "image/jpeg",
+            "size": 5120,
+        },
+    )
+    media_id = media.json()["id"]
+
+    response = await client.post(
+        "/api/posts",
+        json={
+            "address": "Via Roma 1, Roma",
+            "body": "",
+            "scope": "1km",
+            "media_ids": [media_id],
+        },
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["body"] == ""
+    assert data["media"][0]["id"] == media_id
+
+    feed = await client.get("/api/feed", params={"address": "Via Roma 1, Roma"})
+    item = feed.json()["posts"][0]
+    assert item["body"] == ""
+    assert item["media"][0]["kind"] == "image"
+
+
+@pytest.mark.asyncio
 async def test_create_post_degrades_when_geocoder_rate_limited(client) -> None:
     """A Nominatim 429 on geocode must not become a 500 when posting.
 

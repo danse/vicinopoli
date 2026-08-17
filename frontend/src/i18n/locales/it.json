@@ -20,6 +20,8 @@
     "addressPlaceholder": "Es. Via Roma 1, Roma",
     "messageLabel": "Scrivi un messaggio",
     "messagePlaceholder": "Ciao vicinə!",
+    "captionLabel": "Didascalia",
+    "captionPlaceholder": "Aggiungi una didascalia (facoltativa)",
     "postingAs": "Pubblicando come",
     "changePseudonym": "Cambia",
     "typeLabel": "Tipo di messaggio",

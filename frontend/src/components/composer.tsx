@@ -89,7 +89,14 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
   const tracksRef = useRef<MediaStreamTrack[]>([]);
   const startTimeRef = useRef<number>(0);
 
-  const canSubmit = address.trim() !== "" && body.trim() !== "" && !submitting;
+  let canSubmit = address.trim() !== "" && !submitting;
+  if (type === "text") {
+    canSubmit = canSubmit && body.trim() !== "";
+  } else if (type === "photo") {
+    canSubmit = canSubmit && photo !== null;
+  } else {
+    canSubmit = canSubmit && voice !== null;
+  }
 
   const handlePhotoChange = (file: File | null) => {
     setPhoto(file);
@@ -238,20 +245,41 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
         </div>
       </div>
       <div className="mt-4 grid gap-2">
-        <label
-          htmlFor="composer-message"
-          className="text-sm font-medium text-foreground"
-        >
-          {t("composer.messageLabel")}
-        </label>
-        <textarea
-          id="composer-message"
-          data-testid="composer-message"
-          className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          value={body}
-          placeholder={t("composer.messagePlaceholder")}
-          onChange={(e) => setBody(e.target.value)}
-        />
+        {type === "text" ? (
+          <>
+            <label
+              htmlFor="composer-message"
+              className="text-sm font-medium text-foreground"
+            >
+              {t("composer.messageLabel")}
+            </label>
+            <textarea
+              id="composer-message"
+              data-testid="composer-message"
+              className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              value={body}
+              placeholder={t("composer.messagePlaceholder")}
+              onChange={(e) => setBody(e.target.value)}
+            />
+          </>
+        ) : (
+          <>
+            <label
+              htmlFor="composer-caption"
+              className="text-sm font-medium text-foreground"
+            >
+              {t("composer.captionLabel")}
+            </label>
+            <input
+              id="composer-caption"
+              data-testid="composer-caption"
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              value={body}
+              placeholder={t("composer.captionPlaceholder")}
+              onChange={(e) => setBody(e.target.value)}
+            />
+          </>
+        )}
       </div>
       <div className="mt-4 grid gap-2">
         <span className="text-sm font-medium text-foreground">

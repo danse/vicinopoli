@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.schemas.media import MediaInfo
 
@@ -42,10 +42,16 @@ class PostStatus(StrEnum):
 
 class PostCreate(BaseModel):
     address: str = Field(min_length=1, max_length=512)
-    body: str = Field(min_length=1, max_length=5000)
+    body: str = Field(default="", max_length=5000)
     voice: PostVoice = PostVoice.city
     scope: PostScope | None = None
     media_ids: list[uuid.UUID] = Field(default_factory=list, max_length=9)
+
+    @model_validator(mode="after")
+    def _require_text_or_media(self) -> "PostCreate":
+        if not self.body.strip() and not self.media_ids:
+            raise ValueError("a post needs text or at least one media item")
+        return self
 
 
 class LocationInfo(BaseModel):

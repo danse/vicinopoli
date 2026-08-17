@@ -20,6 +20,8 @@
     "addressPlaceholder": "E.g. Via Roma 1, Roma",
     "messageLabel": "Write a message",
     "messagePlaceholder": "Hello neighbours!",
+    "captionLabel": "Caption",
+    "captionPlaceholder": "Add a caption (optional)",
     "postingAs": "Posting as",
     "changePseudonym": "Change",
     "typeLabel": "Message type",

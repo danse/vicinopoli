@@ -1308,8 +1308,8 @@
           "body": {
             "type": "string",
             "maxLength": 5000,
-            "minLength": 1,
-            "title": "Body"
+            "title": "Body",
+            "default": ""
           },
           "voice": {
             "$ref": "#/components/schemas/PostVoice",
@@ -1337,8 +1337,7 @@
         },
         "type": "object",
         "required": [
-          "address",
-          "body"
+          "address"
         ],
         "title": "PostCreate"
       },

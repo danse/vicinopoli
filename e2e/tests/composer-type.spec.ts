@@ -10,7 +10,7 @@ test("the composer defaults to the text type", async ({ page }) => {
   await expect(page.getByTestId("composer-voice-start")).not.toBeVisible();
 });
 
-test("selecting the photo type shows the photo picker and hides the voice recorder", async ({
+test("selecting the photo type shows the photo picker and a caption", async ({
   page,
 }) => {
   await openComposer(page);
@@ -18,11 +18,12 @@ test("selecting the photo type shows the photo picker and hides the voice record
   await page.getByTestId("composer-type-photo").click();
 
   await expect(page.getByTestId("composer-photo")).toBeVisible();
+  await expect(page.getByTestId("composer-caption")).toBeVisible();
+  await expect(page.getByTestId("composer-message")).not.toBeVisible();
   await expect(page.getByTestId("composer-voice-start")).not.toBeVisible();
-  await expect(page.getByTestId("composer-message")).toBeVisible();
 });
 
-test("selecting the voice type shows the recorder and hides the photo picker", async ({
+test("selecting the voice type shows the recorder and a caption", async ({
   page,
 }) => {
   await openComposer(page);
@@ -30,8 +31,9 @@ test("selecting the voice type shows the recorder and hides the photo picker", a
   await page.getByTestId("composer-type-voice").click();
 
   await expect(page.getByTestId("composer-voice-start")).toBeVisible();
+  await expect(page.getByTestId("composer-caption")).toBeVisible();
+  await expect(page.getByTestId("composer-message")).not.toBeVisible();
   await expect(page.getByTestId("composer-photo")).not.toBeVisible();
-  await expect(page.getByTestId("composer-message")).toBeVisible();
 });
 
 test("switching back to the text type hides both media inputs", async ({
