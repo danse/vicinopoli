@@ -60,11 +60,10 @@ Ordered by priority, remove from the list when done
 
 - test that two new users in a rural/unpopulated area can read each other from 45 kilometers distance
 - have the address pre-filled from the browser location
+- do we have message cycle tests for pictures and audios?
 
 #### Tuesday 18
 
-- do we have message cycle tests for pictures and audios?
-- i am considering a migration from docker to nix, what do you think about it?
 - message page, activated on clicking. Image shows full-screen in there
 - post editing
 

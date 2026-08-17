@@ -30,6 +30,9 @@ STATIC_ADDRESSES: Final[dict[str, tuple[float, float, str]]] = {
     "via roma 1, roma": (41.8933, 12.4829, "Via Roma 1, Roma"),
     "piazza venezia, roma": (41.8957, 12.4823, "Piazza Venezia, Roma"),
     "milano centrale, milano": (45.4861, 9.204, "Milano Centrale, Milano"),
+    # Two rural Molise towns ~45km apart (cold-bootstrap reach test).
+    "capracotta, molise": (41.833903, 14.2642443, "Capracotta, Molise"),
+    "campobasso, molise": (41.56, 14.662, "Campobasso, Molise"),
 }
 
 

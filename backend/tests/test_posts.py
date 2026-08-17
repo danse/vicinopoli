@@ -359,3 +359,42 @@ async def test_feed_invalid_cursor_returns_400(client) -> None:
         params={"address": "Via Roma 1, Roma", "cursor": "not-a-valid-cursor"},
     )
     assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_feed_stops_evaluating_visibility_at_target_count(
+    client, monkeypatch
+) -> None:
+    """The feed must not run a reach query for every post in the radius.
+
+    Regression for the N+1 slowdown: with a dense radius the feed used to
+    compute ``reach_for`` once per candidate (feed.py ``_is_visible``), which
+    made a single page cost O(posts) reach queries. Candidates are ordered
+    newest-first, so the feed should stop scanning as soon as ``target_count``
+    visible posts have been collected.
+    """
+    import app.services.feed as feed_module
+
+    for i in range(40):
+        client.cookies.clear()
+        await _create_post(client, f"dense-{i:02d}", scope="5km")
+
+    calls = 0
+
+    async def counting_reach_for(session, location, k, exclude_device_ids=None):
+        nonlocal calls
+        calls += 1
+        return 50_000
+
+    monkeypatch.setattr(feed_module, "reach_for", counting_reach_for)
+
+    response = await client.get(
+        "/api/feed",
+        params={"address": "Via Roma 1, Roma", "target_count": 10},
+    )
+    assert response.status_code == 200
+    assert len(response.json()["posts"]) == 10
+    assert calls <= 10, (
+        f"reach_for ran {calls} times for a target_count of 10; the feed "
+        "should stop scanning once it has enough visible posts"
+    )

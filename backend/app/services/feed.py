@@ -138,8 +138,13 @@ async def expanding_radius_feed(
     for radius_m in RADIUS_STEPS:
         effective_radius = min(radius_m, search_radius_m)
         candidates = await _posts_within(session, viewer, radius_m, search_radius_m, cursor=cursor)
-        visible = []
+        visible: list[tuple[Post, Location, float]] = []
         for post, location, distance_m in candidates:
+            # Candidates are newest-first: once the page is full we can stop,
+            # the remaining posts belong on a later page. At the ceiling the
+            # full scan still runs so ``has_more`` below stays accurate.
+            if radius_m < MAX_RADIUS_M and len(visible) >= target_count:
+                break
             if await _is_visible(
                 session, post, location, distance_m, viewer, search_radius_m
             ):

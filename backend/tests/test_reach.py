@@ -6,8 +6,9 @@ distinct *other* active posters. This is the conversion layer between the
 fuzzy "voice" concept and the distance-based visibility rule (plan: Reach
 model).
 
-The static geocoder map has three addresses: Piazza Venezia is ~270m from Via
-Roma 1, Milano is ~470km away.
+The static geocoder map provides addresses at several distances (Piazza
+Venezia ~270m from Via Roma 1, Milano ~470km away, Capracotta/Campobasso in
+Molise ~45km apart).
 """
 
 import pytest
@@ -21,6 +22,8 @@ from app.services.reach import reach_for
 VIA_ROMA = STATIC_ADDRESSES["via roma 1, roma"]  # (41.8933, 12.4829)
 PIAZZA_VENEZIA = STATIC_ADDRESSES["piazza venezia, roma"]
 MILANO = STATIC_ADDRESSES["milano centrale, milano"]
+CAPRACOTTA = STATIC_ADDRESSES["capracotta, molise"]
+CAMPOBASSO = STATIC_ADDRESSES["campobasso, molise"]
 
 
 async def _post_at(client, address: str, body: str = "ciao", fresh_device: bool = True) -> str:
@@ -100,3 +103,31 @@ async def test_reach_for_without_exclusion_counts_author(client, session_factory
     async with session_factory() as session:
         reach = await reach_for(session, location, k=1)
     assert reach == 500
+
+
+@pytest.mark.asyncio
+async def test_rural_new_users_read_each_other_from_45km(client) -> None:
+    """Cold bootstrap in a rural area: two new users ~45km apart reach each other.
+
+    Capracotta and Campobasso (Molise) are ~45km apart. Both authors are new
+    (K = UNTRUSTED_K = 1); with no other posters nearby, each post's reach
+    spreads to the 50km ceiling, so each user sees the other's post.
+    """
+    await _post_at(client, "Capracotta, Molise", body="capracotta ciao")
+    await _post_at(client, "Campobasso, Molise", body="campobasso ciao")
+
+    from_capracotta = await client.get(
+        "/api/feed", params={"address": "Capracotta, Molise"}
+    )
+    assert from_capracotta.status_code == 200
+    capracotta_bodies = [post["body"] for post in from_capracotta.json()["posts"]]
+    assert "campobasso ciao" in capracotta_bodies
+    assert "capracotta ciao" in capracotta_bodies
+
+    from_campobasso = await client.get(
+        "/api/feed", params={"address": "Campobasso, Molise"}
+    )
+    assert from_campobasso.status_code == 200
+    campobasso_bodies = [post["body"] for post in from_campobasso.json()["posts"]]
+    assert "capracotta ciao" in campobasso_bodies
+    assert "campobasso ciao" in campobasso_bodies
