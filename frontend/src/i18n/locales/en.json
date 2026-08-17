@@ -5,6 +5,12 @@
     "switchLanguage": "Italiano",
     "version": "version"
   },
+  "update": {
+    "available": "A new version is available. Reload to update.",
+    "reload": "Update",
+    "close": "Later",
+    "offlineReady": "Ready to work offline."
+  },
   "address": {
     "title": "Where are you?",
     "hint": "Enter your address to see your neighbours' messages.",

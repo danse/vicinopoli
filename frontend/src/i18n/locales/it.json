@@ -5,6 +5,12 @@
     "switchLanguage": "English",
     "version": "versione"
   },
+  "update": {
+    "available": "C'è una nuova versione. Ricarica per aggiornare.",
+    "reload": "Aggiorna",
+    "close": "Più tardi",
+    "offlineReady": "Pronta per funzionare offline."
+  },
   "address": {
     "title": "Dove ti trovi?",
     "hint": "Inserisci il tuo indirizzo per vedere i messaggi delle vicine.",

@@ -22,7 +22,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       injectRegister: "auto",
       manifest: {
         name: "vicinopoli",
@@ -55,6 +55,11 @@ export default defineConfig({
       workbox: {
         navigateFallback: "/index.html",
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
+        // Prompt mode does not claim clients by default; without this the first
+        // visit never gets controlled by the SW and offline does not work until
+        // a manual reload. Updates still wait for user confirmation (no
+        // skipWaiting) before taking control.
+        clientsClaim: true,
       },
     }),
   ],

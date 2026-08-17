@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { ConsentBanner } from "@/components/consent-banner";
+import { UpdatePrompt } from "@/components/update-prompt";
 import { AppProvider, useApp } from "@/context/app-context";
 import { AddressPage } from "@/pages/address-page";
 import { ComposerPage } from "@/pages/composer-page";
@@ -43,6 +44,7 @@ function AppRoutes() {
       {!consentDecided && (
         <ConsentBanner onDecide={(consented) => decideConsent(consented)} />
       )}
+      <UpdatePrompt />
       <Routes>
         <Route path="/" element={<Navigate to="/address" replace />} />
         <Route path="/address" element={<AddressPage />} />

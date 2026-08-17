@@ -58,10 +58,10 @@ Ordered by priority, remove from the list when done
 
 #### Monday 17
 
-- frontend app asks to update on new versions
-- i get "Upload failed: 405" on sentry when trying to post media messages. Add some troubleshooting info to that error response
-- simple content-control interface: how to add an interface for an administrator to check all the submitted contents (firehose)?
 - support interface pointing at info@<domain>
+- images to take all the horizontal space within a message
+
+- simple content-control interface: how to add an interface for an administrator to check all the submitted contents (firehose)?
 
 #### Tuesday 18
 
@@ -69,17 +69,23 @@ Ordered by priority, remove from the list when done
 - post editing
 
 #### Wednesday 19
-#### Thursday 20
-#### Friday 21
-
-#### 24-28
 
 - re-enable the feed heatmap
 - definition of a read message
+
+#### Thursday 20
+
 - functional reactive programming (new posts and realtime mode)
 - search engine optimisation
+
+#### Friday 21
+
 - previews from youtube, instagram, facebook, twitter, reddit, soundcloud etcetera
-- content-spike detection with coordinates
+- content-spike detection with address
+
+#### 24-28
+
+- denial of service surface with changing device id, like we do in pagination tests
 
 ### Moon
 
