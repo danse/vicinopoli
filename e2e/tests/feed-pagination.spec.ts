@@ -1,10 +1,16 @@
 import { expect, test } from "@playwright/test";
 
-import { ADDRESS, setAddress } from "./helpers";
+import { ADDRESS, seedPosts, setAddress } from "./helpers";
 
 test("the feed loads a first page and loads more on scroll", async ({
   page,
+  request,
 }) => {
+  // The suite starts from a cleared DB, so this spec seeds its own posts to
+  // guarantee more than one page exists at the address. Each post comes from a
+  // fresh device so the per-device post rate limit is never hit.
+  await seedPosts(request, ADDRESS, 22);
+
   await setAddress(page, ADDRESS);
 
   const firstPage = page.getByTestId("feed-post");

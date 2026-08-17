@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type APIRequestContext, type Page } from "@playwright/test";
 
 export const ADDRESS = "Via Roma 1, Roma";
 
@@ -7,6 +7,31 @@ export async function setAddress(page: Page, address: string) {
   await page.getByTestId("address-input").fill(address);
   await page.getByTestId("address-submit").click();
   await expect(page).toHaveURL(/\/feed$/);
+}
+
+/**
+ * Seed ``count`` posts at ``address`` via the API, each from a fresh device.
+ *
+ * The stack rate-limits posting to 5/min per device, so every post uses a brand
+ * new ``device_id`` cookie (the backend mints a new device for an unknown id)
+ * and never trips the limiter.
+ */
+export async function seedPosts(
+  request: APIRequestContext,
+  address: string,
+  count: number,
+) {
+  const bodies: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const body = `seed ${i} ${Date.now()}`;
+    const response = await request.post("/api/posts", {
+      data: { address, body },
+      headers: { Cookie: `device_id=${crypto.randomUUID()}` },
+    });
+    expect(response.status()).toBe(201);
+    bodies.push(body);
+  }
+  return bodies;
 }
 
 export async function openComposer(page: Page, address: string = ADDRESS) {
