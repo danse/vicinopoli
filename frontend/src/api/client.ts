@@ -63,6 +63,9 @@ export function getFeed(
   if (params.search_radius_m !== undefined) {
     searchParams.set("search_radius_m", String(params.search_radius_m));
   }
+  if (params.cursor !== undefined && params.cursor !== null) {
+    searchParams.set("cursor", params.cursor);
+  }
   return request(`/api/feed?${searchParams.toString()}`);
 }
 

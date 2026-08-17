@@ -56,32 +56,27 @@ Three distinct concepts, never conflated:
 
 Ordered by priority, remove from the list when done
 
-#### 17-21
+#### Monday 17
 
-#### Monday
-
-- test that two users can read each other from 45 kilometers distance in a rural area
+- test that two new users in a rural/unpopulated area can read each other from 45 kilometers distance
 - have the address pre-filled from the browser location
 
-#### Tuesday
+#### Tuesday 18
 
 - do we have message cycle tests for pictures and audios?
 - i am considering a migration from docker to nix, what do you think about it?
-- replies and threading user experience
-- send a notification upon a reply
-
-#### Wednesday
-
 - message page, activated on clicking. Image shows full-screen in there
-- feed pagination with endless scrolling
 - post editing
 
-#### Thursday
+#### Wednesday 19
 
-#### Friday
+#### Thursday 20
+
+#### Friday 21
 
 #### 24-28
 
+- simple content-control interface
 - re-enable the feed heatmap
 - definition of a read message
 - functional reactive programming (new posts and realtime mode)
@@ -94,8 +89,9 @@ Ordered by priority, remove from the list when done
 
 - campaign: ${ibla,ragusa}-${eventi,events,chat}
 
-- content-control interface
 - equalise
+- replies and threading user experience
+- send a notification upon a reply
 - range map in composer
 - distance UX: colour-code post cards by distance band and/or a small proximity visualisation (rings/intensity), as a future enhancement
 - address geocoded on the client and shown on map with the range (unsure whether on the address page or post page)

@@ -29,7 +29,7 @@ from app.schemas.post import (
     PostScope,
     PostVoice,
 )
-from app.services.feed import expanding_radius_feed
+from app.services.feed import decode_cursor, expanding_radius_feed
 from app.services.heatmap import bump_activity_cell
 from app.services.media import media_by_post, media_info
 from app.services.reach import MAX_RADIUS_M
@@ -148,13 +148,23 @@ async def get_feed(
     address: str = Query(min_length=1, max_length=512),
     target_count: int = Query(default=10, ge=1, le=50),
     search_radius_m: int = Query(default=MAX_RADIUS_M, ge=1, le=MAX_RADIUS_M),
+    cursor: str | None = Query(default=None),
 ) -> FeedResponse:
     geocoded = await geocoder.geocode(address)
     if geocoded is None:
         raise HTTPException(status_code=404, detail="address not found")
 
-    feed_posts, effective_radius = await expanding_radius_feed(
-        session, geocoded, target_count=target_count, search_radius_m=search_radius_m
+    try:
+        cursor_key = decode_cursor(cursor) if cursor else None
+    except Exception:
+        raise HTTPException(status_code=400, detail="invalid cursor") from None
+
+    feed_posts, effective_radius, next_cursor = await expanding_radius_feed(
+        session,
+        geocoded,
+        target_count=target_count,
+        search_radius_m=search_radius_m,
+        cursor=cursor_key,
     )
 
     post_ids = [post.id for post in feed_posts]
@@ -179,4 +189,5 @@ async def get_feed(
         ],
         effective_radius_m=effective_radius,
         target_count=target_count,
+        next_cursor=next_cursor,
     )

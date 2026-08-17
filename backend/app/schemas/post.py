@@ -91,3 +91,4 @@ class FeedResponse(BaseModel):
     posts: list[FeedItem]
     effective_radius_m: int
     target_count: int
+    next_cursor: str | None = None

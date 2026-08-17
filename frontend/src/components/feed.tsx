@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { type FeedResponse, getFeed, sendAnalyticsEvents } from "@/api/client";
+import { type FeedItem, getFeed, sendAnalyticsEvents } from "@/api/client";
 
 interface FeedProps {
   address: string;
@@ -25,43 +25,94 @@ export function Feed({
   analyticsConsented = false,
 }: FeedProps) {
   const { t } = useTranslation();
-  const [feed, setFeed] = useState<FeedResponse | null>(null);
+  const [posts, setPosts] = useState<FeedItem[] | null>(null);
+  const [effectiveRadius, setEffectiveRadius] = useState(0);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const lastReported = useRef<string>("");
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const nextCursorRef = useRef<string | null>(null);
+
+  const report = useCallback(
+    (batch: FeedItem[]) => {
+      if (!analyticsConsented || batch.length === 0) return;
+      const key = batch.map((p) => p.id).join(",");
+      if (key === lastReported.current) return;
+      lastReported.current = key;
+      void sendAnalyticsEvents(
+        batch.slice(0, 10).map((p) => ({
+          name: "post_viewed",
+          geohash: p.geohash,
+        })),
+      );
+    },
+    [analyticsConsented],
+  );
 
   useEffect(() => {
     if (address === "") {
-      setFeed(null);
+      setPosts(null);
       return;
     }
     let cancelled = false;
+    setPosts(null);
+    setLoading(true);
     getFeed({ address })
       .then((result) => {
-        if (!cancelled) setFeed(result);
-        if (!cancelled && analyticsConsented && result.posts.length > 0) {
-          const key = result.posts.map((p) => p.id).join(",");
-          if (key !== lastReported.current) {
-            lastReported.current = key;
-            void sendAnalyticsEvents(
-              result.posts.slice(0, 10).map((p) => ({
-                name: "post_viewed",
-                geohash: p.geohash,
-              })),
-            );
-          }
-        }
+        if (cancelled) return;
+        setPosts(result.posts);
+        setEffectiveRadius(result.effective_radius_m);
+        setNextCursor(result.next_cursor ?? null);
+        nextCursorRef.current = result.next_cursor ?? null;
+        report(result.posts);
       })
       .catch(() => {
-        if (!cancelled)
-          setFeed({ posts: [], effective_radius_m: 0, target_count: 10 });
+        if (!cancelled) setPosts([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [address, refreshTick, analyticsConsented]);
+  }, [address, refreshTick, report]);
 
-  if (feed === null) return null;
+  const loadMore = useCallback(async () => {
+    if (loading || nextCursorRef.current === null) return;
+    const cursor = nextCursorRef.current;
+    setLoading(true);
+    try {
+      const result = await getFeed({ address, cursor });
+      setPosts((prev) => [...(prev ?? []), ...result.posts]);
+      setEffectiveRadius(result.effective_radius_m);
+      nextCursorRef.current = result.next_cursor ?? null;
+      setNextCursor(result.next_cursor ?? null);
+      report(result.posts);
+    } catch {
+      // Keep the current page; the sentinel will retry on the next scroll.
+    } finally {
+      setLoading(false);
+    }
+  }, [address, loading, report]);
 
-  if (feed.posts.length === 0) {
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (sentinel === null || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          void loadMore();
+        }
+      },
+      { rootMargin: "400px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore]);
+
+  if (posts === null) return null;
+
+  if (posts.length === 0) {
     return (
       <section aria-label={t("composer.feedTitle")} className="mt-8">
         <p className="text-sm text-muted-foreground">{t("composer.empty")}</p>
@@ -74,13 +125,14 @@ export function Feed({
       <h2 className="text-lg font-semibold">{t("composer.feedTitle")}</h2>
       <p className="mb-4 text-sm text-muted-foreground">
         {t("composer.radius", {
-          radius: formatRadius(feed.effective_radius_m),
+          radius: formatRadius(effectiveRadius),
         })}
       </p>
       <ul className="grid gap-4">
-        {feed.posts.map((post) => (
+        {posts.map((post) => (
           <li
             key={post.id}
+            data-testid="feed-post"
             className="rounded-lg border bg-card p-4 text-card-foreground"
           >
             <div className="mb-1 flex items-center gap-2">
@@ -131,6 +183,9 @@ export function Feed({
           </li>
         ))}
       </ul>
+      {nextCursor !== null && (
+        <div ref={sentinelRef} data-testid="feed-load-more" aria-hidden="true" />
+      )}
     </section>
   );
 }

@@ -15,6 +15,28 @@ PIAZZA_VENEZIA = STATIC_ADDRESSES["piazza venezia, roma"]
 MILANO = STATIC_ADDRESSES["milano centrale, milano"]
 
 
+async def _create_post(
+    client,
+    body: str,
+    address: str = "Via Roma 1, Roma",
+    scope: str = "5km",
+) -> dict:
+    """Create a post, failing loudly if it is not accepted.
+
+    Post creation is rate-limited per device (ADR 0005); a test that depends on
+    a batch of posts must override the limiter, otherwise only the first few
+    succeed and the rest are silently dropped.
+    """
+    response = await client.post(
+        "/api/posts",
+        json={"address": address, "body": body, "scope": scope},
+    )
+    assert response.status_code == 201, (
+        f"post '{body}' rejected with {response.status_code}: {response.text}"
+    )
+    return response.json()
+
+
 @pytest.mark.asyncio
 async def test_create_text_post(client) -> None:
     response = await client.post(
@@ -256,3 +278,84 @@ async def test_feed_expands_radius_to_target(client) -> None:
     data = response.json()
     assert len(data["posts"]) >= 1
     assert data["effective_radius_m"] >= 500
+
+
+@pytest.mark.asyncio
+async def test_feed_paginates_with_cursor(client) -> None:
+    """Keyset pagination: each page carries a next_cursor that resumes strictly
+    after the previous page, without overlap, until posts are exhausted.
+
+    Each post is created by a fresh device (cookie cleared) so the per-device
+    post rate limit (ADR 0005) stays enabled and can't silently drop posts.
+    """
+    for i in range(25):
+        client.cookies.clear()
+        await _create_post(client, f"post-{i:02d}")
+
+    first = await client.get(
+        "/api/feed",
+        params={"address": "Via Roma 1, Roma", "target_count": 10},
+    )
+    assert first.status_code == 200
+    page1 = first.json()
+    assert len(page1["posts"]) == 10
+    assert page1["next_cursor"] is not None
+    page1_ids = {post["id"] for post in page1["posts"]}
+
+    second = await client.get(
+        "/api/feed",
+        params={
+            "address": "Via Roma 1, Roma",
+            "target_count": 10,
+            "cursor": page1["next_cursor"],
+        },
+    )
+    page2 = second.json()
+    assert len(page2["posts"]) == 10
+    assert page2["next_cursor"] is not None
+    page2_ids = {post["id"] for post in page2["posts"]}
+    assert page1_ids.isdisjoint(page2_ids)
+
+    third = await client.get(
+        "/api/feed",
+        params={
+            "address": "Via Roma 1, Roma",
+            "target_count": 10,
+            "cursor": page2["next_cursor"],
+        },
+    )
+    page3 = third.json()
+    assert len(page3["posts"]) == 5
+    assert page3["next_cursor"] is None
+    page3_ids = {post["id"] for post in page3["posts"]}
+    assert page1_ids.isdisjoint(page3_ids)
+    assert page2_ids.isdisjoint(page3_ids)
+
+    all_posts = page1_ids | page2_ids | page3_ids
+    assert len(all_posts) == 25
+
+
+@pytest.mark.asyncio
+async def test_feed_single_page_has_no_next_cursor(client) -> None:
+    """Fewer posts than target_count means there is no next page."""
+    await client.post(
+        "/api/posts",
+        json={"address": "Via Roma 1, Roma", "body": "solo", "scope": "5km"},
+    )
+    response = await client.get(
+        "/api/feed",
+        params={"address": "Via Roma 1, Roma", "target_count": 10},
+    )
+    data = response.json()
+    assert len(data["posts"]) == 1
+    assert data["next_cursor"] is None
+
+
+@pytest.mark.asyncio
+async def test_feed_invalid_cursor_returns_400(client) -> None:
+    """A malformed cursor is rejected cleanly instead of 500ing."""
+    response = await client.get(
+        "/api/feed",
+        params={"address": "Via Roma 1, Roma", "cursor": "not-a-valid-cursor"},
+    )
+    assert response.status_code == 400

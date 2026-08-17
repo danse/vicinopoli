@@ -906,4 +906,82 @@ describe("App", () => {
       ).toBeInTheDocument();
     });
   });
+
+  it("loads the next page when the feed sentinel is scrolled into view", async () => {
+    const store = mockFetch();
+    const secondPage = {
+      posts: [
+        {
+          id: "post-2",
+          body: "Un post più vecchio",
+          voice: "city",
+          display_address: "Via Roma 1, Roma",
+          geohash: "sr1x",
+          distance_m: 0.0,
+          created_at: "2026-08-12T00:00:00Z",
+          pseudonym: null,
+          new_neighbour: false,
+        },
+      ],
+      effective_radius_m: 500,
+      target_count: 10,
+      next_cursor: null,
+    };
+    store.mockImplementation((url: string, init?: RequestInit) => {
+      if (url.startsWith("/api/feed")) {
+        const cursor = new URL(url, "http://localhost").searchParams.get(
+          "cursor",
+        );
+        const body = cursor
+          ? secondPage
+          : {
+              ...feedWithMedia,
+              next_cursor: "cursor-page-1",
+            };
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(body),
+        });
+      }
+      return mockFetch()(url, init);
+    });
+    vi.stubGlobal("fetch", store);
+
+    let observeCallback: IntersectionObserverCallback = () => {};
+    const intersectionObserverMock = vi.fn().mockImplementation(
+      (cb: IntersectionObserverCallback) => ({
+        observe: vi.fn(() => {
+          observeCallback = cb;
+        }),
+        disconnect: vi.fn(),
+        unobserve: vi.fn(),
+        takeRecords: vi.fn(() => []),
+        root: null,
+        rootMargin: "400px",
+        thresholds: [0],
+      }),
+    );
+    vi.stubGlobal("IntersectionObserver", intersectionObserverMock);
+
+    renderApp();
+    await submitAddress();
+
+    await waitFor(() => {
+      expect(screen.getByText("Ciao vicini!")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Un post più vecchio")).not.toBeInTheDocument();
+
+    observeCallback(
+      [{ isIntersecting: true } as IntersectionObserverEntry],
+      intersectionObserverMock.mock.results[0]?.value,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Un post più vecchio")).toBeInTheDocument();
+    });
+    expect(store).toHaveBeenCalledWith(
+      expect.stringContaining("cursor=cursor-page-1"),
+      expect.anything(),
+    );
+  });
 });
