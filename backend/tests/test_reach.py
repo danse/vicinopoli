@@ -131,3 +131,56 @@ async def test_rural_new_users_read_each_other_from_45km(client) -> None:
     campobasso_bodies = [post["body"] for post in from_campobasso.json()["posts"]]
     assert "capracotta ciao" in campobasso_bodies
     assert "campobasso ciao" in campobasso_bodies
+
+
+@pytest.mark.asyncio
+async def test_new_neighbours_with_closer_third_poster_still_read_each_other(client) -> None:
+    """Design promise under pressure: two new users ~45km apart still see each
+    other even when a third poster sits right next to one of them.
+
+    Mirrors the production Ragusa case: two brand-new neighbours within 50km,
+    plus a verification/test post on the same street as one of them. The UI
+    reports "Entro 50 km" (effective_radius_m == MAX_RADIUS_M), but the reach
+    model caps each author to K=1 *nearest* other poster, so the third poster
+    collapses the reach to the 500m step and the far new neighbour is hidden.
+
+    Currently FAILS (campobasso feed does not contain the capracotta post):
+    this is the design tension between the count-based reach cap and the
+    pairwise cold-bootstrap guarantee of ADR 0018.
+    """
+    await _post_at(client, "Capracotta, Molise", body="capracotta ciao")
+    await _post_at(client, "Capracotta, Molise", body="closer ciao")  # 3rd poster, same street
+    await _post_at(client, "Campobasso, Molise", body="campobasso ciao")
+
+    from_capracotta = await client.get(
+        "/api/feed", params={"address": "Capracotta, Molise"}
+    )
+    assert from_capracotta.status_code == 200
+    capracotta_bodies = [post["body"] for post in from_capracotta.json()["posts"]]
+    assert "campobasso ciao" in capracotta_bodies
+    assert "closer ciao" in capracotta_bodies
+
+    from_campobasso = await client.get(
+        "/api/feed", params={"address": "Campobasso, Molise"}
+    )
+    assert from_campobasso.status_code == 200
+    campobasso_bodies = [post["body"] for post in from_campobasso.json()["posts"]]
+    assert "capracotta ciao" in campobasso_bodies
+
+
+@pytest.mark.asyncio
+async def test_reach_for_collapses_when_a_closer_poster_exists(client, session_factory) -> None:
+    """A third poster inside the 500m step collapses an untrusted author's reach.
+
+    Reach is the radius of the *nearest* K=1 other poster, so one post on the
+    same street turns a 50km cold-bootstrap spread into a 500m cap. This is the
+    mechanism behind the collapsed feed above.
+    """
+    author = await _post_at(client, "Capracotta, Molise")
+    await _post_at(client, "Capracotta, Molise")  # same street, new device
+    await _post_at(client, "Campobasso, Molise")
+
+    location = await _location_for(session_factory, "capracotta, molise")
+    async with session_factory() as session:
+        reach = await reach_for(session, location, k=1, exclude_device_ids={author})
+    assert reach == 500
