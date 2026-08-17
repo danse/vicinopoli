@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Link, Navigate, Route, Routes } from "react-router-dom";
 
 import { ConsentBanner } from "@/components/consent-banner";
 import { UpdatePrompt } from "@/components/update-prompt";
@@ -9,6 +9,7 @@ import { AddressPage } from "@/pages/address-page";
 import { ComposerPage } from "@/pages/composer-page";
 import { FeedPage } from "@/pages/feed-page";
 import { PseudonymPage } from "@/pages/pseudonym-page";
+import { SupportPage } from "@/pages/support-page";
 
 function RequireAddress({ children }: { children: ReactElement }) {
   const { address } = useApp();
@@ -49,6 +50,7 @@ function AppRoutes() {
         <Route path="/" element={<Navigate to="/address" replace />} />
         <Route path="/address" element={<AddressPage />} />
         <Route path="/pseudonym" element={<PseudonymPage />} />
+        <Route path="/support" element={<SupportPage />} />
         <Route
           path="/feed"
           element={
@@ -69,12 +71,19 @@ function AppRoutes() {
       </Routes>
       <footer
         data-testid="app-footer"
-        className="mt-auto flex items-center justify-center border-t pt-4 text-xs text-muted-foreground"
+        className="mt-auto flex items-center justify-between border-t pt-4 text-xs text-muted-foreground"
       >
         <p>
           {t("app.version")}{" "}
           <span data-testid="app-footer-version">{__APP_COMMIT__}</span>
         </p>
+        <Link
+          to="/support"
+          data-testid="footer-support"
+          className="text-primary hover:underline"
+        >
+          {t("support.title")}
+        </Link>
       </footer>
     </main>
   );

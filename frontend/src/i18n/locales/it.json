@@ -71,5 +71,10 @@
     "body": "Possiamo raccogliere statistiche anonime su come usi vicinopoli? (nessun indirizzo né posizione esatta)",
     "accept": "Accetta",
     "decline": "Rifiuta"
+  },
+  "support": {
+    "title": "Supporto",
+    "hint": "Scrivi a {{email}} per segnalare un problema o fare una domanda.",
+    "back": "Torna all'inizio"
   }
 }

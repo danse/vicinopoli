@@ -58,8 +58,7 @@ Ordered by priority, remove from the list when done
 
 #### Monday 17
 
-- support interface pointing at info@<domain>
-- images to take all the horizontal space within a message
+- for images to take all the horizontal space within a message
 
 - simple content-control interface: how to add an interface for an administrator to check all the submitted contents (firehose)?
 

@@ -71,5 +71,10 @@
     "body": "May we collect anonymous statistics about how you use vicinopoli? No address or exact location is ever recorded.",
     "accept": "Accept",
     "decline": "Decline"
+  },
+  "support": {
+    "title": "Support",
+    "hint": "Write to {{email}} to report a problem or ask a question.",
+    "back": "Back to the start"
   }
 }

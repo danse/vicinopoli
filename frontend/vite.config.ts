@@ -76,6 +76,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
+    env: {
+      VITE_SUPPORT_EMAIL: "info@vicinopoli.it",
+    },
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

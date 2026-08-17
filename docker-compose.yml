@@ -79,6 +79,7 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         VITE_COMMIT_HASH: ${VITE_COMMIT_HASH:-dev}
+        VITE_SUPPORT_EMAIL: ${VITE_SUPPORT_EMAIL:-info@vicinopoli.it}
     expose:
       - "80"
     healthcheck:
