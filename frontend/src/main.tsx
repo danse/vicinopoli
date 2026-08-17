@@ -12,6 +12,9 @@ if (sentryDsn) {
   Sentry.init({
     dsn: sentryDsn,
     environment: import.meta.env.MODE,
+    // Tag every event with the app version (the same value shown in the
+    // footer), so reports are attributable to a specific build.
+    release: __APP_COMMIT__,
     tracesSampleRate: 0.1,
   });
 }
