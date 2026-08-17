@@ -48,3 +48,4 @@ canned
 
 # Backups (database dumps + object-store mirrors)
 backups/
+tunnel.dot
