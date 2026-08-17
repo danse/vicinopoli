@@ -1,0 +1,30 @@
+# Shared vicinopoli route definitions, imported by both the dev Caddyfile
+# (root) and the production Caddyfile (deploy/Caddyfile.prod).
+#
+# Keeping these in one place means a route added for the e2e stack is
+# automatically present in production, and vice versa. The two files differ
+# only in the site address and site-level options (encoding, security headers).
+#
+# Imported as:
+#   import Caddyfile.snippets
+# inside the site block of the active Caddyfile.
+
+handle /api/* {
+	reverse_proxy backend:8000
+}
+
+handle /healthz {
+	reverse_proxy backend:8000
+}
+
+handle /readyz {
+	reverse_proxy backend:8000
+}
+
+handle /metrics {
+	reverse_proxy backend:8000
+}
+
+handle /media/* {
+	reverse_proxy minio:9000
+}

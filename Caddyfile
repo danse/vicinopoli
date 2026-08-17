@@ -1,28 +1,11 @@
-# vicinopoli reverse proxy.
+# vicinopoli reverse proxy (local development and e2e).
 # Local development here uses rootless Docker mapping Caddy's container :80 to
-# the host :8080 (see docker-compose.yml). For production, replace the site
-# address with the registered domain and Caddy will provision TLS automatically.
+# the host :8080 (see docker-compose.yml). Route definitions are shared with
+# production via deploy/Caddyfile.snippets; only the site address and
+# site-level options differ.
 
 :80 {
-	handle /api/* {
-		reverse_proxy backend:8000
-	}
-
-	handle /healthz {
-		reverse_proxy backend:8000
-	}
-
-	handle /readyz {
-		reverse_proxy backend:8000
-	}
-
-	handle /metrics {
-		reverse_proxy backend:8000
-	}
-
-	handle /media/* {
-		reverse_proxy minio:9000
-	}
+	import Caddyfile.snippets
 
 	handle {
 		reverse_proxy frontend:80

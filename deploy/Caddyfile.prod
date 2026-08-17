@@ -4,15 +4,14 @@
 # With vicinopoli.it Caddy provisions a Let's Encrypt cert automatically and
 # redirects :80 -> :443. A bare IP (no DNS) would serve plain HTTP on :80.
 #
+# Route definitions are shared with the dev/e2e stack via Caddyfile.snippets;
+# only the site address and site-level options differ here.
+#
 # Place this via deploy/docker-compose.prod.yml (mounted read-only).
 
 {$DOMAIN:localhost} {
-	# Backend API + OpenAPI docs
-	handle /api/* {
-		reverse_proxy backend:8000
-	}
+	import Caddyfile.snippets
 
-	# PWA / frontend static build
 	handle {
 		reverse_proxy frontend:80
 	}

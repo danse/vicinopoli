@@ -121,6 +121,7 @@ services:
       DOMAIN: ${DOMAIN}
     volumes:
       - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - ./Caddyfile.snippets:/etc/caddy/Caddyfile.snippets:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
