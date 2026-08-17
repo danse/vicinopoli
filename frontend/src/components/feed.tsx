@@ -147,14 +147,14 @@ export function Feed({
             </div>
             {post.body.trim() !== "" && <p>{post.body}</p>}
             {post.media && post.media.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-col gap-2">
                 {post.media.map((item) =>
                   item.kind === "image" ? (
                     <img
                       key={item.id}
                       src={item.url}
                       alt={t("composer.photoAlt")}
-                      className="h-32 w-32 rounded-md object-cover"
+                      className="w-full rounded-md object-cover"
                     />
                   ) : (
                     <audio

@@ -58,8 +58,6 @@ Ordered by priority, remove from the list when done
 
 #### Monday 17
 
-- for images to take all the horizontal space within a message
-
 - simple content-control interface: how to add an interface for an administrator to check all the submitted contents (firehose)?
 
 #### Tuesday 18

@@ -767,6 +767,10 @@ describe("App", () => {
         screen.getByRole("img", { name: "Foto allegata" }),
       ).toBeInTheDocument();
     });
+
+    // The image takes all the horizontal space within the message.
+    const img = screen.getByRole("img", { name: "Foto allegata" });
+    expect(img).toHaveClass("w-full");
   });
 
   it("shows address suggestions while typing and fills the input on select", async () => {
