@@ -60,14 +60,12 @@ Ordered by priority, remove from the list when done
 
 #### Monday
 
-- pseudonym updated in its own page like the address [done: `/pseudonym`, reached from the composer "posting as" link]
-- message type becomes a choice like voice, and the composer would update accordingly
 - text is opt-in when entering a picture
 
 #### Tuesday
 
-- test that two users can read each other in a rural area from a 45 kilometers distance
-- message cycle test for pictures and audios as well
+- test that two users can read each other from 45 kilometers distance in a rural area
+- do we have message cycle tests for pictures and audios?
 - migration from docker to nix?
 - location from the browser
 - replies and threading user experience

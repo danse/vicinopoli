@@ -8,6 +8,7 @@ test("a user can attach a photo and see it in the feed", async ({ page }) => {
   const body = uniqueBody("Foto del quartiere");
 
   await openComposer(page);
+  await page.getByTestId("composer-type-photo").click();
   await page
     .getByTestId("composer-photo")
     .setInputFiles("./test-photo.png");

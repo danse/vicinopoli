@@ -374,6 +374,27 @@ describe("App", () => {
     expect(screen.getByTestId("composer-message")).toBeInTheDocument();
   });
 
+  it("shows only the inputs for the selected message type", async () => {
+    renderApp();
+    await openComposer();
+
+    expect(screen.getByTestId("composer-message")).toBeInTheDocument();
+    expect(screen.queryByTestId("composer-photo")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("composer-voice-start"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("composer-type-photo"));
+    expect(screen.getByTestId("composer-photo")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("composer-voice-start"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("composer-type-voice"));
+    expect(screen.getByTestId("composer-voice-start")).toBeInTheDocument();
+    expect(screen.queryByTestId("composer-photo")).not.toBeInTheDocument();
+  });
+
   it("the composer shows the current pseudonym with a link to change it", async () => {
     renderApp();
     await openComposer();
@@ -602,6 +623,7 @@ describe("App", () => {
     renderApp();
 
     await openComposer();
+    fireEvent.click(screen.getByTestId("composer-type-photo"));
     fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "Foto del quartiere" },
     });
@@ -843,6 +865,7 @@ describe("App", () => {
     renderApp();
 
     await openComposer();
+    fireEvent.click(screen.getByTestId("composer-type-voice"));
     fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "Messaggio vocale" },
     });

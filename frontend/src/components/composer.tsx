@@ -20,6 +20,19 @@ interface ComposerProps {
   onPosted: () => void;
 }
 
+type MessageType = "text" | "photo" | "voice";
+
+const MESSAGE_TYPE_OPTIONS: MessageType[] = ["text", "photo", "voice"];
+
+function messageTypeLabel(type: MessageType): string {
+  const key: Record<MessageType, string> = {
+    text: "composer.typeText",
+    photo: "composer.typePhoto",
+    voice: "composer.typeVoice",
+  };
+  return key[type];
+}
+
 const VOICE_OPTIONS: PostVoice[] = ["building", "some", "area", "city"];
 
 function voiceLabel(voice: PostVoice): string {
@@ -61,6 +74,7 @@ async function resizeImage(file: File): Promise<Blob> {
 
 export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
   const { t } = useTranslation();
+  const [type, setType] = useState<MessageType>("text");
   const [body, setBody] = useState("");
   const [scope, setScope] = useState<PostVoice>("city");
   const [photo, setPhoto] = useState<File | null>(null);
@@ -200,6 +214,30 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
         </Link>
       </div>
       <div className="mt-4 grid gap-2">
+        <span className="text-sm font-medium text-foreground">
+          {t("composer.typeLabel")}
+        </span>
+        <div role="radiogroup" className="flex flex-wrap gap-2">
+          {MESSAGE_TYPE_OPTIONS.map((option) => (
+            <label
+              key={option}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input px-3 py-1.5 text-sm text-foreground has-[:checked]:bg-accent"
+            >
+              <input
+                type="radio"
+                name="message-type"
+                data-testid={`composer-type-${option}`}
+                value={option}
+                checked={type === option}
+                onChange={() => setType(option)}
+                className="h-4 w-4"
+              />
+              {t(messageTypeLabel(option))}
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="mt-4 grid gap-2">
         <label
           htmlFor="composer-message"
           className="text-sm font-medium text-foreground"
@@ -239,6 +277,7 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
           ))}
         </div>
       </div>
+      {type === "photo" && (
       <div className="mt-4 grid gap-2">
         <label
           htmlFor="composer-photo"
@@ -256,6 +295,8 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
           onChange={(e) => handlePhotoChange(e.target.files?.[0] ?? null)}
         />
       </div>
+      )}
+      {type === "voice" && (
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {recording ? (
           <Button
@@ -294,6 +335,7 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
           </span>
         )}
       </div>
+      )}
       {error && (
         <p className="mt-2 text-sm text-destructive">{t("composer.error")}</p>
       )}

@@ -15,6 +15,7 @@ test("a user can record a voice message and see it in the feed", async ({
   await context.grantPermissions(["microphone"], { origin: "http://localhost:8080" });
 
   await openComposer(page);
+  await page.getByTestId("composer-type-voice").click();
 
   await page.getByTestId("composer-voice-start").click();
   await expect(page.getByTestId("composer-voice-stop")).toBeVisible();
