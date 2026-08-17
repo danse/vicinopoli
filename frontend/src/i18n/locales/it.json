@@ -58,7 +58,15 @@
     "voiceArea": "Il quartiere",
     "voiceCity": "Tutta la città",
     "addressSuggestionsLabel": "Suggerimenti di indirizzi",
-    "addressNoResults": "Nessun risultato"
+    "addressNoResults": "Nessun risultato",
+    "quotaRemaining": "Ti resta {{count}} post oggi",
+    "quotaRemaining_other": "Ti restano {{count}} post oggi",
+    "quotaExhausted": "Hai raggiunto il limite di post di oggi",
+    "quotaHelpLabel": "Perché questo limite?",
+    "quotaHelpTitle": "Il limite quotidiano",
+    "quotaHelpBody": "Quando sei una nuova vicina, puoi pubblicare solo pochi post al giorno. Così evitiamo spam e abusi senza chiederti un account.",
+    "quotaHelpTrust": "Col tempo la tua vicina acquisisce fiducia e il limite sale.",
+    "quotaHelpClose": "Chiudi"
   },
   "pseudonym": {
     "title": "Come vuoi chiamarti?",

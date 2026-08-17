@@ -1066,6 +1066,28 @@
             "type": "boolean",
             "title": "New Neighbour"
           },
+          "daily_post_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Post Limit"
+          },
+          "posts_left_today": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Posts Left Today"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -1684,6 +1706,28 @@
             "type": "boolean",
             "title": "New Neighbour",
             "default": true
+          },
+          "daily_post_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Post Limit"
+          },
+          "posts_left_today": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Posts Left Today"
           },
           "media": {
             "items": {

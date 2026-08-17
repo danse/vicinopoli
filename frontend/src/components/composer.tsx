@@ -11,8 +11,10 @@ import {
   type PostVoice,
   uploadPhotoToUrl,
 } from "@/api/client";
+import { useApp } from "@/context/app-context";
 import { Button } from "@/components/ui/button";
 import { hashAddress } from "@/lib/utils";
+import { QuotaHelpModal } from "@/components/quota-help-modal";
 
 interface ComposerProps {
   address: string;
@@ -74,6 +76,7 @@ async function resizeImage(file: File): Promise<Blob> {
 
 export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
   const { t } = useTranslation();
+  const { postsLeftToday, refreshDevice } = useApp();
   const [type, setType] = useState<MessageType>("text");
   const [body, setBody] = useState("");
   const [scope, setScope] = useState<PostVoice>("city");
@@ -83,7 +86,9 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
   const [recordingError, setRecordingError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(false);
+  const [quotaExhausted, setQuotaExhausted] = useState(false);
   const [addressError, setAddressError] = useState(false);
+  const [quotaHelpOpen, setQuotaHelpOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const tracksRef = useRef<MediaStreamTrack[]>([]);
@@ -189,6 +194,7 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
       setPhoto(null);
       setVoice(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
+      refreshDevice();
       onPosted();
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) {
@@ -196,6 +202,16 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
         Sentry.captureException(err, {
           extra: { addressHash: await hashAddress(address) },
         });
+      } else if (
+        err instanceof ApiError &&
+        err.status === 429 &&
+        typeof err.detail === "object" &&
+        err.detail !== null &&
+        "code" in err.detail &&
+        err.detail.code === "daily_quota_exceeded"
+      ) {
+        setQuotaExhausted(true);
+        refreshDevice();
       } else {
         Sentry.captureException(err);
         setError(true);
@@ -372,9 +388,35 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
           {t("composer.addressNotFound")}
         </p>
       )}
-      <Button className="mt-4" disabled={!canSubmit} onClick={handleSubmit}>
-        {submitting ? t("composer.publishing") : t("composer.publish")}
-      </Button>
+      {quotaExhausted && (
+        <p className="mt-2 text-sm text-destructive">
+          {t("composer.quotaExhausted")}
+        </p>
+      )}
+      <div className="mt-4 flex items-center justify-between gap-4">
+        <Button disabled={!canSubmit} onClick={handleSubmit}>
+          {submitting ? t("composer.publishing") : t("composer.publish")}
+        </Button>
+        {postsLeftToday !== null && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <span>
+              {t("composer.quotaRemaining", { count: postsLeftToday })}
+            </span>
+            <button
+              type="button"
+              data-testid="composer-quota-help"
+              className="text-primary hover:underline"
+              onClick={() => setQuotaHelpOpen(true)}
+            >
+              {t("composer.quotaHelpLabel")}
+            </button>
+          </div>
+        )}
+      </div>
+      <QuotaHelpModal
+        open={quotaHelpOpen}
+        onClose={() => setQuotaHelpOpen(false)}
+      />
     </section>
   );
 }

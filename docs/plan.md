@@ -13,18 +13,19 @@ Initial target: Italy. Internationalisation (i18n) in place from day one
 
 ## Key semantics
 
-### Reach model (voice / trust cap / visibility)
+### Reach model (voice / fixed neighbour-count / visibility)
 
 Three distinct concepts, never conflated:
 
 - **Voice** — the author's fuzzy intent when composing: `street`, `some`,
   `area`, `city`. User-facing string; it is what the composer offers
   (`street` / some neighbours / the neighbourhood / the whole city).
-- **Trust cap** — the neighbour-count `K` an author may reach, set by the trust
-  ladder: `UNTRUSTED_K = 1`, `TRUSTED_K = 25` (distinct *other* active posters).
-  This replaces the old km-based cap on scope.
+- **Neighbour-count `K`** — a **fixed, trust-free** constant `NEIGHBOUR_K = 25`
+  (distinct *other* active posters). It no longer depends on the trust ladder
+  (ADR 0022; this is what caused asymmetric visibility — an extra poster near
+  the author collapsed reach to the 500m step, hiding a far new neighbour).
 - **Reach (`reach_m`)** — the distance a post actually travels, converted from
-  voice + trust cap at feed-serve time and clamped to `[0, 50km]`. It is the
+  voice + `K` at feed-serve time and clamped to `[0, 50km]`. It is the
   **author's max reach**.
 
 ### Visibility (asymmetric ranges)
@@ -41,24 +42,27 @@ Three distinct concepts, never conflated:
 ### Cold bootstrap
 
 - Feed auto-expands radius until ~10 posts (ceiling ~50km).
-- Because voice `some` for an untrusted author yields `K = 1`, two brand-new
+- Because `K` is fixed and reach auto-expands in sparse areas, two brand-new
   neighbours always reach each other (auto-expanding to 50km if sparse), which
-  resolves the cold-start problem without a km-cap.
+  resolves the cold-start problem without a km-cap or a trust cap.
 
-### Trust ladder
+### Trust ladder (daily posting quota)
 
-- New devices can post immediately but with reduced reach until they accrue
-  trust (age, no reports, engagement). Reach is reduced as a *neighbour-count*
-  cap (`K`), not a km cap.
-- Phone verification is a later, optional *reach* gate — never a read gate.
+- Trust gates **how much an unknown device can write**, not how far its posts
+  travel (ADR 0022).
+- `UNTRUSTED_DAILY_POSTS = 3`, `TRUSTED_DAILY_POSTS = 30` per UTC day, counted
+  on the device's posts in the DB (survives restarts); the limit is exposed on
+  `/api/me` and the create-post response and shown in the composer.
+- Trust accrual unchanged: a device becomes trusted by age (7 days, no reports,
+  engagement). Phone verification is a later, optional gate — never a read gate.
 
 ## To do
 
 Ordered by priority, remove from the list when done
 
-#### Monday 17
-
-#### Tuesday 18
+- `/` to redirect to `/address` only if the address is missing, otherwise redirect to `/feed`
+- reach computed once per feed rather than per post to save performance. This also allows the "Entro <x> km" label on the feed to be accurate
+- push notifications
 
 - message page, activated on clicking. Image shows full-screen in there
 - post removal
@@ -66,8 +70,8 @@ Ordered by priority, remove from the list when done
 
 #### Wednesday 19
 
-- app version in sentry reports
 - definition of a read message
+- annoying location bar covering "entra in zona"
 
 #### Thursday 20
 
@@ -81,7 +85,7 @@ Ordered by priority, remove from the list when done
 
 #### 24-28
 
-- push notifications
+- account page
 - denial of service surface with changing device id, like we do in pagination tests
 
 ### Moon

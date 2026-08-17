@@ -23,8 +23,8 @@ from sqlalchemy.orm import selectinload
 from app.core.geocoder import GeocodedAddress
 from app.models.location import Location
 from app.models.post import Post, PostStatus
-from app.services.reach import MAX_RADIUS_M, RADIUS_STEPS, reach_for
-from app.services.trust import is_new_neighbour, neighbour_cap
+from app.services.reach import MAX_RADIUS_M, NEIGHBOUR_K, RADIUS_STEPS, reach_for
+from app.services.trust import is_new_neighbour
 
 # Expanding-radius ladder (metres) per ADR 0007.
 # (``RADIUS_STEPS``/``MAX_RADIUS_M`` live in ``reach`` to avoid a cycle.)
@@ -105,9 +105,9 @@ async def _is_visible(
 ) -> bool:
     """Plan visibility: distance <= post.reach_m AND distance <= search_radius.
 
-    ``reach_m`` is converted from the author's voice + trust cap at serve time
-    (neighbour-count -> distance). ``street`` yields reach 0 (same normalized
-    address key).
+    ``reach_m`` is converted from the author's voice at serve time using the
+    fixed neighbour-count ``NEIGHBOUR_K`` (ADR 0022) — reach is trust-free.
+    ``street`` yields reach 0 (same normalized address key).
     """
     if distance_m > search_radius_m:
         return False
@@ -115,10 +115,8 @@ async def _is_visible(
     if post.voice == "street":
         return location.normalized_key == viewer.normalized_key
 
-    author = post.device
-    k = neighbour_cap(author) if author is not None else 1
     exclude = {post.device_id} if post.device_id is not None else None
-    reach_m = await reach_for(session, location, k=k, exclude_device_ids=exclude)
+    reach_m = await reach_for(session, location, k=NEIGHBOUR_K, exclude_device_ids=exclude)
     return distance_m <= reach_m
 
 

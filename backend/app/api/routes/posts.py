@@ -32,8 +32,9 @@ from app.schemas.post import (
 from app.services.feed import decode_cursor, expanding_radius_feed
 from app.services.heatmap import bump_activity_cell
 from app.services.media import media_by_post, media_info
+from app.services.quota import posts_used_today
 from app.services.reach import MAX_RADIUS_M
-from app.services.trust import is_new_neighbour
+from app.services.trust import daily_post_quota, is_new_neighbour
 
 router = APIRouter()
 
@@ -93,10 +94,24 @@ async def create_post(
     if rate_limiter is not None and not rate_limiter.allow(str(device.id)):
         raise HTTPException(status_code=429, detail="rate limit exceeded")
 
+    # Daily posting quota (ADR 0022): a transparent, user-facing trust gate on
+    # how much an unknown device may write in a UTC day.
+    quota = daily_post_quota(device)
+    used_today = await posts_used_today(session, device.id)
+    if used_today >= quota:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "code": "daily_quota_exceeded",
+                "daily_post_limit": quota,
+                "posts_left_today": 0,
+            },
+        )
+
     location, _ = await _resolve_location(session, geocoder, payload.address)
 
-    # The author's voice is ``voice``; the trust ladder caps it as a
-    # neighbour-count, converted to distance only at feed-serve time.
+    # The author's voice is ``voice``; reach is trust-free (ADR 0022) and the
+    # ladder is converted to a distance only at feed-serve time.
     if payload.scope is not None and payload.voice == PostVoice.city:
         # Backwards-compat: a legacy km scope maps to the closest intent.
         payload.voice = _scope_to_voice(payload.scope)
@@ -137,6 +152,8 @@ async def create_post(
         created_at=post.created_at,
         pseudonym=device.pseudonym,
         new_neighbour=is_new_neighbour(device),
+        daily_post_limit=quota,
+        posts_left_today=max(0, quota - used_today - 1),
         media=media_info(attached),
     )
 

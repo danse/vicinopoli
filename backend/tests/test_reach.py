@@ -17,7 +17,7 @@ from sqlalchemy import select
 from app.core.geocoder import STATIC_ADDRESSES
 from app.models.location import Location
 from app.services.feed import MAX_RADIUS_M
-from app.services.reach import reach_for
+from app.services.reach import NEIGHBOUR_K, reach_for
 
 VIA_ROMA = STATIC_ADDRESSES["via roma 1, roma"]  # (41.8933, 12.4829)
 PIAZZA_VENEZIA = STATIC_ADDRESSES["piazza venezia, roma"]
@@ -109,9 +109,9 @@ async def test_reach_for_without_exclusion_counts_author(client, session_factory
 async def test_rural_new_users_read_each_other_from_45km(client) -> None:
     """Cold bootstrap in a rural area: two new users ~45km apart reach each other.
 
-    Capracotta and Campobasso (Molise) are ~45km apart. Both authors are new
-    (K = UNTRUSTED_K = 1); with no other posters nearby, each post's reach
-    spreads to the 50km ceiling, so each user sees the other's post.
+    Capracotta and Campobasso (Molise) are ~45km apart. Reach uses a fixed
+    ``K = NEIGHBOUR_K`` independent of trust; with no other posters nearby, each
+    post's reach spreads to the 50km ceiling, so each user sees the other's post.
     """
     await _post_at(client, "Capracotta, Molise", body="capracotta ciao")
     await _post_at(client, "Campobasso, Molise", body="campobasso ciao")
@@ -135,18 +135,12 @@ async def test_rural_new_users_read_each_other_from_45km(client) -> None:
 
 @pytest.mark.asyncio
 async def test_new_neighbours_with_closer_third_poster_still_read_each_other(client) -> None:
-    """Design promise under pressure: two new users ~45km apart still see each
-    other even when a third poster sits right next to one of them.
+    """Regression for the production Ragusa case (ADR 0022).
 
-    Mirrors the production Ragusa case: two brand-new neighbours within 50km,
-    plus a verification/test post on the same street as one of them. The UI
-    reports "Entro 50 km" (effective_radius_m == MAX_RADIUS_M), but the reach
-    model caps each author to K=1 *nearest* other poster, so the third poster
-    collapses the reach to the 500m step and the far new neighbour is hidden.
-
-    Currently FAILS (campobasso feed does not contain the capracotta post):
-    this is the design tension between the count-based reach cap and the
-    pairwise cold-bootstrap guarantee of ADR 0018.
+    Two brand-new neighbours ~45km apart still see each other even when a third
+    poster sits right next to one of them. Reach uses a fixed ``K``
+    (``NEIGHBOUR_K``) with no trust dependence, so the sparse-area honesty rule
+    spreads both posts to the 50km ceiling regardless of the extra poster.
     """
     await _post_at(client, "Capracotta, Molise", body="capracotta ciao")
     await _post_at(client, "Capracotta, Molise", body="closer ciao")  # 3rd poster, same street
@@ -169,12 +163,13 @@ async def test_new_neighbours_with_closer_third_poster_still_read_each_other(cli
 
 
 @pytest.mark.asyncio
-async def test_reach_for_collapses_when_a_closer_poster_exists(client, session_factory) -> None:
-    """A third poster inside the 500m step collapses an untrusted author's reach.
+async def test_fixed_k_keeps_sparse_reach_at_ceiling(client, session_factory) -> None:
+    """Fewer than NEIGHBOUR_K other posters anywhere -> reach stays 50km.
 
-    Reach is the radius of the *nearest* K=1 other poster, so one post on the
-    same street turns a 50km cold-bootstrap spread into a 500m cap. This is the
-    mechanism behind the collapsed feed above.
+    With the fixed ``K = NEIGHBOUR_K`` a handful of posters (here: 3) does not
+    collapse an author's reach; the sparse-area honesty rule keeps it at the
+    50km ceiling. This is what makes the cold-bootstrap guarantee independent
+    of trust.
     """
     author = await _post_at(client, "Capracotta, Molise")
     await _post_at(client, "Capracotta, Molise")  # same street, new device
@@ -182,5 +177,21 @@ async def test_reach_for_collapses_when_a_closer_poster_exists(client, session_f
 
     location = await _location_for(session_factory, "capracotta, molise")
     async with session_factory() as session:
-        reach = await reach_for(session, location, k=1, exclude_device_ids={author})
+        reach = await reach_for(
+            session, location, k=NEIGHBOUR_K, exclude_device_ids={author}
+        )
+    assert reach == MAX_RADIUS_M
+
+
+@pytest.mark.asyncio
+async def test_fixed_k_caps_reach_in_dense_area(client, session_factory) -> None:
+    """Once NEIGHBOUR_K other posters fit in a step, reach stops at that step."""
+    author = await _post_at(client, "Via Roma 1, Roma")
+    for _ in range(NEIGHBOUR_K):
+        await _post_at(client, "Piazza Venezia, Roma")
+    location = await _location_for(session_factory, "via roma 1, roma")
+    async with session_factory() as session:
+        reach = await reach_for(
+            session, location, k=NEIGHBOUR_K, exclude_device_ids={author}
+        )
     assert reach == 500

@@ -72,8 +72,24 @@ async def test_report_status_auto_hidden_reported(client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_rate_limit_exceeded_returns_429(client) -> None:
+async def test_rate_limit_exceeded_returns_429(client, session_factory) -> None:
     await client.get("/api/me")
+    me = await client.get("/api/me")
+    # Raise the daily trust quota so the per-minute API limiter (5/min) is the
+    # one being exercised, not the daily quota.
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import text
+
+    async with session_factory() as session:
+        await session.execute(
+            text("UPDATE devices SET created_at = :older WHERE id = :did"),
+            {
+                "older": datetime.now(UTC) - timedelta(days=8),
+                "did": me.json()["id"],
+            },
+        )
+        await session.commit()
     for _ in range(5):
         response = await client.post(
             "/api/posts",

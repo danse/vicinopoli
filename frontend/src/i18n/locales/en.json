@@ -58,7 +58,15 @@
     "voiceArea": "The neighbourhood",
     "voiceCity": "The whole city",
     "addressSuggestionsLabel": "Address suggestions",
-    "addressNoResults": "No results"
+    "addressNoResults": "No results",
+    "quotaRemaining": "{{count}} post left today",
+    "quotaRemaining_other": "{{count}} posts left today",
+    "quotaExhausted": "You've reached today's posting limit",
+    "quotaHelpLabel": "Why this limit?",
+    "quotaHelpTitle": "The daily limit",
+    "quotaHelpBody": "When you're a new neighbour, you can only publish a few posts per day. That's how we keep out spam and abuse without asking you to sign up.",
+    "quotaHelpTrust": "Over time your neighbour gains trust and the limit goes up.",
+    "quotaHelpClose": "Close"
   },
   "pseudonym": {
     "title": "What should we call you?",

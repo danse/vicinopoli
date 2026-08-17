@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -35,6 +36,9 @@ interface AppContextValue {
   analyticsConsented: boolean;
   decideConsent: (consented: boolean) => void;
   experimentFlags: Record<string, boolean>;
+  dailyPostLimit: number | null;
+  postsLeftToday: number | null;
+  refreshDevice: () => void;
   feedTick: number;
   bumpFeedTick: () => void;
 }
@@ -49,21 +53,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [experimentFlags, setExperimentFlags] = useState<Record<string, boolean>>(
     {},
   );
+  const [dailyPostLimit, setDailyPostLimit] = useState<number | null>(null);
+  const [postsLeftToday, setPostsLeftToday] = useState<number | null>(null);
   const [feedTick, setFeedTick] = useState(0);
 
-  useEffect(() => {
+  const applyDevice = (me: {
+    pseudonym?: string | null;
+    experiment_flags: Record<string, boolean>;
+    analytics_consent?: boolean | null;
+    daily_post_limit?: number | null;
+    posts_left_today?: number | null;
+  }) => {
+    setPseudonym(me.pseudonym ?? "");
+    setExperimentFlags(me.experiment_flags);
+    setDailyPostLimit(me.daily_post_limit ?? null);
+    setPostsLeftToday(me.posts_left_today ?? null);
+    if (me.analytics_consent === null) {
+      setConsentDecided(false);
+    } else {
+      setAnalyticsConsented(me.analytics_consent === true);
+    }
+  };
+
+  const refreshDevice = useCallback(() => {
     getMe()
-      .then((me) => {
-        setPseudonym(me.pseudonym ?? "");
-        setExperimentFlags(me.experiment_flags);
-        if (me.analytics_consent === null) {
-          setConsentDecided(false);
-        } else {
-          setAnalyticsConsented(me.analytics_consent === true);
-        }
-      })
+      .then((me) => applyDevice(me))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    refreshDevice();
+  }, [refreshDevice]);
 
   const decideConsent = (consented: boolean) => {
     setConsentDecided(true);
@@ -88,6 +108,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         analyticsConsented,
         decideConsent,
         experimentFlags,
+        dailyPostLimit,
+        postsLeftToday,
+        refreshDevice,
         feedTick,
         bumpFeedTick,
       }}

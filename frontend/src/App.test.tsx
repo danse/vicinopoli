@@ -60,6 +60,8 @@ const created = {
   },
   distance_m: 0.0,
   created_at: "2026-08-13T00:00:00Z",
+  daily_post_limit: 3,
+  posts_left_today: 2,
 };
 
 const feed = {
@@ -118,6 +120,8 @@ const device = {
   id: "device-1",
   pseudonym: null,
   new_neighbour: true,
+  daily_post_limit: 3,
+  posts_left_today: 3,
   created_at: "2026-08-13T00:00:00Z",
   experiment_segment: 7,
   experiment_flags: {},
@@ -502,6 +506,20 @@ describe("App", () => {
     expect(screen.getByTestId("composer-voice-start")).toBeInTheDocument();
     expect(screen.getByTestId("composer-caption")).toBeInTheDocument();
     expect(screen.queryByTestId("composer-photo")).not.toBeInTheDocument();
+  });
+
+  it("shows the composer's daily quota hint", async () => {
+    renderApp();
+    await openComposer();
+    expect(screen.getByText("Ti restano 3 post oggi")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("composer-quota-help"));
+    await waitFor(() => {
+      expect(screen.getByTestId("quota-help-dialog")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("quota-help-close"));
+    await waitFor(() => {
+      expect(screen.queryByTestId("quota-help-dialog")).not.toBeVisible();
+    });
   });
 
   it("the composer shows the current pseudonym with a link to change it", async () => {

@@ -27,7 +27,7 @@ build: ## Build all images
 gen: ## Generate TS types from the backend OpenAPI schema
 	docker compose build backend
 	mkdir -p openapi
-	docker compose run --rm --no-deps backend python scripts/export_openapi.py > openapi/openapi.json
+	docker compose run -T --rm --no-deps backend python scripts/export_openapi.py > openapi/openapi.json
 	cd frontend && npm run gen:types
 
 migrate: ## Run Alembic migrations

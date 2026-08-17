@@ -14,6 +14,8 @@ class DeviceResponse(BaseModel):
     id: uuid.UUID
     pseudonym: str | None = None
     new_neighbour: bool
+    daily_post_limit: int | None = None
+    posts_left_today: int | None = None
     created_at: datetime
     experiment_segment: int
     experiment_flags: dict[str, bool]

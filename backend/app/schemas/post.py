@@ -70,6 +70,8 @@ class PostResponse(BaseModel):
     created_at: datetime
     pseudonym: str | None = None
     new_neighbour: bool = True
+    daily_post_limit: int | None = None
+    posts_left_today: int | None = None
     media: list[MediaInfo] = Field(default_factory=list)
 
 
