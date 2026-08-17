@@ -102,7 +102,13 @@ export async function uploadPhotoToUrl(
     headers: { "Content-Type": contentType },
   });
   if (!response.ok) {
-    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+    const target = new URL(url);
+    const bodySnippet = (await response.text().catch(() => "")).slice(0, 200);
+    throw new Error(
+      `Upload failed: ${response.status} ${response.statusText}. ` +
+        `PUT ${contentType} (${file.size} bytes) to ${target.host}${target.pathname} ` +
+        `was rejected. Body: ${bodySnippet}.`,
+    );
   }
 }
 
