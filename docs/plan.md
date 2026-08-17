@@ -60,10 +60,9 @@ Three distinct concepts, never conflated:
 
 Ordered by priority, remove from the list when done
 
-- `/` to redirect to `/address` only if the address is missing, otherwise redirect to `/feed`
-- reach computed once per feed rather than per post to save performance. This also allows the "Entro <x> km" label on the feed to be accurate
-- push notifications
+- search radius computed once per feed rather than per post to save performance. This also allows the "Entro <x> km" label on the feed to be accurate
 
+- push notifications
 - message page, activated on clicking. Image shows full-screen in there
 - post removal
 - post editing: should happen within a time window

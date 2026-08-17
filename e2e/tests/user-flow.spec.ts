@@ -8,6 +8,15 @@ test("the root redirects to the address page", async ({ page }) => {
   await expect(page.getByTestId("address-submit")).toBeVisible();
 });
 
+test("the root redirects to the feed when an address is already set", async ({
+  page,
+}) => {
+  await setAddress(page, "Via Roma 1, Roma");
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/feed$/);
+  await expect(page.getByTestId("feed-compose")).toBeVisible();
+});
+
 test("the submit button is disabled until an address is entered", async ({
   page,
 }) => {

@@ -458,6 +458,18 @@ describe("App", () => {
     expect(localStorage.getItem("vicinopoli.address")).toBe("Via Roma 1, Roma");
   });
 
+  it("redirects the root to the feed when an address is already set", async () => {
+    localStorage.setItem("vicinopoli.address", "Via Roma 1, Roma");
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+  });
+
   it("redirects the feed and composer pages to the address page when no address is set", async () => {
     const { rerender } = render(
       <MemoryRouter initialEntries={["/feed"]}>

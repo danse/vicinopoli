@@ -19,6 +19,11 @@ function RequireAddress({ children }: { children: ReactElement }) {
   return children;
 }
 
+function RootRedirect() {
+  const { address } = useApp();
+  return <Navigate to={address.trim() !== "" ? "/feed" : "/address"} replace />;
+}
+
 function AppRoutes() {
   const { t, i18n } = useTranslation();
   const { consentDecided, decideConsent } = useApp();
@@ -47,7 +52,7 @@ function AppRoutes() {
       )}
       <UpdatePrompt />
       <Routes>
-        <Route path="/" element={<Navigate to="/address" replace />} />
+        <Route path="/" element={<RootRedirect />} />
         <Route path="/address" element={<AddressPage />} />
         <Route path="/pseudonym" element={<PseudonymPage />} />
         <Route path="/support" element={<SupportPage />} />

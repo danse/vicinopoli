@@ -3,7 +3,7 @@ import { expect, type APIRequestContext, type Page } from "@playwright/test";
 export const ADDRESS = "Via Roma 1, Roma";
 
 export async function setAddress(page: Page, address: string) {
-  await page.goto("/");
+  await page.goto("/address");
   await page.getByTestId("address-input").fill(address);
   await page.getByTestId("address-submit").click();
   await expect(page).toHaveURL(/\/feed$/);
