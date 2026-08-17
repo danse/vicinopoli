@@ -58,14 +58,12 @@ Ordered by priority, remove from the list when done
 
 #### Monday 17
 
-- test that two new users in a rural/unpopulated area can read each other from 45 kilometers distance
-- have the address pre-filled from the browser location
-- do we have message cycle tests for pictures and audios?
-
-#### Tuesday 18
-
+- photon does not provide street numbers. Rename `building` -> `street` throughout code and docs
+- frontend app auto-updated on new versions
 - message page, activated on clicking. Image shows full-screen in there
 - post editing
+
+#### Tuesday 18
 
 #### Wednesday 19
 
@@ -79,7 +77,6 @@ Ordered by priority, remove from the list when done
 - re-enable the feed heatmap
 - definition of a read message
 - functional reactive programming (new posts and realtime mode)
-- frontend app auto-updated on new versions
 - search engine optimisation
 - previews from youtube, instagram, facebook, twitter, reddit, soundcloud etcetera
 - content-spike detection with coordinates

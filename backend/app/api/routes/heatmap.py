@@ -16,6 +16,7 @@ from app.api.deps import get_geocoder, get_session
 from app.core.geocoder import Geocoder
 from app.schemas.heatmap import (
     GeocodeResponse,
+    GeocodeReverseResponse,
     GeocodeSuggestResponse,
     HeatmapTileResponse,
 )
@@ -51,6 +52,23 @@ async def suggest_geocode(
     """Autocomplete an address from a partial query (display strings only)."""
     suggestions = await geocoder.suggest(q, limit)
     return GeocodeSuggestResponse(suggestions=suggestions)
+
+
+@router.get("/geocode/reverse", response_model=GeocodeReverseResponse)
+async def reverse_geocode(
+    geocoder: GeocoderDep,
+    lat: float = Query(ge=-90, le=90),
+    lon: float = Query(ge=-180, le=180),
+) -> GeocodeReverseResponse:
+    """Resolve a browser-location coordinate to the nearest address.
+
+    Used to pre-fill the address page. Only the display string is returned;
+    the coordinate is used for the lookup and never stored or logged.
+    """
+    geocoded = await geocoder.reverse(lat, lon)
+    if geocoded is None:
+        raise HTTPException(status_code=404, detail="address not found")
+    return GeocodeReverseResponse(display_address=geocoded.display_address)
 
 
 @router.get("/geocode", response_model=GeocodeResponse)

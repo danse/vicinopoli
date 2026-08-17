@@ -168,6 +168,31 @@ async def test_static_geocoder_suggest_respects_limit() -> None:
 
 
 @pytest.mark.asyncio
+async def test_static_geocoder_reverse_finds_nearest_address() -> None:
+    geocoder = StaticGeocoder()
+    # Piazza Venezia's own coordinates.
+    result = await geocoder.reverse(41.8957, 12.4823)
+    assert result is not None
+    assert result.display_address == "Piazza Venezia, Roma"
+
+
+@pytest.mark.asyncio
+async def test_static_geocoder_reverse_picks_nearest_from_multiple() -> None:
+    geocoder = StaticGeocoder()
+    # Between Piazza Venezia and Via Roma, closer to Via Roma.
+    result = await geocoder.reverse(41.894, 12.4826)
+    assert result is not None
+    assert result.display_address == "Via Roma 1, Roma"
+
+
+@pytest.mark.asyncio
+async def test_static_geocoder_reverse_returns_none_far_away() -> None:
+    geocoder = StaticGeocoder()
+    # Mid-Atlantic: beyond the 100km confidence radius.
+    assert await geocoder.reverse(0.0, 0.0) is None
+
+
+@pytest.mark.asyncio
 async def test_nominatim_geocoder_suggest_forwards_query_and_limit() -> None:
     class FakeResponse:
         def raise_for_status(self) -> None:
@@ -257,9 +282,53 @@ async def test_nominatim_geocoder_suggest_degrades_on_429() -> None:
 
     geocoder = NominatimGeocoder("https://nominatim.test")
     geocoder._fetch = fake_fetch  # type: ignore[method-assign]
-
     suggestions = await geocoder.suggest("via roma")
     assert suggestions == []
+
+
+@pytest.mark.asyncio
+async def test_nominatim_geocoder_reverse_forwards_coordinates() -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return {"lat": "41.8957", "lon": "12.4823", "display_name": "Piazza Venezia, Roma"}
+
+    captured: dict[str, str] = {}
+
+    async def fake_reverse_fetch(params):
+        captured.update(params)
+        return FakeResponse()
+
+    geocoder = NominatimGeocoder("https://nominatim.test")
+    geocoder._reverse_fetch = fake_reverse_fetch  # type: ignore[method-assign]
+
+    result = await geocoder.reverse(41.8957, 12.4823)
+
+    assert result is not None
+    assert result.display_address == "Piazza Venezia, Roma"
+    assert captured["lat"] == "41.8957"
+    assert captured["lon"] == "12.4823"
+    assert captured["format"] == "jsonv2"
+
+
+@pytest.mark.asyncio
+async def test_nominatim_geocoder_reverse_returns_none_without_results() -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self):
+            return {}
+
+    async def fake_reverse_fetch(params):
+        return FakeResponse()
+
+    geocoder = NominatimGeocoder("https://nominatim.test")
+    geocoder._reverse_fetch = fake_reverse_fetch  # type: ignore[method-assign]
+
+    assert await geocoder.reverse(0.0, 0.0) is None
 
 
 def _photon_feature(lon: float, lat: float, **properties) -> dict:
@@ -336,6 +405,35 @@ async def test_photon_geocoder_geocode_returns_none_without_features() -> None:
     geocoder._fetch = fake_fetch  # type: ignore[method-assign]
 
     assert await geocoder.geocode("Via Inesistente 99, Nowhere") is None
+
+
+@pytest.mark.asyncio
+async def test_photon_geocoder_reverse_parses_nearest_feature() -> None:
+    async def fake_fetch(params):
+        return _photon_response(
+            _photon_feature(12.4823, 41.8957, name="Piazza Venezia", city="Roma")
+        )
+
+    geocoder = PhotonGeocoder("https://photon.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    result = await geocoder.reverse(41.8957, 12.4823)
+
+    assert result is not None
+    assert "Piazza Venezia" in result.display_address
+    assert result.latitude == pytest.approx(41.8957)
+    assert result.longitude == pytest.approx(12.4823)
+
+
+@pytest.mark.asyncio
+async def test_photon_geocoder_reverse_returns_none_without_features() -> None:
+    async def fake_fetch(params):
+        return _photon_response()
+
+    geocoder = PhotonGeocoder("https://photon.test")
+    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+
+    assert await geocoder.reverse(0.0, 0.0) is None
 
 
 @pytest.mark.asyncio

@@ -6,7 +6,7 @@ is added, renamed, or removed. Keep it short.
 | Page | Responsibility |
 |---|---|
 | `/` | Redirects to `address` |
-| `address` | Ask only "where are you?" -> `feed` |
+| `address` | Ask only "where are you?" -> `feed`; pre-fills the input from the browser location (reverse-geocoded) when no address is set |
 | `feed` | Feed + heatmap + `+` button -> `composer`; address bar -> `address`; the `feed-load-more` sentinel triggers endless scroll (IntersectionObserver) |
 | `composer` | Compose/publish; message-type chips (`composer-type-*`) show only the selected input — textarea for text, single-line caption (`composer-caption`) for photo/voice; "posting as" link -> `pseudonym` |
 | `pseudonym` | Set/clear the pseudonym; on save goes back to the previous page |

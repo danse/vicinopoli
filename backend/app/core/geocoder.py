@@ -35,6 +35,10 @@ STATIC_ADDRESSES: Final[dict[str, tuple[float, float, str]]] = {
     "campobasso, molise": (41.56, 14.662, "Campobasso, Molise"),
 }
 
+# Reverse-geocode confidence radius: further away we return ``None`` so a far
+# browser location can't silently pick a wrong static address.
+STATIC_REVERSE_MAX_KM: Final[float] = 100.0
+
 
 @dataclass(frozen=True)
 class GeocodedAddress:
@@ -128,12 +132,36 @@ class Geocoder(ABC):
         """Resolve an address; ``None`` when it cannot be resolved."""
 
     @abstractmethod
+    async def reverse(self, latitude: float, longitude: float) -> GeocodedAddress | None:
+        """Resolve a coordinate to the nearest address; ``None`` when far away.
+
+        Used to pre-fill the address page from the browser location. The raw
+        coordinates are only used to look the address up — they are never
+        stored or logged.
+        """
+
+    @abstractmethod
     async def suggest(self, query: str, limit: int = 6) -> list[str]:
         """Return display-address suggestions matching a partial query.
 
         Only display strings come back — never coordinates or geohashes — so
         the privacy stance of :mod:`app.core.geocoder` holds for autocomplete.
         """
+
+
+def _haversine_km(
+    latitude_a: float, longitude_a: float, latitude_b: float, longitude_b: float
+) -> float:
+    """Great-circle distance in kilometres between two coordinates."""
+    import math
+
+    radius_km = 6371.0
+    lat_a, lon_a = math.radians(latitude_a), math.radians(longitude_a)
+    lat_b, lon_b = math.radians(latitude_b), math.radians(longitude_b)
+    dlat = lat_b - lat_a
+    dlon = lon_b - lon_a
+    h = math.sin(dlat / 2) ** 2 + math.cos(lat_a) * math.cos(lat_b) * math.sin(dlon / 2) ** 2
+    return 2 * radius_km * math.asin(math.sqrt(h))
 
 
 class StaticGeocoder(Geocoder):
@@ -154,6 +182,25 @@ class StaticGeocoder(Geocoder):
             latitude=latitude,
             longitude=longitude,
             geohash=geohash_encode(latitude, longitude),
+        )
+
+    async def reverse(self, latitude: float, longitude: float) -> GeocodedAddress | None:
+        nearest: tuple[float, str, tuple[float, float, str]] | None = None
+        for key, (entry_lat, entry_lon, display) in self._addresses.items():
+            distance = _haversine_km(latitude, longitude, entry_lat, entry_lon)
+            if nearest is None or distance < nearest[0]:
+                nearest = (distance, key, (entry_lat, entry_lon, display))
+        if nearest is None:
+            return None
+        distance, key, (entry_lat, entry_lon, display) = nearest
+        if distance > STATIC_REVERSE_MAX_KM:
+            return None
+        return GeocodedAddress(
+            normalized_key=key,
+            display_address=display,
+            latitude=entry_lat,
+            longitude=entry_lon,
+            geohash=geohash_encode(entry_lat, entry_lon),
         )
 
     async def suggest(self, query: str, limit: int = 6) -> list[str]:
@@ -186,6 +233,10 @@ class NominatimGeocoder(Geocoder):
         """Separated for testability."""
         return await self._client.get("/search", params=params)
 
+    async def _reverse_fetch(self, params: dict[str, str]) -> httpx.Response:
+        """Reverse lookup, separated for testability."""
+        return await self._client.get("/reverse", params=params)
+
     async def geocode(self, address: str) -> GeocodedAddress | None:
         cache_key = normalize_address(address)
         cached = self._cache.get(cache_key)
@@ -217,6 +268,28 @@ class NominatimGeocoder(Geocoder):
             geohash=geohash_encode(latitude, longitude),
         )
         self._cache[cache_key] = (time.monotonic(), result)
+        return result
+
+    async def reverse(self, latitude: float, longitude: float) -> GeocodedAddress | None:
+        response = await self._reverse_fetch(
+            {"lat": str(latitude), "lon": str(longitude), "format": "jsonv2"}
+        )
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 429:
+                return None
+            raise
+        item = response.json()
+        if not item or not item.get("lat"):
+            return None
+        result = GeocodedAddress(
+            normalized_key=item.get("display_name") or "",
+            display_address=item.get("display_name") or "",
+            latitude=float(item["lat"]),
+            longitude=float(item["lon"]),
+            geohash=geohash_encode(float(item["lat"]), float(item["lon"])),
+        )
         return result
 
     async def suggest(self, query: str, limit: int = 6) -> list[str]:
@@ -314,6 +387,29 @@ class PhotonGeocoder(Geocoder):
             geohash=geohash_encode(lat, lon),
         )
         self._cache[cache_key] = (time.monotonic(), result)
+        return result
+
+    async def reverse(self, latitude: float, longitude: float) -> GeocodedAddress | None:
+        response = await self._fetch({"lat": str(latitude), "lon": str(longitude), "limit": "1"})
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 429:
+                return None
+            raise
+        features = response.json().get("features", [])
+        if not features:
+            return None
+        feature = features[0]
+        lon, lat = feature["geometry"]["coordinates"]
+        properties = feature.get("properties", {})
+        result = GeocodedAddress(
+            normalized_key="",
+            display_address=self._display_name("", properties),
+            latitude=lat,
+            longitude=lon,
+            geohash=geohash_encode(lat, lon),
+        )
         return result
 
     async def suggest(self, query: str, limit: int = 6) -> list[str]:

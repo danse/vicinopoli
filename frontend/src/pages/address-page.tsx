@@ -1,14 +1,27 @@
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { AddressCombobox } from "@/components/address-combobox";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/app-context";
+import { useBrowserAddress } from "@/lib/use-browser-address";
 
 export function AddressPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { address, setAddress } = useApp();
+
+  // Pre-fill from the browser location only when nothing is set yet, and never
+  // clobber an address the user has already typed.
+  const addressRef = useRef(address);
+  addressRef.current = address;
+  useBrowserAddress(
+    (located) => {
+      if (addressRef.current.trim() === "") setAddress(located);
+    },
+    address.trim() === "",
+  );
 
   const canSubmit = address.trim() !== "";
 

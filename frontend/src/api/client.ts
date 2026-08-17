@@ -128,6 +128,8 @@ export async function sendAnalyticsEvents(
 export type GeocodeResponse = components["schemas"]["GeocodeResponse"];
 export type GeocodeSuggestResponse =
   components["schemas"]["GeocodeSuggestResponse"];
+export type GeocodeReverseResponse =
+  components["schemas"]["GeocodeReverseResponse"];
 export type HeatmapTileResponse = components["schemas"]["HeatmapTileResponse"];
 
 export function geocode(address: string): Promise<GeocodeResponse> {
@@ -141,6 +143,13 @@ export function suggestGeocode(
   return request(
     `/api/geocode/suggest?q=${encodeURIComponent(q)}&limit=${limit}`,
   );
+}
+
+export function reverseGeocode(
+  lat: number,
+  lon: number,
+): Promise<GeocodeReverseResponse> {
+  return request(`/api/geocode/reverse?lat=${lat}&lon=${lon}`);
 }
 
 export function getHeatmapTile(

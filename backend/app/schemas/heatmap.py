@@ -27,3 +27,9 @@ class GeocodeSuggestResponse(BaseModel):
     """Autocomplete results: display strings only, never coordinates."""
 
     suggestions: list[str]
+
+
+class GeocodeReverseResponse(BaseModel):
+    """Nearest address for a coordinate (for pre-filling the address page)."""
+
+    display_address: str

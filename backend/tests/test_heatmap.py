@@ -70,6 +70,34 @@ async def test_geocode_suggest_validates_query(client) -> None:
     assert (await client.get("/api/geocode/suggest")).status_code == 422
 
 
+@pytest.mark.asyncio
+async def test_geocode_reverse_returns_nearest_address(client) -> None:
+    response = await client.get(
+        "/api/geocode/reverse", params={"lat": 41.8957, "lon": 12.4823}
+    )
+    assert response.status_code == 200
+    assert response.json()["display_address"] == "Piazza Venezia, Roma"
+
+
+@pytest.mark.asyncio
+async def test_geocode_reverse_returns_404_far_away(client) -> None:
+    response = await client.get(
+        "/api/geocode/reverse", params={"lat": 0.0, "lon": 0.0}
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_geocode_reverse_validates_coordinates(client) -> None:
+    assert (
+        await client.get("/api/geocode/reverse", params={"lat": 200, "lon": 0})
+    ).status_code == 422
+    assert (
+        await client.get("/api/geocode/reverse", params={"lat": 0, "lon": 200})
+    ).status_code == 422
+    assert (await client.get("/api/geocode/reverse", params={"lat": 0})).status_code == 422
+
+
 async def _post_at(client: object, address: str, body: str) -> None:
     response = await client.post(
         "/api/posts",

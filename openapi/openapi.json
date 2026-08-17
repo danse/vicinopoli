@@ -628,6 +628,62 @@
         }
       }
     },
+    "/api/geocode/reverse": {
+      "get": {
+        "tags": [
+          "heatmap"
+        ],
+        "summary": "Reverse Geocode",
+        "description": "Resolve a browser-location coordinate to the nearest address.\n\nUsed to pre-fill the address page. Only the display string is returned;\nthe coordinate is used for the lookup and never stored or logged.",
+        "operationId": "reverse_geocode_api_geocode_reverse_get",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 90,
+              "minimum": -90,
+              "title": "Lat"
+            }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 180,
+              "minimum": -180,
+              "title": "Lon"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeocodeReverseResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/geocode": {
       "get": {
         "tags": [
@@ -1046,6 +1102,20 @@
           "cell_center_longitude"
         ],
         "title": "GeocodeResponse"
+      },
+      "GeocodeReverseResponse": {
+        "properties": {
+          "display_address": {
+            "type": "string",
+            "title": "Display Address"
+          }
+        },
+        "type": "object",
+        "required": [
+          "display_address"
+        ],
+        "title": "GeocodeReverseResponse",
+        "description": "Nearest address for a coordinate (for pre-filling the address page)."
       },
       "GeocodeSuggestResponse": {
         "properties": {

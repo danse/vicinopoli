@@ -138,6 +138,8 @@ function mockFetch() {
         cell_center_latitude: 41.89,
         cell_center_longitude: 12.48,
       };
+    } else if (url.startsWith("/api/geocode/reverse")) {
+      body = { display_address: "Piazza Venezia, Roma" };
     } else if (url.startsWith("/api/geocode/suggest")) {
       const q = new URL(url, "http://localhost").searchParams.get("q") ?? "";
       const all = [
@@ -291,6 +293,109 @@ describe("App", () => {
       target: { value: "Via Roma 1, Roma" },
     });
     expect(screen.getByTestId("address-submit")).toBeEnabled();
+  });
+
+  it("pre-fills the address input from the browser location", async () => {
+    vi.stubGlobal(
+      "navigator",
+      Object.defineProperty(
+        {},
+        "geolocation",
+        {
+          configurable: true,
+          value: {
+            getCurrentPosition: vi.fn().mockImplementation((success) =>
+              success({ coords: { latitude: 41.8957, longitude: 12.4823 } }),
+            ),
+          },
+        },
+      ),
+    );
+
+    renderApp();
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toHaveValue(
+        "Piazza Venezia, Roma",
+      );
+    });
+  });
+
+  it("leaves the address empty when geolocation is denied", async () => {
+    vi.stubGlobal(
+      "navigator",
+      Object.defineProperty({}, "geolocation", {
+        configurable: true,
+        value: {
+          getCurrentPosition: vi.fn().mockImplementation((_success, error) =>
+            error?.(new Error("denied")),
+          ),
+        },
+      }),
+    );
+
+    renderApp();
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("address-input")).toHaveValue("");
+  });
+
+  it("leaves the address empty when the reverse geocode finds nothing", async () => {
+    vi.stubGlobal(
+      "navigator",
+      Object.defineProperty({}, "geolocation", {
+        configurable: true,
+        value: {
+          getCurrentPosition: vi.fn().mockImplementation((success) =>
+            success({ coords: { latitude: 0, longitude: 0 } }),
+          ),
+        },
+      }),
+    );
+    const store = mockFetch();
+    store.mockImplementation((url: string, init?: RequestInit) => {
+      if (url.startsWith("/api/geocode/reverse")) {
+        return Promise.resolve({
+          ok: false,
+          status: 404,
+          json: () => Promise.resolve({ detail: "address not found" }),
+        });
+      }
+      return mockFetch()(url, init);
+    });
+    vi.stubGlobal("fetch", store);
+
+    renderApp();
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("address-input")).toHaveValue("");
+  });
+
+  it("does not overwrite a typed address with a located one", async () => {
+    vi.stubGlobal(
+      "navigator",
+      Object.defineProperty({}, "geolocation", {
+        configurable: true,
+        value: {
+          getCurrentPosition: vi.fn().mockImplementation((success) =>
+            success({ coords: { latitude: 41.8957, longitude: 12.4823 } }),
+          ),
+        },
+      }),
+    );
+
+    renderApp();
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByTestId("address-input"), {
+      target: { value: "Milano Centrale, Milano" },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.getByTestId("address-input")).toHaveValue(
+      "Milano Centrale, Milano",
+    );
   });
 
   it("submitting an address shows the feed page", async () => {
