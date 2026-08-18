@@ -1,8 +1,16 @@
-"""Feed service: expanding-radius feed honouring scope/visibility semantics.
+"""Feed service: adaptive feed honouring reach semantics.
 
-Implements ADR 0006 (visibility = distance <= scope AND distance <=
-search_radius; ``street`` matches on the normalized address key) and ADR 0007
-(expand radius until ~target_count posts, hard ceiling ~50km).
+Implements ADR 0024: visibility = distance <= reach(voice), where reach comes
+from the stored ``voice`` via ``VOICE_TO_REACH_M`` (a fixed lookup, not
+density- or trust-derived; see ``app.services.reach``). The feed's *scope* is
+how far it searched to fill the page: it widens the search radius step by step
+(``SCOPE_STEPS``, the sorted voice reaches) until ``target_count`` visible
+posts are gathered or the 50km ceiling is reached (ADR 0007);
+``effective_radius_m`` is the step where the feed stopped, so the "Entro <x>"
+label is honest.
+
+``street`` is a 5m reach (there are no street numbers yet), not a normalized
+address key match.
 
 Pagination is keyset-based: each page carries a ``next_cursor`` encoding the
 last post's ``(created_at, id)``, so the next request resumes strictly after it.
@@ -23,11 +31,15 @@ from sqlalchemy.orm import selectinload
 from app.core.geocoder import GeocodedAddress
 from app.models.location import Location
 from app.models.post import Post, PostStatus
-from app.services.reach import MAX_RADIUS_M, NEIGHBOUR_K, RADIUS_STEPS, reach_for
+from app.services.reach import VOICE_TO_REACH_M
 from app.services.trust import is_new_neighbour
 
-# Expanding-radius ladder (metres) per ADR 0007.
-# (``RADIUS_STEPS``/``MAX_RADIUS_M`` live in ``reach`` to avoid a cycle.)
+# Expanding-radius ladder (metres) for the adaptive feed: the sorted voice
+# reaches, so the feed fills step by step and the "Entro <x>" label is honest.
+SCOPE_STEPS: tuple[int, ...] = tuple(sorted(set(VOICE_TO_REACH_M.values())))
+
+# Hard ceiling for the expanding-radius search.
+MAX_SCOPE_M: int = 50_000
 
 
 @dataclass
@@ -60,10 +72,9 @@ async def _posts_within(
     session: AsyncSession,
     viewer: GeocodedAddress,
     radius_m: int,
-    search_radius_m: int,
     cursor: tuple[datetime, uuid.UUID] | None = None,
 ) -> list[tuple[Post, Location, float]]:
-    """Return active posts within ``radius_m``, before scope filtering.
+    """Return active posts within ``radius_m``, before reach filtering.
 
     Uses ``ST_DWithin`` on the GiST-indexed geography column. The distance is
     computed with ``ST_Distance`` so visibility can be evaluated precisely.
@@ -95,36 +106,20 @@ async def _posts_within(
     return rows
 
 
-async def _is_visible(
-    session: AsyncSession,
-    post: Post,
-    location: Location,
-    distance_m: float,
-    viewer: GeocodedAddress,
-    search_radius_m: int,
-) -> bool:
-    """Plan visibility: distance <= post.reach_m AND distance <= search_radius.
+def _is_visible(post: Post, distance_m: float) -> bool:
+    """Plan visibility: distance <= reach(voice).
 
-    ``reach_m`` is converted from the author's voice at serve time using the
-    fixed neighbour-count ``NEIGHBOUR_K`` (ADR 0022) — reach is trust-free.
-    ``street`` yields reach 0 (same normalized address key).
+    ``reach`` is the fixed voice->distance lookup (ADR 0024); it is trust-free
+    and never density-dependent. ``street`` is a 5m reach, not a normalized
+    address key match.
     """
-    if distance_m > search_radius_m:
-        return False
-
-    if post.voice == "street":
-        return location.normalized_key == viewer.normalized_key
-
-    exclude = {post.device_id} if post.device_id is not None else None
-    reach_m = await reach_for(session, location, k=NEIGHBOUR_K, exclude_device_ids=exclude)
-    return distance_m <= reach_m
+    return distance_m <= VOICE_TO_REACH_M[post.voice]
 
 
 async def expanding_radius_feed(
     session: AsyncSession,
     viewer: GeocodedAddress,
     target_count: int = 10,
-    search_radius_m: int = MAX_RADIUS_M,
     cursor: tuple[datetime, uuid.UUID] | None = None,
 ) -> tuple[list[FeedPost], int, str | None]:
     """Build the feed, widening the radius until ``target_count`` is reached.
@@ -133,21 +128,18 @@ async def expanding_radius_feed(
     ``None`` when there are no more posts after this page; otherwise it encodes
     the last post's ``(created_at, id)`` for the next page.
     """
-    for radius_m in RADIUS_STEPS:
-        effective_radius = min(radius_m, search_radius_m)
-        candidates = await _posts_within(session, viewer, radius_m, search_radius_m, cursor=cursor)
+    for radius_m in SCOPE_STEPS:
+        candidates = await _posts_within(session, viewer, radius_m, cursor=cursor)
         visible: list[tuple[Post, Location, float]] = []
         for post, location, distance_m in candidates:
             # Candidates are newest-first: once the page is full we can stop,
             # the remaining posts belong on a later page. At the ceiling the
             # full scan still runs so ``has_more`` below stays accurate.
-            if radius_m < MAX_RADIUS_M and len(visible) >= target_count:
+            if radius_m < MAX_SCOPE_M and len(visible) >= target_count:
                 break
-            if await _is_visible(
-                session, post, location, distance_m, viewer, search_radius_m
-            ):
+            if _is_visible(post, distance_m):
                 visible.append((post, location, distance_m))
-        if len(visible) >= target_count or radius_m == MAX_RADIUS_M:
+        if len(visible) >= target_count or radius_m == MAX_SCOPE_M:
             feed_posts = []
             for post, location, distance_m in visible[:target_count]:
                 author = post.device
@@ -165,10 +157,10 @@ async def expanding_radius_feed(
                     )
                 )
             next_cursor: str | None = None
-            has_more = radius_m < MAX_RADIUS_M or len(visible) > target_count
+            has_more = radius_m < MAX_SCOPE_M or len(visible) > target_count
             if has_more and feed_posts:
                 last = feed_posts[-1]
                 next_cursor = encode_cursor(last.created_at, uuid.UUID(last.id))
-            return feed_posts, effective_radius, next_cursor
+            return feed_posts, radius_m, next_cursor
 
-    return [], MAX_RADIUS_M, None
+    return [], MAX_SCOPE_M, None

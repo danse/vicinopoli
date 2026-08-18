@@ -12,6 +12,9 @@ text, voice, or photos to your neighbours. No account, no password.
 ## Source of truth
 
 - `docs/plan.md` — roadmap and milestones.
+- `docs/glossary.md` — the single source of truth for concept naming (e.g.
+  reach vs scope vs voice). Use its terms in code, docs and UI; don't invent
+  synonyms.
 - `docs/decisions/` — Architecture Decision Records (ADRs). Read these before
   making structural changes; add a new ADR for any significant decision.
 - This file (`AGENTS.md`) — commands and conventions.

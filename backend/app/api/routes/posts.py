@@ -3,8 +3,8 @@
 - ``POST /api/posts`` — geocode the address, resolve the canonical location,
   and store a text post attributed to the calling device (ADR 0005 caps the
   scope of untrusted devices).
-- ``GET  /api/feed`` — expanding-radius feed honouring scope/visibility; posts
-  that are reported-hidden are excluded (ADR 0009).
+- ``GET  /api/feed`` — adaptive feed honouring reach semantics; posts that
+  are reported-hidden are excluded (ADR 0009).
 """
 
 from typing import Annotated
@@ -33,7 +33,6 @@ from app.services.feed import decode_cursor, expanding_radius_feed
 from app.services.heatmap import bump_activity_cell
 from app.services.media import media_by_post, media_info
 from app.services.quota import posts_used_today
-from app.services.reach import MAX_RADIUS_M
 from app.services.trust import daily_post_quota, is_new_neighbour
 
 router = APIRouter()
@@ -110,8 +109,8 @@ async def create_post(
 
     location, _ = await _resolve_location(session, geocoder, payload.address)
 
-    # The author's voice is ``voice``; reach is trust-free (ADR 0022) and the
-    # ladder is converted to a distance only at feed-serve time.
+    # The author's voice is stored as-is; reach is derived from it in the feed
+    # (ADR 0024), never frozen here.
     if payload.scope is not None and payload.voice == PostVoice.city:
         # Backwards-compat: a legacy km scope maps to the closest intent.
         payload.voice = _scope_to_voice(payload.scope)
@@ -164,7 +163,6 @@ async def get_feed(
     geocoder: GeocoderDep,
     address: str = Query(min_length=1, max_length=512),
     target_count: int = Query(default=10, ge=1, le=50),
-    search_radius_m: int = Query(default=MAX_RADIUS_M, ge=1, le=MAX_RADIUS_M),
     cursor: str | None = Query(default=None),
 ) -> FeedResponse:
     geocoded = await geocoder.geocode(address)
@@ -180,7 +178,6 @@ async def get_feed(
         session,
         geocoded,
         target_count=target_count,
-        search_radius_m=search_radius_m,
         cursor=cursor_key,
     )
 

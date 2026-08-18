@@ -87,7 +87,9 @@ See `docs/decisions/` for Architecture Decision Records (ADRs). Key choices:
   generated via OpenAPI.
 - PostGIS (`geography` type, GiST, `ST_DWithin`) for geospatial queries.
 - Anonymous device tokens + optional pseudonym, no login; a trust ladder gives
-  new devices reduced reach.
+  new devices a reduced daily posting quota.
+- A fixed voice-to-reach map (see `docs/glossary.md`): posts travel 5m/500m/3km/50km
+  depending on the author's voice; the feed auto-expands its scope to fill.
 - Tailwind CSS + shadcn/ui for styling; Italian (`it`) default locale with `en`.
 
 ## Deployment

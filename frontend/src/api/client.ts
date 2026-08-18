@@ -60,9 +60,6 @@ export function getFeed(
   if (params.target_count !== undefined) {
     searchParams.set("target_count", String(params.target_count));
   }
-  if (params.search_radius_m !== undefined) {
-    searchParams.set("search_radius_m", String(params.search_radius_m));
-  }
   if (params.cursor !== undefined && params.cursor !== null) {
     searchParams.set("cursor", params.cursor);
   }

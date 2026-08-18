@@ -1,8 +1,10 @@
 """Post creation and feed visibility tests (DB-backed, real PostGIS).
 
-These exercise the API contract and the ADR 0006 visibility semantics:
-visibility = distance <= scope AND distance <= search_radius; ``street``
-matches on the normalized address key.
+These exercise the API contract and the adaptive-feed visibility semantics
+(glossary: reach, ADR 0024): visibility = distance <= reach(voice), where
+reach comes from the stored ``voice`` via ``VOICE_TO_REACH_M`` (street->5m,
+some->500m, area->3km, city->50km). ``street`` is a 5m radius; the legacy
+normalized-address-key gate is gone.
 """
 
 import pytest
@@ -234,33 +236,6 @@ async def test_feed_street_scope_requires_same_address(client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_feed_respects_search_radius(client) -> None:
-    """A post outside the viewer's search_radius is never shown.
-
-    Via Roma and Piazza Venezia are ~270m apart (per the static geocoder map),
-    so a 100m search radius excludes the far post while a generous radius
-    includes it.
-    """
-    await client.post(
-        "/api/posts",
-        json={"address": "Via Roma 1, Roma", "body": "ci sono", "scope": "5km"},
-    )
-    excluded = await client.get(
-        "/api/feed",
-        params={"address": "Piazza Venezia, Roma", "search_radius_m": 100},
-    )
-    assert excluded.status_code == 200
-    assert excluded.json()["posts"] == []
-
-    included = await client.get(
-        "/api/feed",
-        params={"address": "Piazza Venezia, Roma", "search_radius_m": 50000},
-    )
-    assert included.status_code == 200
-    assert included.json()["posts"]
-
-
-@pytest.mark.asyncio
 async def test_feed_expands_radius_to_target(client) -> None:
     """Expanding radius returns at least as many posts as target_count allows."""
     await client.post(
@@ -277,7 +252,7 @@ async def test_feed_expands_radius_to_target(client) -> None:
     )
     data = response.json()
     assert len(data["posts"]) >= 1
-    assert data["effective_radius_m"] >= 500
+    assert data["effective_radius_m"] == 5
 
 
 @pytest.mark.asyncio
@@ -365,13 +340,12 @@ async def test_feed_invalid_cursor_returns_400(client) -> None:
 async def test_feed_stops_evaluating_visibility_at_target_count(
     client, monkeypatch
 ) -> None:
-    """The feed must not run a reach query for every post in the radius.
+    """The feed must not evaluate visibility for every post in the radius.
 
-    Regression for the N+1 slowdown: with a dense radius the feed used to
-    compute ``reach_for`` once per candidate (feed.py ``_is_visible``), which
-    made a single page cost O(posts) reach queries. Candidates are ordered
-    newest-first, so the feed should stop scanning as soon as ``target_count``
-    visible posts have been collected.
+    Candidates are ordered newest-first, so the feed should stop scanning as
+    soon as ``target_count`` visible posts have been collected (the per-candidate
+    scope lookup in ``_is_visible`` stays O(1), but the loop must still bail
+    early — otherwise a dense radius costs O(posts) work per page).
     """
     import app.services.feed as feed_module
 
@@ -380,13 +354,14 @@ async def test_feed_stops_evaluating_visibility_at_target_count(
         await _create_post(client, f"dense-{i:02d}", scope="5km")
 
     calls = 0
+    original = feed_module._is_visible
 
-    async def counting_reach_for(session, location, k, exclude_device_ids=None):
+    def counting_is_visible(post, distance_m):
         nonlocal calls
         calls += 1
-        return 50_000
+        return original(post, distance_m)
 
-    monkeypatch.setattr(feed_module, "reach_for", counting_reach_for)
+    monkeypatch.setattr(feed_module, "_is_visible", counting_is_visible)
 
     response = await client.get(
         "/api/feed",
@@ -395,6 +370,6 @@ async def test_feed_stops_evaluating_visibility_at_target_count(
     assert response.status_code == 200
     assert len(response.json()["posts"]) == 10
     assert calls <= 10, (
-        f"reach_for ran {calls} times for a target_count of 10; the feed "
+        f"_is_visible ran {calls} times for a target_count of 10; the feed "
         "should stop scanning once it has enough visible posts"
     )

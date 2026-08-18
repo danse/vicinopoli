@@ -23,9 +23,10 @@ class PostScope(StrEnum):
 class PostVoice(StrEnum):
     """The author's voice intent (fuzzy, user-facing): who should read this.
 
-    Unlike ``PostScope`` (a fixed km), the voice is converted to a distance at
-    feed-serve time via the neighbour-count conversion (plan: Reach model).
-    ``street`` yields ``reach_m = 0`` (same normalized address key).
+    The voice is stored on the post as-is; the feed converts it to a fixed
+    ``reach`` (a distance) via ``VOICE_TO_REACH_M`` (glossary: reach, ADR
+    0024): ``street`` -> 5m, ``some`` -> 500m, ``area`` -> 3km, ``city`` ->
+    50km. ``street`` is a 5m radius, not a normalized address key match.
     """
 
     street = "street"

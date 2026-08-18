@@ -3,6 +3,9 @@
 - Status: accepted
 - Date: 2026-08-17
 - Supersedes: [0018-reach-model.md](0018-reach-model.md)
+- Amended: 2026-08-18 by [0024-scope-from-voice.md](0024-scope-from-voice.md)
+  (the reach/neighbour-count conversion is replaced by a fixed voice->reach
+  lookup; the daily posting quota is untouched)
 
 ## Context
 
