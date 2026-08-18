@@ -85,6 +85,10 @@
     "hint": "Scrivi a {{email}} per segnalare un problema o fare una domanda.",
     "back": "Torna all'inizio"
   },
+  "push": {
+    "toggleLabel": "Avvisami quando una vicina pubblica in zona",
+    "error": "Impossibile attivare le notifiche. Riprova."
+  },
   "admin": {
     "title": "Controllo contenuti",
     "subtitle": "Tutti i messaggi inviati, per la revisione",

@@ -13,7 +13,7 @@ export default function globalSetup() {
   execSync(
     [
       "docker compose exec -T db psql -U vicinopoli -d vicinopoli",
-      `-c "TRUNCATE activity_cells, analytics_events, devices, locations, media, posts, reports RESTART IDENTITY CASCADE"`,
+      `-c "TRUNCATE push_subscriptions, activity_cells, analytics_events, devices, locations, media, posts, reports RESTART IDENTITY CASCADE"`,
     ].join(" "),
     {
       cwd: "..",

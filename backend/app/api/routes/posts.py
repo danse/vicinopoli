@@ -9,13 +9,14 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_device, get_geocoder, get_post_rate_limiter, get_session
 from app.core.geocoder import Geocoder
 from app.core.ratelimit import RateLimiter
+from app.db import async_session_factory
 from app.models.device import Device
 from app.models.location import Location
 from app.models.media import Media
@@ -32,6 +33,7 @@ from app.schemas.post import (
 from app.services.feed import decode_cursor, expanding_radius_feed
 from app.services.heatmap import bump_activity_cell
 from app.services.media import media_by_post, media_info
+from app.services.push import PushSender, get_push_sender, notify_new_post
 from app.services.quota import posts_used_today
 from app.services.trust import daily_post_quota, is_new_neighbour
 
@@ -89,6 +91,8 @@ async def create_post(
     geocoder: GeocoderDep,
     device: DeviceDep,
     rate_limiter: RateLimiterDep,
+    background_tasks: BackgroundTasks,
+    push_sender: Annotated[PushSender, Depends(get_push_sender)],
 ) -> PostResponse:
     if rate_limiter is not None and not rate_limiter.allow(str(device.id)):
         raise HTTPException(status_code=429, detail="rate limit exceeded")
@@ -136,6 +140,13 @@ async def create_post(
     await session.commit()
     await session.refresh(post)
     await session.refresh(post.location)
+
+    # Notify subscribers whose cell the post's reach covers (ADR 0025). Runs
+    # after the response is sent with its own session; failures never fail the
+    # request.
+    background_tasks.add_task(
+        notify_new_post, async_session_factory, post.id, push_sender
+    )
 
     return PostResponse(
         id=post.id,

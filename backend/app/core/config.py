@@ -47,5 +47,15 @@ class Settings(BaseSettings):
     # admin surface is bound to the loopback interface in both compose files.
     admin_token: str | None = None
 
+    # Push notifications (ADR 0025).
+    # PUSH_SENDER: "mock" (dev/test) POSTs the payload to the subscription's
+    # endpoint verbatim; "webpush" delivers via pywebpush (production).
+    push_sender: str = "mock"
+    # VAPID keys as base64url raw values (RFC 8292). When unset (dev/test) an
+    # ephemeral pair is generated at startup.
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_subject: str = "mailto:info@vicinopoli.it"
+
 
 settings = Settings()

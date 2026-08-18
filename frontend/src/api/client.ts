@@ -38,7 +38,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } | null;
     throw new ApiError(response.status, body?.detail);
   }
-  return (await response.json()) as T;
+  if (response.status === 204) {
+    return undefined as T;
+  }
+  return (await response.json().catch(() => undefined)) as T;
 }
 
 export function createPost(
@@ -68,6 +71,31 @@ export function getFeed(
 
 export function getMe(): Promise<DeviceResponse> {
   return request("/api/me");
+}
+
+export type PushConfigResponse = components["schemas"]["PushConfigResponse"];
+
+export function getPushConfig(): Promise<PushConfigResponse> {
+  return request("/api/push/config");
+}
+
+export function subscribePush(body: {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  address: string;
+}): Promise<void> {
+  return request("/api/push/subscriptions", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function unsubscribePush(endpoint: string): Promise<void> {
+  return request("/api/push/subscriptions", {
+    method: "DELETE",
+    body: JSON.stringify({ endpoint }),
+  });
 }
 
 export function presignMedia(

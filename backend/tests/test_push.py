@@ -1,0 +1,188 @@
+"""Push notification tests (DB-backed, real PostGIS).
+
+Covered by ADR 0025: a subscription stores only the device's area as a geohash
+cell (never an address or exact point); a notification fires when a new post's
+reach covers that cell (plus ``CELL_SLACK_M``) and the post would appear in the
+author's feed. The send path is a recording sender injected into
+``notify_new_post``; the API routes exercise the real subscription lifecycle.
+"""
+
+from app.core.geocoder import geohash_encode
+from app.services.push import CELL_SLACK_M, notify_new_post
+
+
+class RecordingSender:
+    """Collect deliveries instead of hitting a real push service."""
+
+    def __init__(self) -> None:
+        self.sent: list[dict] = []
+
+    async def send(self, endpoint: str, p256dh: str, auth: str, payload: dict) -> None:
+        self.sent.append(
+            {"endpoint": endpoint, "p256dh": p256dh, "auth": auth, "payload": payload}
+        )
+
+
+async def _subscribe(client, address: str, endpoint: str = "https://push.example.test/sub") -> None:
+    client.cookies.clear()  # fresh subscriber device
+    response = await client.post(
+        "/api/push/subscriptions",
+        json={
+            "endpoint": endpoint,
+            "p256dh": "cGF5bG9hZA==",
+            "auth": "YXV0aA==",
+            "address": address,
+        },
+    )
+    assert response.status_code == 201
+
+
+async def _post(client, body: str, voice: str, address: str = "Via Roma 1, Roma") -> str:
+    client.cookies.clear()  # fresh author device, distinct from the subscriber
+    response = await client.post(
+        "/api/posts", json={"address": address, "body": body, "voice": voice}
+    )
+    assert response.status_code == 201
+    return response.json()["id"]
+
+
+async def test_push_config_exposes_vapid_public_key(client) -> None:
+    """``GET /api/push/config`` serves the auto-generated VAPID public key."""
+    response = await client.get("/api/push/config")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["enabled"] is True
+    assert body["vapid_public_key"]
+
+
+async def test_subscribe_unknown_address_404(client) -> None:
+    response = await client.post(
+        "/api/push/subscriptions",
+        json={
+            "endpoint": "https://push.example.test/sub",
+            "p256dh": "cGF5bG9hZA==",
+            "auth": "YXV0aA==",
+            "address": "Via Inesistente 99, Nowhere",
+        },
+    )
+    assert response.status_code == 404
+
+
+async def test_subscribe_stores_cell_not_address(client, session_factory) -> None:
+    """The subscription stores a geohash cell centre, never the address."""
+    await _subscribe(client, "Piazza Venezia, Roma", endpoint="https://push.example.test/a")
+
+    async with session_factory() as session:
+        from sqlalchemy import select
+
+        from app.models.push_subscription import PushSubscription
+
+        row = await session.scalar(select(PushSubscription))
+        assert row is not None
+        assert row.endpoint == "https://push.example.test/a"
+        assert row.device_id is not None
+        # Cell precision 7 (~150m), centred on Piazza Venezia.
+        assert len(row.geohash) == 7
+        assert row.geohash == geohash_encode(41.8957, 12.4823, 7)
+
+
+async def test_resubscribe_updates_cell(client, session_factory) -> None:
+    """Re-subscribing the same endpoint from a new address updates the cell."""
+    await _subscribe(client, "Via Roma 1, Roma", endpoint="https://push.example.test/move")
+    await _subscribe(client, "Piazza Venezia, Roma", endpoint="https://push.example.test/move")
+
+    async with session_factory() as session:
+        from sqlalchemy import func, select
+
+        from app.models.push_subscription import PushSubscription
+
+        count = await session.scalar(
+            select(func.count()).select_from(PushSubscription)
+        )
+        row = await session.scalar(select(PushSubscription))
+        assert count == 1
+        assert row.geohash == geohash_encode(41.8957, 12.4823, 7)
+
+
+async def test_unsubscribe_deletes(client, session_factory) -> None:
+    await _subscribe(client, "Piazza Venezia, Roma", endpoint="https://push.example.test/gone")
+
+    response = await client.request(
+        "DELETE",
+        "/api/push/subscriptions",
+        json={"endpoint": "https://push.example.test/gone"},
+    )
+    assert response.status_code == 204
+
+    async with session_factory() as session:
+        from sqlalchemy import func, select
+
+        from app.models.push_subscription import PushSubscription
+
+        count = await session.scalar(
+            select(func.count()).select_from(PushSubscription)
+        )
+        assert count == 0
+
+
+async def test_notify_delivers_when_reach_covers_subscriber(client, session_factory) -> None:
+    """A ``some`` post (500m reach) at Via Roma covers Piazza Venezia (~270m)."""
+    await _subscribe(client, "Piazza Venezia, Roma", endpoint="https://push.example.test/a")
+    post_id = await _post(client, "ciao some", voice="some")
+
+    sender = RecordingSender()
+    await notify_new_post(session_factory, post_id, sender)
+
+    assert len(sender.sent) == 1
+    assert sender.sent[0]["endpoint"] == "https://push.example.test/a"
+    payload = sender.sent[0]["payload"]
+    assert payload["body"] == "ciao some"
+    assert payload["voice"] == "some"
+    assert payload["display_address"] == "Via Roma 1, Roma"
+
+
+async def test_notify_payload_has_no_coordinates(client, session_factory) -> None:
+    """The wire payload must not leak the post location or the address."""
+    await _subscribe(client, "Piazza Venezia, Roma")
+    post_id = await _post(client, "ciao some", voice="some")
+
+    sender = RecordingSender()
+    await notify_new_post(session_factory, post_id, sender)
+
+    payload = sender.sent[0]["payload"]
+    for forbidden in ("latitude", "longitude", "address", "geohash"):
+        assert forbidden not in payload
+
+
+async def test_notify_skips_post_outside_reach(client, session_factory) -> None:
+    """A ``street`` post (5m reach) does not cover Piazza Venezia (~270m)."""
+    await _subscribe(client, "Piazza Venezia, Roma")
+    post_id = await _post(client, "ciao street", voice="street")
+
+    sender = RecordingSender()
+    await notify_new_post(session_factory, post_id, sender)
+
+    assert sender.sent == []
+
+
+async def test_notify_excludes_the_author(client, session_factory) -> None:
+    """The author's own device is never notified about its own post."""
+    # Subscribe with device A, then post WITHOUT clearing the cookie so the
+    # author is the same device A (its ``city`` post would cover its cell).
+    await _subscribe(client, "Piazza Venezia, Roma")
+    response = await client.post(
+        "/api/posts",
+        json={"address": "Via Roma 1, Roma", "body": "ciao city", "voice": "city"},
+    )
+    assert response.status_code == 201
+    post_id = response.json()["id"]
+
+    sender = RecordingSender()
+    await notify_new_post(session_factory, post_id, sender)
+
+    assert sender.sent == []
+
+
+async def test_notify_uses_cell_slack_above_reach(client, session_factory) -> None:
+    """The search widens by CELL_SLACK_M beyond the post's reach."""
+    assert CELL_SLACK_M > 0

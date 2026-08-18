@@ -24,9 +24,17 @@ export default defineConfig({
     VitePWA({
       registerType: "prompt",
       injectRegister: "auto",
-      // The admin entry is a separate internal tool: it must not be part of the
-      // PWA manifest or precache, and must never be served publicly. Keep the
-      // service worker scoped to the public app's entry only.
+      // A custom service worker (src/sw.ts) is needed to listen for push
+      // notifications (ADR 0025); generateSW cannot add a `push` handler.
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
+      injectManifest: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
+        // The admin entry is an internal tool: it must never be served or
+        // precached by the public service worker.
+        globIgnores: ["admin.html", "assets/admin-*"],
+      },
       manifest: {
         name: "vicinopoli",
         short_name: "vicinopoli",
@@ -54,18 +62,6 @@ export default defineConfig({
             purpose: "maskable",
           },
         ],
-      },
-      workbox: {
-        navigateFallback: "/index.html",
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,webmanifest}"],
-        // The admin entry is an internal tool: it must never be served or
-        // precached by the public service worker.
-        globIgnores: ["admin.html", "assets/admin-*"],
-        // Prompt mode does not claim clients by default; without this the first
-        // visit never gets controlled by the SW and offline does not work until
-        // a manual reload. Updates still wait for user confirmation (no
-        // skipWaiting) before taking control.
-        clientsClaim: true,
       },
     }),
   ],

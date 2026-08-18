@@ -83,6 +83,133 @@
         }
       }
     },
+    "/api/admin/push/inbox": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Push Inbox Read",
+        "description": "Return every mock push delivery (optionally clearing on read).",
+        "operationId": "push_inbox_read_api_admin_push_inbox_get",
+        "parameters": [
+          {
+            "name": "clear",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Clear"
+            }
+          },
+          {
+            "name": "x-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Push Inbox Read Api Admin Push Inbox Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Push Inbox Write",
+        "description": "Record a delivery, keyed by the ``to`` query parameter (if any).",
+        "operationId": "push_inbox_write_api_admin_push_inbox_post",
+        "parameters": [
+          {
+            "name": "x-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Push Inbox Write Api Admin Push Inbox Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "tags": [
@@ -445,6 +572,118 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/push/config": {
+      "get": {
+        "tags": [
+          "push"
+        ],
+        "summary": "Push Config",
+        "operationId": "push_config_api_push_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushConfigResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/push/subscriptions": {
+      "post": {
+        "tags": [
+          "push"
+        ],
+        "summary": "Subscribe",
+        "description": "Register the device's subscription, keyed by the Web Push endpoint.\n\nThe address is geocoded like a post's, but only the geohash cell centre is\npersisted \u2014 re-subscribing from a new address moves the cell.",
+        "operationId": "subscribe_api_push_subscriptions_post",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushSubscriptionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "push"
+        ],
+        "summary": "Unsubscribe",
+        "description": "Remove the subscription for the given endpoint (opt-out).",
+        "operationId": "unsubscribe_api_push_subscriptions_delete",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushSubscriptionDelete"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -1764,6 +2003,78 @@
         ],
         "title": "PostVoice",
         "description": "The author's voice intent (fuzzy, user-facing): who should read this.\n\nThe voice is stored on the post as-is; the feed converts it to a fixed\n``reach`` (a distance) via ``VOICE_TO_REACH_M`` (glossary: reach, ADR\n0024): ``street`` -> 5m, ``some`` -> 500m, ``area`` -> 3km, ``city`` ->\n50km. ``street`` is a 5m radius, not a normalized address key match."
+      },
+      "PushConfigResponse": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "vapid_public_key": {
+            "type": "string",
+            "title": "Vapid Public Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "vapid_public_key"
+        ],
+        "title": "PushConfigResponse",
+        "description": "VAPID public key the browser needs to subscribe (RFC 8292)."
+      },
+      "PushSubscriptionCreate": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 8,
+            "title": "Endpoint"
+          },
+          "p256dh": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 8,
+            "title": "P256Dh"
+          },
+          "auth": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 8,
+            "title": "Auth"
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Address"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint",
+          "p256dh",
+          "auth",
+          "address"
+        ],
+        "title": "PushSubscriptionCreate",
+        "description": "Register a Web Push subscription for the calling device.\n\n``address`` is sent on the wire for geocoding (as post creation does) but\nonly a geohash cell centre is persisted \u2014 never the address or an exact\npoint."
+      },
+      "PushSubscriptionDelete": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 8,
+            "title": "Endpoint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "title": "PushSubscriptionDelete",
+        "description": "Remove a previously registered subscription by its endpoint."
       },
       "ReportResponse": {
         "properties": {

@@ -53,6 +53,9 @@ services:
       PHOTON_BASE_URL: ${PHOTON_BASE_URL:-https://photon.komoot.io}
       SENTRY_DSN: ${SENTRY_DSN:-}
       ADMIN_TOKEN: ${ADMIN_TOKEN:?set ADMIN_TOKEN in .env}
+      PUSH_SENDER: ${PUSH_SENDER:-mock}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
     depends_on:
       db:
         condition: service_healthy

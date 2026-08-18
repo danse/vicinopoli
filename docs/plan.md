@@ -53,13 +53,12 @@ synonyms. The essentials:
 
 Ordered by priority, remove from the list when done
 
-- push notifications
-- immediacy is important: realtime feed, maybe with functional reactive programming
+- realtime feed
+- search engine optimisation
 
 #### Wednesday 19
 
 - message page, navigate on click. Image shows full-screen in there
-- search engine optimisation
 
 #### Thursday 20
 

@@ -7,6 +7,7 @@ from app.models.device import Device, DeviceStatus
 from app.models.location import Location
 from app.models.media import Media, MediaKind
 from app.models.post import Post, PostScope, PostStatus
+from app.models.push_subscription import PushSubscription
 from app.models.report import Report, ReportStatus
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "Post",
     "PostScope",
     "PostStatus",
+    "PushSubscription",
     "Report",
     "ReportStatus",
 ]

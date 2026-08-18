@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { type FeedItem, getFeed, sendAnalyticsEvents } from "@/api/client";
 
 import { PostMedia } from "@/components/post-media";
+import { PushToggle } from "@/components/push-toggle";
 
 interface FeedProps {
   address: string;
@@ -114,23 +115,23 @@ export function Feed({
 
   if (posts === null) return null;
 
-  if (posts.length === 0) {
-    return (
-      <section aria-label={t("composer.feedTitle")} className="mt-8">
-        <p className="text-sm text-muted-foreground">{t("composer.empty")}</p>
-      </section>
-    );
-  }
-
   return (
     <section aria-label={t("composer.feedTitle")} className="mt-8">
-      <h2 className="text-lg font-semibold">{t("composer.feedTitle")}</h2>
-      <p className="mb-4 text-sm text-muted-foreground">
-        {t("composer.radius", {
-          radius: formatRadius(effectiveRadius),
-        })}
-      </p>
-      <ul className="grid gap-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold">{t("composer.feedTitle")}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t("composer.radius", {
+              radius: formatRadius(effectiveRadius),
+            })}
+          </p>
+        </div>
+        <PushToggle address={address} />
+      </div>
+      {posts.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t("composer.empty")}</p>
+      ) : (
+        <ul className="grid gap-4">
         {posts.map((post) => (
           <li
             key={post.id}
@@ -163,7 +164,8 @@ export function Feed({
             </p>
           </li>
         ))}
-      </ul>
+        </ul>
+      )}
       {nextCursor !== null && (
         <div ref={sentinelRef} data-testid="feed-load-more" aria-hidden="true" />
       )}

@@ -8,7 +8,7 @@ and is only reachable on the loopback interface in both compose files.
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -99,3 +99,27 @@ async def get_admin_posts(
         next_cursor = encode_cursor(last.created_at, last.id)
 
     return AdminFeedResponse(posts=posts, next_cursor=next_cursor)
+
+
+# In-memory inbox for push deliveries (ADR 0025, PUSH_SENDER=mock). The mock
+# sender POSTs the notification payload to the subscription's endpoint; e2e
+# points it here so the full pipeline is asserted without a real push service.
+_push_inbox: list[dict[str, object]] = []
+
+
+@router.get("/admin/push/inbox")
+async def push_inbox_read(clear: int = 0) -> list[dict[str, object]]:
+    """Return every mock push delivery (optionally clearing on read)."""
+    if clear:
+        deliveries = list(_push_inbox)
+        _push_inbox.clear()
+        return deliveries
+    return list(_push_inbox)
+
+
+@router.post("/admin/push/inbox", status_code=201)
+async def push_inbox_write(payload: dict[str, object], request: Request) -> dict[str, object]:
+    """Record a delivery, keyed by the ``to`` query parameter (if any)."""
+    record: dict[str, object] = {"to": request.query_params.get("to"), "payload": payload}
+    _push_inbox.append(record)
+    return record
