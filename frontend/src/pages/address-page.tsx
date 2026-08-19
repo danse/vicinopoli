@@ -51,21 +51,25 @@ export function AddressPage() {
         >
           {t("address.title")}
         </label>
-        <AddressCombobox
-          testId="address-input"
-          address={address}
-          onAddressChange={setAddress}
-        />
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <AddressCombobox
+              testId="address-input"
+              address={address}
+              onAddressChange={setAddress}
+            />
+          </div>
+          <Button
+            className="h-10 shrink-0"
+            data-testid="address-submit"
+            disabled={!canSubmit}
+            onClick={submit}
+          >
+            {t("address.enter")}
+          </Button>
+        </div>
         <p className="text-sm text-muted-foreground">{t("address.hint")}</p>
       </div>
-      <Button
-        className="mt-4 w-full"
-        data-testid="address-submit"
-        disabled={!canSubmit}
-        onClick={submit}
-      >
-        {t("address.enter")}
-      </Button>
     </section>
   );
 }

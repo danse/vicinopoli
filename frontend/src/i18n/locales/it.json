@@ -13,7 +13,7 @@
   "address": {
     "title": "Dove ti trovi?",
     "hint": "Inserisci il tuo indirizzo per vedere i messaggi delle vicine.",
-    "enter": "Entra in zona"
+    "enter": "Entra"
   },
   "feed": {
     "compose": "Scrivi un messaggio",

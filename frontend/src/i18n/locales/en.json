@@ -13,7 +13,7 @@
   "address": {
     "title": "Where are you?",
     "hint": "Enter your address to see your neighbours' messages.",
-    "enter": "Enter the area"
+    "enter": "Enter"
   },
   "feed": {
     "compose": "Write a message",

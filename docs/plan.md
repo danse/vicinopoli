@@ -53,8 +53,8 @@ synonyms. The essentials:
 
 Ordered by priority, remove from the list when done
 
-- the location bar autocompletions cover the submit ("entra in zona") button when expanding towards the bottom. Maybe we could have a smaller "Entra" button straight to the right of the input?
 - browser location autofill does not seem to work in production. The permissions dialog appears but, after accepting, the input stays empty (both on mobile and on desktop)
+- when there is a new version, clicking "Accetta" does not do anything (chrome and firefox mobile)
 - search engine optimisation
 
 #### Thursday 20
