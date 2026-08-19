@@ -45,6 +45,7 @@ export function AddressPage() {
   return (
     <section aria-label={t("address.title")}>
       <div className="grid gap-2">
+        <p className="text-sm text-muted-foreground">{t("address.intro")}</p>
         <label
           htmlFor="address-input"
           className="text-sm font-medium text-foreground"

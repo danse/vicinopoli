@@ -7,7 +7,54 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-    <title>vicinopoli</title>
+
+    <!-- SEO (ADR 0027): landing/brand metadata, Italian by default. -->
+    <title>vicinopoli — La piazza delle tue vicine</title>
+    <meta
+      name="description"
+      content="vicinopoli è la piazza del tuo quartiere: leggi e scrivi messaggi, voce e foto con le persone che vivono vicino a te. Gratis, senza account né password."
+    />
+    <link rel="canonical" href="%VITE_PUBLIC_BASE_URL%/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="vicinopoli" />
+    <meta property="og:title" content="vicinopoli — La piazza delle tue vicine" />
+    <meta
+      property="og:description"
+      content="vicinopoli è la piazza del tuo quartiere: leggi e scrivi messaggi, voce e foto con le persone che vivono vicino a te. Gratis, senza account né password."
+    />
+    <meta property="og:url" content="%VITE_PUBLIC_BASE_URL%/" />
+    <meta property="og:image" content="https://vicinopoli.it/icons/icon-512x512.png" />
+    <meta property="og:locale" content="it_IT" />
+    <meta property="og:locale:alternate" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="vicinopoli — La piazza delle tue vicine" />
+    <meta
+      name="twitter:description"
+      content="vicinopoli è la piazza del tuo quartiere: messaggi, voce e foto con chi vive vicino a te. Gratis, senza account."
+    />
+    <meta name="twitter:image" content="https://vicinopoli.it/icons/icon-512x512.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "vicinopoli",
+        "url": "https://vicinopoli.it/",
+        "inLanguage": "it",
+        "description": "La piazza del tuo quartiere: messaggi, voce e foto con le persone che vivono vicino a te. Gratis, senza account."
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "vicinopoli",
+        "url": "https://vicinopoli.it/",
+        "logo": "https://vicinopoli.it/icons/icon-512x512.png"
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

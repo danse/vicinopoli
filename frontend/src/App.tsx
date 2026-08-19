@@ -6,6 +6,7 @@ import { ConsentBanner } from "@/components/consent-banner";
 import { UpdatePrompt } from "@/components/update-prompt";
 import { AppProvider, useApp } from "@/context/app-context";
 import { trackPageView } from "@/lib/analytics";
+import { pageTitle } from "@/lib/page-title";
 import { AddressPage } from "@/pages/address-page";
 import { ComposerPage } from "@/pages/composer-page";
 import { FeedPage } from "@/pages/feed-page";
@@ -35,6 +36,11 @@ function AppRoutes() {
   useEffect(() => {
     trackPageView(location.pathname + location.search, document.title);
   }, [location.pathname, location.search]);
+
+  // Page-specific tab titles (ADR 0027).
+  useEffect(() => {
+    document.title = pageTitle(location.pathname, t);
+  }, [location.pathname, t]);
 
   const toggleLanguage = () => {
     const next = i18n.language === "it" ? "en" : "it";

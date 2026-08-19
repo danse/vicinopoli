@@ -250,6 +250,7 @@ describe("App", () => {
     analytics.setConsent.mockClear();
     analytics.trackPageView.mockClear();
     analytics.trackConversion.mockClear();
+    document.title = "";
   });
 
   it("renders the app title", () => {
@@ -354,6 +355,7 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByTestId("address-input")).toBeInTheDocument();
     });
+    expect(document.title).toBe("Dove ti trovi? — vicinopoli");
   });
 
   it("keeps the submit disabled until an address is entered", async () => {
@@ -475,6 +477,7 @@ describe("App", () => {
     renderApp();
     await submitAddress();
     expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    expect(document.title).toBe("La piazza delle tue vicine — vicinopoli");
   });
 
   it("hides the heatmap when its feature flag is off", async () => {

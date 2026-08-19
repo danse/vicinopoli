@@ -53,7 +53,7 @@ synonyms. The essentials:
 
 Ordered by priority, remove from the list when done
 
-- search engine optimisation
+- repetitions in feed copy ("zona/zona", "nearby/nearby")
 
 #### Thursday 20
 

@@ -2,6 +2,7 @@
   "app": {
     "title": "vicinopoli",
     "tagline": "La piazza delle tue vicine",
+    "description": "vicinopoli è la piazza del tuo quartiere: leggi e scrivi messaggi, voce e foto con le persone che vivono vicino a te. Gratis, senza account.",
     "switchLanguage": "English",
     "version": "versione"
   },
@@ -12,6 +13,7 @@
   },
   "address": {
     "title": "Dove ti trovi?",
+    "intro": "vicinopoli è la piazza del tuo quartiere. Inserisci il tuo indirizzo e leggi i messaggi — testi, voce e foto — delle persone che vivono vicino a te. Gratis, senza account né password.",
     "hint": "Inserisci il tuo indirizzo per vedere i messaggi delle vicine.",
     "enter": "Entra"
   },
