@@ -89,6 +89,7 @@ export default defineConfig({
     env: {
       VITE_SUPPORT_EMAIL: "info@vicinopoli.it",
       VITE_PUBLIC_BASE_URL: "http://localhost:8080",
+      VITE_GTAG_ID: "",
     },
     coverage: {
       provider: "v8",

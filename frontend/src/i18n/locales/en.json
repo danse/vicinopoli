@@ -76,7 +76,7 @@
   },
   "consent": {
     "title": "Analytics",
-    "body": "May we collect anonymous statistics about how you use vicinopoli? No address or exact location is ever recorded.",
+    "body": "May we collect anonymous statistics about how you use vicinopoli and share your choice with Google for advertising campaigns? No address or exact location is ever recorded.",
     "accept": "Accept",
     "decline": "Decline"
   },

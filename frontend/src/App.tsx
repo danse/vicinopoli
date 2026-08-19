@@ -1,10 +1,11 @@
-import type { ReactElement } from "react";
+import { useEffect, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, Navigate, Route, Routes } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { ConsentBanner } from "@/components/consent-banner";
 import { UpdatePrompt } from "@/components/update-prompt";
 import { AppProvider, useApp } from "@/context/app-context";
+import { trackPageView } from "@/lib/analytics";
 import { AddressPage } from "@/pages/address-page";
 import { ComposerPage } from "@/pages/composer-page";
 import { FeedPage } from "@/pages/feed-page";
@@ -27,6 +28,13 @@ function RootRedirect() {
 function AppRoutes() {
   const { t, i18n } = useTranslation();
   const { consentDecided, decideConsent } = useApp();
+  const location = useLocation();
+
+  // Report SPA route changes to the Google Ads tag (ADR 0026); a no-op when
+  // no tag id is configured.
+  useEffect(() => {
+    trackPageView(location.pathname + location.search, document.title);
+  }, [location.pathname, location.search]);
 
   const toggleLanguage = () => {
     const next = i18n.language === "it" ? "en" : "it";

@@ -76,7 +76,7 @@
   },
   "consent": {
     "title": "Analisi statistiche",
-    "body": "Possiamo raccogliere statistiche anonime su come usi vicinopoli? (nessun indirizzo né posizione esatta)",
+    "body": "Possiamo raccogliere statistiche anonime su come usi vicinopoli e condividere la tua scelta con Google per le campagne pubblicitarie? Nessun indirizzo né posizione esatta viene mai registrato.",
     "accept": "Accetta",
     "decline": "Rifiuta"
   },

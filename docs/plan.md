@@ -53,15 +53,16 @@ synonyms. The essentials:
 
 Ordered by priority, remove from the list when done
 
+- what is the "pronta per funzionare offline" banner about? On first load the page is full of banners
+- browser location autofill does not seem to work in production. The permissions dialog appears but, after accepting, the input stays empty
 
-
-- realtime feed
 - link from the composer to the feed
 
+#### Thursday 20
+
+- realtime feed
 - search engine optimisation
 - message page, navigate on click. Image shows full-screen in there
-
-#### Thursday 20
 
 - post removal
 - post editing: should happen within a time window
@@ -79,6 +80,7 @@ Ordered by priority, remove from the list when done
 
 ### Moon
 
+- remove google tag for privacy
 - equalise
 - replies and threading user experience
 - send a notification upon a reply

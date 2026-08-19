@@ -14,6 +14,13 @@ vi.mock("@sentry/react", () => ({
   captureException: (err: unknown, hint?: unknown) => sentryCapture(err, hint),
 }));
 
+const analytics = vi.hoisted(() => ({
+  initGtag: vi.fn(),
+  setConsent: vi.fn(),
+  trackPageView: vi.fn(),
+}));
+vi.mock("@/lib/analytics", () => analytics);
+
 vi.mock("maplibre-gl", () => ({
   Map: vi.fn().mockImplementation(() => {
     const handlers: Record<string, () => void> = {};
@@ -238,6 +245,9 @@ describe("App", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", mockFetch());
     clearSuggestionCache();
+    analytics.initGtag.mockClear();
+    analytics.setConsent.mockClear();
+    analytics.trackPageView.mockClear();
   });
 
   it("renders the app title", () => {
@@ -263,6 +273,7 @@ describe("App", () => {
         screen.getByRole("button", { name: "Accetta" }),
       ).toBeInTheDocument();
     });
+    expect(analytics.setConsent).not.toHaveBeenLastCalledWith(true);
 
     fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
 
@@ -278,6 +289,27 @@ describe("App", () => {
         body: expect.stringContaining("onboarding_completed"),
       }),
     );
+    expect(analytics.initGtag).toHaveBeenCalledTimes(1);
+    expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
+  });
+
+  it("keeps Google consent denied when the banner is declined", async () => {
+    renderApp();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Rifiuta" }),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Rifiuta" }));
+
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(false);
+    });
+    expect(
+      screen.queryByRole("button", { name: "Rifiuta" }),
+    ).not.toBeInTheDocument();
   });
 
   it("redirects the root to the address page", async () => {

@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { getMe } from "@/api/client";
+import { initGtag, setConsent } from "@/lib/analytics";
 
 const ADDRESS_STORAGE_KEY = "vicinopoli.address";
 
@@ -84,6 +85,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     refreshDevice();
   }, [refreshDevice]);
+
+  // Google Ads tag (ADR 0026): load once with every consent signal denied,
+  // then reflect the GDPR choice as soon as it is known.
+  useEffect(() => {
+    initGtag();
+  }, []);
+
+  useEffect(() => {
+    if (!consentDecided) return;
+    setConsent(analyticsConsented);
+  }, [consentDecided, analyticsConsented]);
 
   const decideConsent = (consented: boolean) => {
     setConsentDecided(true);
