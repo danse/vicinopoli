@@ -30,4 +30,10 @@ test("the app asks to update when a new version is deployed", async ({
   // The prompt appears with an update action.
   await expect(page.getByTestId("update-prompt")).toBeVisible();
   await expect(page.getByTestId("update-prompt-reload")).toBeVisible();
+
+  // Clicking "update" must skip the waiting worker and reload into the new
+  // version; the prompt then disappears (regression: injectManifest SW had no
+  // SKIP_WAITING handler, so the button did nothing).
+  await page.getByTestId("update-prompt-reload").click();
+  await expect(page.getByTestId("update-prompt")).toBeHidden({ timeout: 10_000 });
 });

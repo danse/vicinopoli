@@ -12,6 +12,15 @@ declare let self: ServiceWorkerGlobalScope & {
 precacheAndRoute(self.__WB_MANIFEST);
 clientsClaim();
 
+// In injectManifest mode the plugin does not auto-inject the skipWaiting
+// handler; without it the update prompt's button sends SKIP_WAITING to a
+// worker that ignores it, so "update" never activates the new version.
+self.addEventListener("message", (event) => {
+  if ((event.data as { type?: string } | undefined)?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 // Offline navigation fallback for the SPA entry (was `navigateFallback` in
 // the old generateSW setup; injectManifest leaves this to the SW itself).
 const navigationHandler = createHandlerBoundToURL("/index.html");

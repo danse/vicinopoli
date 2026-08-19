@@ -53,7 +53,6 @@ synonyms. The essentials:
 
 Ordered by priority, remove from the list when done
 
-- when there is a new version, clicking "Accetta" does not do anything (chrome and firefox mobile)
 - search engine optimisation
 
 #### Thursday 20
@@ -61,7 +60,6 @@ Ordered by priority, remove from the list when done
 - link from the composer to the feed
 - realtime feed
 - message page, navigate on click. Image shows full-screen in there
-
 - post removal
 - post editing: should happen within a time window
 
