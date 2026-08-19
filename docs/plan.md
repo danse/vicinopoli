@@ -53,11 +53,12 @@ synonyms. The essentials:
 
 Ordered by priority, remove from the list when done
 
+
+
 - realtime feed
+- link from the composer to the feed
+
 - search engine optimisation
-
-#### Wednesday 19
-
 - message page, navigate on click. Image shows full-screen in there
 
 #### Thursday 20
@@ -77,8 +78,6 @@ Ordered by priority, remove from the list when done
 - denial of service surface with changing device id, like we do in pagination tests
 
 ### Moon
-
-- campaign: ${ibla,ragusa}-${eventi,events,chat,gruppo}
 
 - equalise
 - replies and threading user experience

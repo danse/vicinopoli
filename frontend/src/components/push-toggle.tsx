@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { getPushConfig, subscribePush, unsubscribePush } from "@/api/client";
+
+import { Switch } from "@/components/ui/switch";
 
 const ENABLED_KEY = "vicinopoli.pushEnabled";
 
@@ -51,20 +53,23 @@ interface PushToggleProps {
 }
 
 /**
- * Opt-in/out toggle for push notifications (ADR 0025), shown in the feed.
+ * Push notifications toggle (ADR 0025), shown in the feed.
  *
- * Enabling requests the Notification permission, subscribes with the VAPID
- * public key and registers the subscription with the current address (only a
- * geohash cell is stored server-side). Changing address while enabled moves
- * the cell. All failures keep the toggle off and surface a short error.
+ * **On by default**: the very first visit attempts to enable push (request the
+ * Notification permission, subscribe with the VAPID public key and register
+ * the subscription with the current address — only a geohash cell is stored
+ * server-side). A denied permission or failed subscription flips the toggle
+ * off and remembers the choice, so it is never forced again. Changing address
+ * while enabled moves the cell. Failures always surface a short error.
  */
 export function PushToggle({ address }: PushToggleProps) {
   const { t } = useTranslation();
   const [enabled, setEnabled] = useState(
-    () => localStorage.getItem(ENABLED_KEY) === "1",
+    () => localStorage.getItem(ENABLED_KEY) !== "0",
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  const autoAttempted = useRef(false);
 
   const enable = useCallback(async () => {
     setBusy(true);
@@ -75,12 +80,14 @@ export function PushToggle({ address }: PushToggleProps) {
         !("serviceWorker" in navigator) ||
         !("PushManager" in window)
       ) {
+        localStorage.setItem(ENABLED_KEY, "0");
         setEnabled(false);
         setError(true);
         return;
       }
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
+        localStorage.setItem(ENABLED_KEY, "0");
         setEnabled(false);
         setError(true);
         return;
@@ -96,7 +103,8 @@ export function PushToggle({ address }: PushToggleProps) {
       await subscribePush({ ...(await encodeSubscription(subscription)), address });
       localStorage.setItem(ENABLED_KEY, "1");
     } catch {
-      // Revert the optimistic toggle so the checkbox reflects reality.
+      // Revert the optimistic toggle so the switch reflects reality.
+      localStorage.setItem(ENABLED_KEY, "0");
       setEnabled(false);
       setError(true);
     } finally {
@@ -115,9 +123,10 @@ export function PushToggle({ address }: PushToggleProps) {
         await subscription.unsubscribe();
         await unsubscribePush(endpoint);
       }
-      localStorage.removeItem(ENABLED_KEY);
+      localStorage.setItem(ENABLED_KEY, "0");
     } catch {
-      // Revert the optimistic toggle so the checkbox reflects reality.
+      // Revert the optimistic toggle so the switch reflects reality.
+      localStorage.setItem(ENABLED_KEY, "1");
       setEnabled(true);
       setError(true);
     } finally {
@@ -125,11 +134,37 @@ export function PushToggle({ address }: PushToggleProps) {
     }
   }, []);
 
+  // Default-on: on the first visit (or after a successful previous session)
+  // subscribe without waiting for the user to touch the switch. Runs at most
+  // once; opting out persists so it never nags again.
+  useEffect(() => {
+    if (autoAttempted.current) return;
+    autoAttempted.current = true;
+    if (!enabled || address === "") return;
+    const ready = navigator.serviceWorker?.ready;
+    if (ready === undefined) return;
+    let cancelled = false;
+    ready
+      .then((registration) => registration.pushManager.getSubscription())
+      .then(async (subscription) => {
+        if (cancelled || subscription !== null) return;
+        await enable();
+      })
+      .catch(() => {
+        // Non-fatal: the switch still lets the user enable manually.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, address, enable]);
+
   // Moving house while enabled: tell the backend the new area.
   useEffect(() => {
     if (!enabled || address === "") return;
+    const ready = navigator.serviceWorker?.ready;
+    if (ready === undefined) return;
     let cancelled = false;
-    navigator.serviceWorker.ready
+    ready
       .then((registration) => registration.pushManager.getSubscription())
       .then(async (subscription) => {
         if (subscription === null || cancelled) return;
@@ -147,34 +182,34 @@ export function PushToggle({ address }: PushToggleProps) {
   }, [enabled, address]);
 
   return (
-    <label className="flex cursor-pointer items-start gap-2 text-sm">
-      <input
-        type="checkbox"
-        data-testid="feed-push-toggle"
-        checked={enabled}
-        disabled={busy}
-        onChange={() => {
-          // Optimistic: flip immediately so the control feels instant; the
-          // async subscribe/unsubscribe runs in the background and reverts
-          // the flip on failure.
-          setError(false);
-          if (enabled) {
-            setEnabled(false);
-            localStorage.removeItem(ENABLED_KEY);
-            void disable();
-          } else {
-            setEnabled(true);
-            void enable();
-          }
-        }}
-        className="mt-0.5 h-4 w-4 accent-foreground"
-      />
+    <div className="flex items-start justify-between gap-3 text-sm">
       <span className="flex flex-col gap-0.5">
         <span>{t("push.toggleLabel")}</span>
         {error && (
           <span className="text-xs text-destructive">{t("push.error")}</span>
         )}
       </span>
-    </label>
+      <Switch
+        data-testid="feed-push-toggle"
+        checked={enabled}
+        disabled={busy}
+        aria-label={t("push.toggleLabel")}
+        onCheckedChange={() => {
+          // Optimistic: flip immediately so the control feels instant; the
+          // async subscribe/unsubscribe runs in the background and reverts
+          // the flip on failure.
+          setError(false);
+          if (enabled) {
+            setEnabled(false);
+            localStorage.setItem(ENABLED_KEY, "0");
+            void disable();
+          } else {
+            setEnabled(true);
+            void enable();
+          }
+        }}
+        className="mt-0.5"
+      />
+    </div>
   );
 }

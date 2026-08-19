@@ -33,13 +33,17 @@ function stubBrowser(overrides: {
   subscribed?: boolean;
   permission?: string;
 } = {}) {
-  const { subscribed = true, permission = "granted" } = overrides;
+  const { subscribed = false, permission = "granted" } = overrides;
   const subscription = stubSubscription();
+  let active = subscribed;
   const registration = {
     pushManager: {
-      subscribe: vi.fn().mockResolvedValue(subscription),
-      getSubscription: vi.fn().mockResolvedValue(
-        subscribed ? subscription : null,
+      subscribe: vi.fn().mockImplementation(async () => {
+        active = true;
+        return subscription;
+      }),
+      getSubscription: vi.fn().mockImplementation(async () =>
+        active ? subscription : null,
       ),
     },
   };
@@ -55,11 +59,7 @@ function stubBrowser(overrides: {
   return { registration, subscription };
 }
 
-async function enableToggle() {
-  const checkbox = screen.getByTestId("feed-push-toggle");
-  fireEvent.click(checkbox);
-  await waitFor(() => expect(api.subscribePush).toHaveBeenCalled());
-}
+const address = "Via Roma 1, Roma";
 
 describe("PushToggle", () => {
   beforeEach(() => {
@@ -69,31 +69,63 @@ describe("PushToggle", () => {
     api.unsubscribePush.mockClear();
   });
 
-  it("registers the subscription with the current address when enabled", async () => {
+  it("is on by default and subscribes on the first visit", async () => {
     stubBrowser();
-    render(<PushToggle address="Via Roma 1, Roma" />);
-    const checkbox = screen.getByTestId("feed-push-toggle");
-    expect(checkbox).not.toBeChecked();
-    await enableToggle();
-    expect(checkbox).toBeChecked();
-    expect(api.getPushConfig).toHaveBeenCalledTimes(1);
+    render(<PushToggle address={address} />);
+    const toggle = screen.getByTestId("feed-push-toggle");
+    await waitFor(() => expect(api.subscribePush).toHaveBeenCalled());
+    expect(toggle).toBeChecked();
     expect(api.subscribePush).toHaveBeenCalledWith(
       expect.objectContaining({
         endpoint: "https://push.example.test/sub/abc",
         p256dh: expect.any(String),
         auth: expect.any(String),
-        address: "Via Roma 1, Roma",
+        address,
       }),
     );
+    expect(localStorage.getItem("vicinopoli.pushEnabled")).toBe("1");
   });
 
-  it("stays disabled and explains when permission is denied", async () => {
-    stubBrowser({ permission: "denied" });
-    render(<PushToggle address="Via Roma 1, Roma" />);
-    const checkbox = screen.getByTestId("feed-push-toggle");
-    fireEvent.click(checkbox);
-    await waitFor(() => expect(checkbox).not.toBeChecked());
+  it("respects a previous opt-out and never nags again", async () => {
+    stubBrowser();
+    localStorage.setItem("vicinopoli.pushEnabled", "0");
+    render(<PushToggle address={address} />);
+    expect(screen.getByTestId("feed-push-toggle")).not.toBeChecked();
+    await new Promise((resolve) => setTimeout(resolve, 20));
     expect(api.subscribePush).not.toHaveBeenCalled();
+  });
+
+  it("re-syncs the server-side cell when already subscribed", async () => {
+    stubBrowser({ subscribed: true });
+    localStorage.setItem("vicinopoli.pushEnabled", "1");
+    render(<PushToggle address={address} />);
+    await waitFor(() =>
+      expect(api.subscribePush).toHaveBeenCalledWith(
+        expect.objectContaining({ address }),
+      ),
+    );
+    expect(screen.getByTestId("feed-push-toggle")).toBeChecked();
+  });
+
+  it("flips off and remembers the choice when permission is denied", async () => {
+    stubBrowser({ permission: "denied" });
+    render(<PushToggle address={address} />);
+    const toggle = screen.getByTestId("feed-push-toggle");
+    await waitFor(() => expect(toggle).not.toBeChecked());
+    expect(api.subscribePush).not.toHaveBeenCalled();
+    expect(localStorage.getItem("vicinopoli.pushEnabled")).toBe("0");
+    expect(
+      await screen.findByText(/Impossibile attivare le notifiche/),
+    ).toBeInTheDocument();
+  });
+
+  it("flips off and remembers the choice when the config call fails", async () => {
+    stubBrowser();
+    api.getPushConfig.mockRejectedValueOnce(new Error("boom"));
+    render(<PushToggle address={address} />);
+    const toggle = screen.getByTestId("feed-push-toggle");
+    await waitFor(() => expect(toggle).not.toBeChecked());
+    expect(localStorage.getItem("vicinopoli.pushEnabled")).toBe("0");
     expect(
       await screen.findByText(/Impossibile attivare le notifiche/),
     ).toBeInTheDocument();
@@ -101,39 +133,33 @@ describe("PushToggle", () => {
 
   it("unsubscribes locally and on the server when disabled", async () => {
     stubBrowser();
-    render(<PushToggle address="Via Roma 1, Roma" />);
-    const checkbox = screen.getByTestId("feed-push-toggle");
-    await enableToggle();
-    fireEvent.click(checkbox);
+    render(<PushToggle address={address} />);
+    await waitFor(() => expect(api.subscribePush).toHaveBeenCalled());
+    const toggle = screen.getByTestId("feed-push-toggle");
+    expect(toggle).toBeChecked();
+    fireEvent.click(toggle);
     await waitFor(() =>
       expect(api.unsubscribePush).toHaveBeenCalledWith(
         "https://push.example.test/sub/abc",
       ),
     );
-    expect(checkbox).not.toBeChecked();
+    expect(toggle).not.toBeChecked();
+    expect(localStorage.getItem("vicinopoli.pushEnabled")).toBe("0");
   });
 
   it("moves the server-side cell when the address changes while enabled", async () => {
     stubBrowser();
-    const { rerender } = render(<PushToggle address="Via Roma 1, Roma" />);
-    await enableToggle();
+    const { rerender } = render(<PushToggle address={address} />);
+    await waitFor(() =>
+      expect(api.subscribePush).toHaveBeenCalledWith(
+        expect.objectContaining({ address }),
+      ),
+    );
     rerender(<PushToggle address="Via Milano 9, Milano" />);
     await waitFor(() =>
       expect(api.subscribePush).toHaveBeenCalledWith(
         expect.objectContaining({ address: "Via Milano 9, Milano" }),
       ),
     );
-  });
-
-  it("surfaces an error instead of enabling when the config call fails", async () => {
-    stubBrowser();
-    api.getPushConfig.mockRejectedValueOnce(new Error("boom"));
-    render(<PushToggle address="Via Roma 1, Roma" />);
-    fireEvent.click(screen.getByTestId("feed-push-toggle"));
-    const checkbox = screen.getByTestId("feed-push-toggle");
-    expect(
-      await screen.findByText(/Impossibile attivare le notifiche/),
-    ).toBeInTheDocument();
-    await waitFor(() => expect(checkbox).not.toBeChecked());
   });
 });

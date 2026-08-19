@@ -119,7 +119,7 @@ test("the feed toggle subscribes and unsubscribes the device", async ({
 
   await setAddress(page, "Via Roma 1, Roma");
 
-  await page.getByTestId("feed-push-toggle").check();
+  // Default-on: the first visit subscribes automatically, no click needed.
   await expect
     .poll(() => posted.some((p) => p.method === "POST"))
     .toBe(true);
@@ -130,8 +130,19 @@ test("the feed toggle subscribes and unsubscribes the device", async ({
   expect(body.address).toBe("Via Roma 1, Roma");
   expect(body.endpoint).toContain("https://push.example.test");
 
-  await page.getByTestId("feed-push-toggle").uncheck();
+  // The switch reflects the subscribed state and can turn it off...
+  await page.getByTestId("feed-push-toggle").click();
   await expect
     .poll(() => posted.some((p) => p.method === "DELETE"))
+    .toBe(true);
+
+  // ...and back on.
+  await page.getByTestId("feed-push-toggle").click();
+  await expect
+    .poll(
+      () =>
+        posted.filter((p) => p.method === "POST").length >= 2 &&
+        posted[posted.length - 1]?.method === "POST",
+    )
     .toBe(true);
 });
