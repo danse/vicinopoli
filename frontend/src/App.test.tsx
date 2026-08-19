@@ -18,6 +18,7 @@ const analytics = vi.hoisted(() => ({
   initGtag: vi.fn(),
   setConsent: vi.fn(),
   trackPageView: vi.fn(),
+  trackConversion: vi.fn(),
 }));
 vi.mock("@/lib/analytics", () => analytics);
 
@@ -248,6 +249,7 @@ describe("App", () => {
     analytics.initGtag.mockClear();
     analytics.setConsent.mockClear();
     analytics.trackPageView.mockClear();
+    analytics.trackConversion.mockClear();
   });
 
   it("renders the app title", () => {
@@ -291,6 +293,41 @@ describe("App", () => {
     );
     expect(analytics.initGtag).toHaveBeenCalledTimes(1);
     expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
+  });
+
+  it("fires the feed conversion only after consent and on the feed page", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
+    });
+    expect(analytics.trackConversion).not.toHaveBeenCalled();
+
+    submitAddress();
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    expect(analytics.trackConversion).toHaveBeenCalledTimes(1);
+  });
+
+  it("never fires the feed conversion when consent is declined", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Rifiuta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(false);
+    });
+
+    submitAddress();
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    expect(analytics.trackConversion).not.toHaveBeenCalled();
   });
 
   it("keeps Google consent denied when the banner is declined", async () => {

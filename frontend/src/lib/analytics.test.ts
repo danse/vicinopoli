@@ -110,4 +110,24 @@ describe("analytics (Google Ads gtag)", () => {
       { page_path: "/feed" },
     ]);
   });
+
+  it("fires the feed conversion with value and currency", () => {
+    analytics.initGtag(ID);
+    analytics.trackConversion(ID);
+    expect(lastCall()).toEqual([
+      "event",
+      "conversion",
+      {
+        send_to: "AW-18396502888/fiC1CP7z0eMcEOi2kcRE",
+        value: 1.0,
+        currency: "views",
+      },
+    ]);
+  });
+
+  it("does not fire the conversion when the id is unset", () => {
+    analytics.initGtag("");
+    analytics.trackConversion("");
+    expect(window.dataLayer).toBeUndefined();
+  });
 });

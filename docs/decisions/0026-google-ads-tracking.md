@@ -23,6 +23,9 @@ self-hosted, privacy-safe and gated behind an explicit GDPR consent banner.
   Google consent is enforced purely client-side, before any data is sent.
 - SPA route changes push `page_view` config calls so Ads attribution sees real
   paths.
+- Loading the feed fires the "Page view" conversion event
+  (`AW-18396502888/fiC1CP7z0eMcEOi2kcRE`, `value: 1.0`, `currency: views`)
+  — only for users who consented to the tag.
 - The module (`frontend/src/lib/analytics.ts`) no-ops when the id is unset,
   so the whole feature is inert unless a tag id is supplied at build time.
 

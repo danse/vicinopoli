@@ -53,7 +53,7 @@ synonyms. The essentials:
 
 Ordered by priority, remove from the list when done
 
-- what is the "pronta per funzionare offline" banner about? On first load the page is full of banners
+- On first load the page is full of banners, i want to reduce them. What is the "pronta per funzionare offline" banner about?
 - browser location autofill does not seem to work in production. The permissions dialog appears but, after accepting, the input stays empty
 
 - link from the composer to the feed

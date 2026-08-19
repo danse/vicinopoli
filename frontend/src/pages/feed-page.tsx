@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -5,11 +6,17 @@ import { Feed } from "@/components/feed";
 import { Heatmap } from "@/components/heatmap";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/app-context";
+import { trackConversion } from "@/lib/analytics";
 
 export function FeedPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { address, analyticsConsented, experimentFlags, feedTick } = useApp();
+
+  // Feed-page view conversion (ADR 0026): only for users who consented.
+  useEffect(() => {
+    if (analyticsConsented) trackConversion();
+  }, [analyticsConsented]);
 
   return (
     <section>

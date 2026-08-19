@@ -74,3 +74,17 @@ export function trackPageView(
   if (id === "" || typeof window === "undefined") return;
   window.gtag?.("config", id, { page_path: path });
 }
+
+/** Feed-page view conversion (Google Ads). */
+const FEED_CONVERSION_ID = "AW-18396502888/fiC1CP7z0eMcEOi2kcRE";
+
+export function trackConversion(
+  id = import.meta.env.VITE_GTAG_ID ?? "",
+): void {
+  if (id === "" || typeof window === "undefined") return;
+  window.gtag?.("event", "conversion", {
+    send_to: FEED_CONVERSION_ID,
+    value: 1.0,
+    currency: "views",
+  });
+}
