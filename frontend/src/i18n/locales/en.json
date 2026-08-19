@@ -8,8 +8,7 @@
   "update": {
     "available": "A new version is available. Reload to update.",
     "reload": "Update",
-    "close": "Later",
-    "offlineReady": "Ready to work offline."
+    "close": "Later"
   },
   "address": {
     "title": "Where are you?",

@@ -130,6 +130,9 @@ debugging, verify each layer is actually running what was just changed:
 
 ### General
 
+- **One todo at a time.** Pick the single highest-priority open item from
+  `docs/plan.md`, finish it (tests + verification, e2e included), and only then
+  move to the next. Ask which todo to take if the ordering is unclear.
 - No emojis in code or docs unless explicitly requested.
 - Never log raw addresses or exact coordinates; use geohash cells / IDs only.
 - The codebase should stay docker-compose runnable: `make up` must always work.

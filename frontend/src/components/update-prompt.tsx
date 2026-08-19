@@ -6,17 +6,15 @@ import { Button } from "@/components/ui/button";
 export function UpdatePrompt() {
   const { t } = useTranslation();
   const {
-    offlineReady: [offlineReady, setOfflineReady],
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW();
 
   const close = () => {
-    setOfflineReady(false);
     setNeedRefresh(false);
   };
 
-  if (!needRefresh && !offlineReady) {
+  if (!needRefresh) {
     return null;
   }
 
@@ -27,9 +25,7 @@ export function UpdatePrompt() {
       data-testid="update-prompt"
       className="flex items-center justify-between gap-3 rounded-lg border bg-background p-4 shadow-lg"
     >
-      <p className="text-sm text-foreground">
-        {needRefresh ? t("update.available") : t("update.offlineReady")}
-      </p>
+      <p className="text-sm text-foreground">{t("update.available")}</p>
       <div className="flex shrink-0 gap-2">
         {needRefresh && (
           <Button size="sm" onClick={() => void updateServiceWorker(true)}>

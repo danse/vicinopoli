@@ -6,16 +6,13 @@ import "../i18n";
 
 const mockState = vi.hoisted(() => ({
   needRefresh: false,
-  offlineReady: false,
   updateServiceWorker: vi.fn().mockResolvedValue(undefined),
   setNeedRefresh: vi.fn(),
-  setOfflineReady: vi.fn(),
 }));
 
 vi.mock("virtual:pwa-register/react", () => ({
   useRegisterSW: () => ({
     needRefresh: [mockState.needRefresh, mockState.setNeedRefresh],
-    offlineReady: [mockState.offlineReady, mockState.setOfflineReady],
     updateServiceWorker: mockState.updateServiceWorker,
   }),
 }));
@@ -23,9 +20,7 @@ vi.mock("virtual:pwa-register/react", () => ({
 describe("UpdatePrompt", () => {
   beforeEach(() => {
     mockState.needRefresh = false;
-    mockState.offlineReady = false;
     mockState.setNeedRefresh.mockClear();
-    mockState.setOfflineReady.mockClear();
     mockState.updateServiceWorker.mockClear();
   });
 
@@ -54,14 +49,5 @@ describe("UpdatePrompt", () => {
     fireEvent.click(screen.getByTestId("update-prompt-close"));
     expect(mockState.updateServiceWorker).not.toHaveBeenCalled();
     expect(mockState.setNeedRefresh).toHaveBeenCalledWith(false);
-  });
-
-  it("shows an offline-ready notice on first install", () => {
-    mockState.offlineReady = true;
-    render(<UpdatePrompt />);
-    expect(screen.getByTestId("update-prompt")).toBeInTheDocument();
-    expect(
-      screen.queryByTestId("update-prompt-reload"),
-    ).not.toBeInTheDocument();
   });
 });

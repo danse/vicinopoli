@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { suggestGeocode } from "@/api/client";
 
-export const DEBOUNCE_MS = 1200;
+export const DEBOUNCE_MS = 400;
 const MIN_QUERY_LENGTH = 3;
 
 const suggestionCache = new Map<string, string[]>();

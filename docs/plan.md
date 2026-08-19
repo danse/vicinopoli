@@ -53,20 +53,18 @@ synonyms. The essentials:
 
 Ordered by priority, remove from the list when done
 
-- On first load the page is full of banners, i want to reduce them. What is the "pronta per funzionare offline" banner about?
-- browser location autofill does not seem to work in production. The permissions dialog appears but, after accepting, the input stays empty
-
-- link from the composer to the feed
+- the location bar autocompletions cover the submit ("entra in zona") button when expanding towards the bottom. Maybe we could have a smaller "Entra" button straight to the right of the input?
+- browser location autofill does not seem to work in production. The permissions dialog appears but, after accepting, the input stays empty (both on mobile and on desktop)
+- search engine optimisation
 
 #### Thursday 20
 
+- link from the composer to the feed
 - realtime feed
-- search engine optimisation
 - message page, navigate on click. Image shows full-screen in there
 
 - post removal
 - post editing: should happen within a time window
-- annoying location bar covering "entra in zona"
 
 #### Friday 21
 
