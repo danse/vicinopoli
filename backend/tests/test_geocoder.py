@@ -409,13 +409,13 @@ async def test_photon_geocoder_geocode_returns_none_without_features() -> None:
 
 @pytest.mark.asyncio
 async def test_photon_geocoder_reverse_parses_nearest_feature() -> None:
-    async def fake_fetch(params):
+    async def fake_reverse_fetch(params):
         return _photon_response(
             _photon_feature(12.4823, 41.8957, name="Piazza Venezia", city="Roma")
         )
 
     geocoder = PhotonGeocoder("https://photon.test")
-    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+    geocoder._reverse_fetch = fake_reverse_fetch  # type: ignore[method-assign]
 
     result = await geocoder.reverse(41.8957, 12.4823)
 
@@ -427,13 +427,47 @@ async def test_photon_geocoder_reverse_parses_nearest_feature() -> None:
 
 @pytest.mark.asyncio
 async def test_photon_geocoder_reverse_returns_none_without_features() -> None:
-    async def fake_fetch(params):
+    async def fake_reverse_fetch(params):
         return _photon_response()
 
     geocoder = PhotonGeocoder("https://photon.test")
-    geocoder._fetch = fake_fetch  # type: ignore[method-assign]
+    geocoder._reverse_fetch = fake_reverse_fetch  # type: ignore[method-assign]
 
     assert await geocoder.reverse(0.0, 0.0) is None
+
+
+@pytest.mark.asyncio
+async def test_photon_geocoder_reverse_hits_the_reverse_endpoint() -> None:
+    """Reverse geocoding must call ``/reverse``, not the forward ``/api``:
+    browser-location autofill against photon.komoot.io silently failed in
+    production because ``/api`` with lat/lon returns nothing (plan todo)."""
+    import httpx
+
+    captured: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(str(request.url))
+        return httpx.Response(
+            200,
+            json={
+                "features": [
+                    {
+                        "geometry": {"type": "Point", "coordinates": [12.4823, 41.8957]},
+                        "properties": {"name": "Piazza Venezia", "city": "Roma"},
+                    }
+                ]
+            },
+        )
+
+    transport = httpx.MockTransport(handler)
+    geocoder = PhotonGeocoder("https://photon.test")
+    geocoder._client = httpx.AsyncClient(base_url="https://photon.test", transport=transport)
+
+    result = await geocoder.reverse(41.8957, 12.4823)
+
+    assert result is not None
+    assert "Piazza Venezia" in result.display_address
+    assert captured == ["https://photon.test/reverse?lat=41.8957&lon=12.4823&limit=1"]
 
 
 @pytest.mark.asyncio

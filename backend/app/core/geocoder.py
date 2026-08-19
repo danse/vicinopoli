@@ -339,6 +339,10 @@ class PhotonGeocoder(Geocoder):
         """Separated for testability."""
         return await self._client.get("/api", params=params)
 
+    async def _reverse_fetch(self, params: dict[str, str]) -> httpx.Response:
+        """Reverse lookup at Photon's dedicated ``/reverse`` endpoint."""
+        return await self._client.get("/reverse", params=params)
+
     @staticmethod
     def _display_name(query: str, properties: dict[str, object]) -> str:
         """Compose a human-readable display string from Photon properties."""
@@ -390,7 +394,9 @@ class PhotonGeocoder(Geocoder):
         return result
 
     async def reverse(self, latitude: float, longitude: float) -> GeocodedAddress | None:
-        response = await self._fetch({"lat": str(latitude), "lon": str(longitude), "limit": "1"})
+        response = await self._reverse_fetch(
+            {"lat": str(latitude), "lon": str(longitude), "limit": "1"}
+        )
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
