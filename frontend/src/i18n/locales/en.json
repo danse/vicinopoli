@@ -40,7 +40,7 @@
     "error": "Could not publish. Try again.",
     "addressNotFound": "Address not found.",
     "feedTitle": "What's happening nearby",
-    "empty": "No messages nearby. Be the first!",
+    "empty": "No messages yet. Be the first!",
     "radius": "Within {{radius}}",
     "distanceFrom": "{{distance}} from you",
     "anonymous": "Anonymous neighbour",
@@ -87,7 +87,7 @@
     "back": "Back to the start"
   },
   "push": {
-    "toggleLabel": "Notify me when a neighbour posts nearby",
+    "toggleLabel": "Notify me when a neighbour posts",
     "error": "Could not enable notifications. Try again."
   },
   "admin": {

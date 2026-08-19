@@ -40,7 +40,7 @@
     "error": "Non è stato possibile pubblicare. Riprova.",
     "addressNotFound": "Indirizzo non trovato.",
     "feedTitle": "Cosa succede in zona",
-    "empty": "Nessun messaggio nei dintorni. Sii la prima!",
+    "empty": "Nessun messaggio ancora. Sii la prima!",
     "radius": "Entro {{radius}}",
     "distanceFrom": "{{distance}} da te",
     "anonymous": "Vicina anonima",
@@ -87,7 +87,7 @@
     "back": "Torna all'inizio"
   },
   "push": {
-    "toggleLabel": "Avvisami quando una vicina pubblica in zona",
+    "toggleLabel": "Avvisami quando una vicina pubblica",
     "error": "Impossibile attivare le notifiche. Riprova."
   },
   "admin": {

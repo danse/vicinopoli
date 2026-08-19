@@ -53,8 +53,6 @@ synonyms. The essentials:
 
 Ordered by priority, remove from the list when done
 
-- repetitions in feed copy ("zona/zona", "nearby/nearby")
-
 #### Thursday 20
 
 - link from the composer to the feed
