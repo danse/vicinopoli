@@ -53,7 +53,7 @@ export function LinkPreview({ url }: LinkPreviewProps) {
             />
           )}
           <span className="flex min-w-0 flex-col justify-center gap-1 p-3">
-            <span className="line-clamp-2 text-sm font-semibold">
+            <span className="line-clamp-2 break-words text-sm font-semibold">
               {preview.title ?? url}
             </span>
             {preview.description !== null &&

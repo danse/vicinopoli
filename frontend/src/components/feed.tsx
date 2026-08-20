@@ -143,7 +143,7 @@ export function Feed({
           <li
             key={post.id}
             data-testid="feed-post"
-            className="rounded-lg border bg-card p-4 text-card-foreground"
+            className="min-w-0 rounded-lg border bg-card p-4 text-card-foreground"
           >
             <div className="mb-1 flex items-center gap-2">
               <span className="text-sm font-semibold">
@@ -157,16 +157,16 @@ export function Feed({
             </div>
             {post.body.trim() !== "" &&
               (link === null ? (
-                <p>{post.body}</p>
+                <p className="break-words">{post.body}</p>
               ) : (
-                <p>
+                <p className="break-words">
                   {link.before}
                   <a
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     data-testid="post-link"
-                    className="text-primary underline"
+                    className="break-all text-primary underline"
                   >
                     {link.url}
                   </a>
