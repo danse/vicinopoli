@@ -1389,7 +1389,8 @@
         "enum": [
           "post_viewed",
           "post_created",
-          "onboarding_completed"
+          "onboarding_completed",
+          "address_set"
         ],
         "title": "EventName"
       },

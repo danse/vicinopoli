@@ -423,8 +423,114 @@ describe("App", () => {
     });
 
     const calls = vi.mocked(fetch).mock.calls.filter(
-      ([url, init]) =>
-        url === "/api/events" && String(init?.body).includes("post_created"),
+      (call): call is [RequestInfo | URL, RequestInit] =>
+        call[0] === "/api/events" && String(call[1]?.body).includes("post_created"),
+    );
+    expect(calls).toHaveLength(0);
+  });
+
+  it("sends an address_set event on the first address set after consent", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
+    });
+
+    submitAddress();
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+
+    const calls = vi.mocked(fetch).mock.calls.filter(
+      (call): call is [RequestInfo | URL, RequestInit] =>
+        call[0] === "/api/events" && String(call[1]?.body).includes("address_set"),
+    );
+    expect(calls).toHaveLength(1);
+    const payload = JSON.parse(String(calls[0][1].body)) as {
+      events: { name: string }[];
+    };
+    expect(payload.events[0].name).toBe("address_set");
+  });
+
+  it("does not re-send address_set when the address changes", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
+    });
+
+    submitAddress();
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("feed-change-address"));
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByTestId("address-input"), {
+      target: { value: "Piazza Venezia, Roma" },
+    });
+    fireEvent.click(screen.getByTestId("address-submit"));
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+
+    const calls = vi.mocked(fetch).mock.calls.filter(
+      (call): call is [RequestInfo | URL, RequestInit] =>
+        call[0] === "/api/events" && String(call[1]?.body).includes("address_set"),
+    );
+    expect(calls).toHaveLength(1);
+  });
+
+  it("sends address_set when consent is accepted after the address was set", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+
+    submitAddress();
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
+    });
+
+    const calls = vi.mocked(fetch).mock.calls.filter(
+      (call): call is [RequestInfo | URL, RequestInit] =>
+        call[0] === "/api/events" && String(call[1]?.body).includes("address_set"),
+    );
+    expect(calls).toHaveLength(1);
+  });
+
+  it("does not send address_set when consent is declined", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+
+    submitAddress();
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Rifiuta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(false);
+    });
+
+    const calls = vi.mocked(fetch).mock.calls.filter(
+      (call): call is [RequestInfo | URL, RequestInit] =>
+        call[0] === "/api/events" && String(call[1]?.body).includes("address_set"),
     );
     expect(calls).toHaveLength(0);
   });

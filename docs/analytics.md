@@ -26,6 +26,7 @@ Event types (schema `EventName`, `backend/app/schemas/experiments.py`):
 | `post_viewed` | feed (batch, ≤10/page) | `geohash`, `post_id`, `occurred_at` |
 | `post_created` | composer on publish | `geohash`, `post_id`, `occurred_at` |
 | `onboarding_completed` | consent banner on accept | none |
+| `address_set` | first address set (once per device, on consent) | none |
 
 Privacy: no IP, no raw address, no exact coordinates, no pseudonym. The
 Google Ads tag (ADR 0026) is separate — client-side, consent-gated, and lives

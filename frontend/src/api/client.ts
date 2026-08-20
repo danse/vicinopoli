@@ -144,8 +144,7 @@ export function updateMe(payload: DeviceUpdate): Promise<DeviceResponse> {
   });
 }
 
-export type AnalyticsEventName =
-  "post_viewed" | "post_created" | "onboarding_completed";
+export type AnalyticsEventName = components["schemas"]["EventName"];
 
 export async function sendAnalyticsEvents(
   events: {

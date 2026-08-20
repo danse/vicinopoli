@@ -22,7 +22,7 @@ stable identity is the anonymous device token (ADR 0005).
   server-side when consent is missing or declined. There is no client-side
   "server said no" — the server enforces it.
 - **Client contract:** `POST /api/events` accepts
-  `post_viewed`, `post_created`, `onboarding_completed`.
+  `post_viewed`, `post_created`, `onboarding_completed`, `address_set`.
 
 ## Consequences
 

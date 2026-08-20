@@ -7,10 +7,11 @@ import {
   type ReactNode,
 } from "react";
 
-import { getMe } from "@/api/client";
+import { getMe, sendAnalyticsEvents } from "@/api/client";
 import { initGtag, setConsent } from "@/lib/analytics";
 
 const ADDRESS_STORAGE_KEY = "vicinopoli.address";
+const ADDRESS_SET_STORAGE_KEY = "vicinopoli.address-set";
 
 function readStoredAddress(): string {
   try {
@@ -25,6 +26,22 @@ function writeStoredAddress(address: string) {
     window.localStorage.setItem(ADDRESS_STORAGE_KEY, address);
   } catch {
     // Privacy mode or storage full: the address just won't survive a refresh.
+  }
+}
+
+function readAddressSetFlag(): string {
+  try {
+    return window.localStorage.getItem(ADDRESS_SET_STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeAddressSetFlag(value: string) {
+  try {
+    window.localStorage.setItem(ADDRESS_SET_STORAGE_KEY, value);
+  } catch {
+    // Same privacy-mode caveat as the address itself.
   }
 }
 
@@ -51,6 +68,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pseudonym, setPseudonym] = useState("");
   const [consentDecided, setConsentDecided] = useState(true);
   const [analyticsConsented, setAnalyticsConsented] = useState(false);
+  const [addressSetPending, setAddressSetPending] = useState(
+    () => readAddressSetFlag() === "pending",
+  );
   const [experimentFlags, setExperimentFlags] = useState<Record<string, boolean>>(
     {},
   );
@@ -97,14 +117,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setConsent(analyticsConsented);
   }, [consentDecided, analyticsConsented]);
 
+  // First-address-set milestone: once per device, as soon as consent is known.
+  // The flag lives in localStorage so an address set before the banner is
+  // decided still counts when the user later accepts.
+  useEffect(() => {
+    if (!analyticsConsented || !addressSetPending) return;
+    writeAddressSetFlag("reported");
+    setAddressSetPending(false);
+    void sendAnalyticsEvents([{ name: "address_set" }]).catch(() => {});
+  }, [analyticsConsented, addressSetPending]);
+
   const decideConsent = (consented: boolean) => {
     setConsentDecided(true);
     setAnalyticsConsented(consented);
   };
 
   const handleSetAddress = (next: string) => {
+    const wasEmpty = address.trim() === "";
     setAddress(next);
     writeStoredAddress(next);
+    if (wasEmpty && next.trim() !== "" && readAddressSetFlag() === "") {
+      writeAddressSetFlag("pending");
+      setAddressSetPending(true);
+    }
   };
 
   const bumpFeedTick = () => setFeedTick((tick) => tick + 1);

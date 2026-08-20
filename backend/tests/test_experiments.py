@@ -115,3 +115,27 @@ async def test_event_occurred_at_is_stored(client, session_factory) -> None:
     assert rows[0].geohash == "sr1m9h"
     assert rows[0].occurred_at is not None
     assert rows[0].occurred_at.year == 2026
+
+
+@pytest.mark.asyncio
+async def test_address_set_event_stored_after_consent(client, session_factory) -> None:
+    """The first-address-set milestone is its own event, distinct from consent."""
+    from sqlalchemy import select
+
+    from app.models.analytics_event import AnalyticsEvent
+
+    await client.get("/api/me")
+    await client.patch("/api/me", json={"analytics_consent": True})
+
+    response = await client.post(
+        "/api/events",
+        json={"events": [{"name": "address_set"}]},
+    )
+    assert response.status_code == 202
+    assert response.json()["stored"] == 1
+
+    async with session_factory() as session:
+        rows = (await session.execute(select(AnalyticsEvent))).scalars().all()
+
+    assert len(rows) == 1
+    assert rows[0].name == "address_set"

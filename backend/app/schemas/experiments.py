@@ -16,6 +16,7 @@ class EventName(StrEnum):
     post_viewed = "post_viewed"
     post_created = "post_created"
     onboarding_completed = "onboarding_completed"
+    address_set = "address_set"
 
 
 class AnalyticsEventInput(BaseModel):
