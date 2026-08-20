@@ -4,6 +4,7 @@ Single source of truth for the API contract; TypeScript types are generated
 from these via ``make gen``.
 """
 
+from datetime import datetime
 from enum import StrEnum
 from typing import Literal
 from uuid import UUID
@@ -21,7 +22,7 @@ class AnalyticsEventInput(BaseModel):
     name: EventName
     geohash: str | None = Field(default=None, max_length=32)
     post_id: UUID | None = None
-    occurred_at: str | None = None
+    occurred_at: datetime | None = None
 
 
 class AnalyticsEventBatch(BaseModel):

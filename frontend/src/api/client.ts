@@ -148,7 +148,12 @@ export type AnalyticsEventName =
   "post_viewed" | "post_created" | "onboarding_completed";
 
 export async function sendAnalyticsEvents(
-  events: { name: AnalyticsEventName; geohash?: string; post_id?: string }[],
+  events: {
+    name: AnalyticsEventName;
+    geohash?: string;
+    post_id?: string;
+    occurred_at?: string;
+  }[],
 ): Promise<void> {
   await request("/api/events", {
     method: "POST",

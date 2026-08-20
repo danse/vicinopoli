@@ -53,25 +53,17 @@ synonyms. The essentials:
 
 Ordered by priority, remove from the list when done
 
-#### Thursday 20
 
+
+- rendering of links and previews from youtube, instagram, facebook, twitter, reddit, soundcloud etcetera
 - link from the composer to the feed
 - realtime feed
 - message page, navigate on click. Image shows full-screen in there
 - post removal
 - post editing: should happen within a time window
-
-#### Friday 21
-
-- rendering of links and previews from youtube, instagram, facebook, twitter, reddit, soundcloud etcetera
-- re-enable the feed heatmap
-
-#### 24-28
-
 - account page
+- re-enable the feed heatmap
 - denial of service surface with changing device id, like we do in pagination tests
-
-### Moon
 
 - remove google tag for privacy
 - equalise

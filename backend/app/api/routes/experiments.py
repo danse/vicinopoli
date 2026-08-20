@@ -41,6 +41,7 @@ async def post_events(
                 name=event.name,
                 geohash=event.geohash,
                 post_id=event.post_id,
+                occurred_at=event.occurred_at,
             )
         )
     await session.commit()

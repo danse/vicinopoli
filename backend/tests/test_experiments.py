@@ -81,3 +81,37 @@ async def test_post_created_event_stored_after_consent(client) -> None:
     )
     assert response.status_code == 202
     assert response.json()["stored"] == 1
+
+
+@pytest.mark.asyncio
+async def test_event_occurred_at_is_stored(client, session_factory) -> None:
+    """The client-reported moment (occurred_at) is persisted alongside the row."""
+    from sqlalchemy import select
+
+    from app.models.analytics_event import AnalyticsEvent
+
+    await client.get("/api/me")
+    await client.patch("/api/me", json={"analytics_consent": True})
+
+    response = await client.post(
+        "/api/events",
+        json={
+            "events": [
+                {
+                    "name": "post_viewed",
+                    "geohash": "sr1m9h",
+                    "occurred_at": "2026-08-19T10:00:00Z",
+                }
+            ]
+        },
+    )
+    assert response.status_code == 202
+    assert response.json()["stored"] == 1
+
+    async with session_factory() as session:
+        rows = (await session.execute(select(AnalyticsEvent))).scalars().all()
+
+    assert len(rows) == 1
+    assert rows[0].geohash == "sr1m9h"
+    assert rows[0].occurred_at is not None
+    assert rows[0].occurred_at.year == 2026

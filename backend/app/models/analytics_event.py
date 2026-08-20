@@ -25,4 +25,7 @@ class AnalyticsEvent(Base):
     name: Mapped[str] = mapped_column(String(40))
     geohash: Mapped[str | None] = mapped_column(String(32), nullable=True)
     post_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    occurred_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

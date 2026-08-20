@@ -8,6 +8,7 @@ import {
   createPost,
   presignMedia,
   registerMedia,
+  sendAnalyticsEvents,
   type PostVoice,
   uploadPhotoToUrl,
 } from "@/api/client";
@@ -76,7 +77,7 @@ async function resizeImage(file: File): Promise<Blob> {
 
 export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
   const { t } = useTranslation();
-  const { postsLeftToday, refreshDevice } = useApp();
+  const { postsLeftToday, refreshDevice, analyticsConsented } = useApp();
   const [type, setType] = useState<MessageType>("text");
   const [body, setBody] = useState("");
   const [scope, setScope] = useState<PostVoice>("city");
@@ -184,12 +185,22 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
         mediaIds.push(registered.id);
       }
 
-      await createPost({
+      const created = await createPost({
         address: address.trim(),
         body: body.trim(),
         voice: scope,
         media_ids: mediaIds,
       });
+      if (analyticsConsented) {
+        void sendAnalyticsEvents([
+          {
+            name: "post_created",
+            post_id: created.id,
+            geohash: created.location.geohash,
+            occurred_at: new Date().toISOString(),
+          },
+        ]);
+      }
       setBody("");
       setPhoto(null);
       setVoice(null);

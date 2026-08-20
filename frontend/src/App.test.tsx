@@ -331,6 +331,104 @@ describe("App", () => {
     expect(analytics.trackConversion).not.toHaveBeenCalled();
   });
 
+  it("reports viewed posts to analytics with post ids", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
+    });
+
+    submitAddress();
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+
+    const calls = vi.mocked(fetch).mock.calls.filter(
+      (call): call is [RequestInfo | URL, RequestInit] =>
+        call[0] === "/api/events" && String(call[1]?.body).includes("post_viewed"),
+    );
+    expect(calls).toHaveLength(1);
+    const payload = JSON.parse(String(calls[0][1].body)) as {
+      events: {
+        name: string;
+        post_id: string;
+        geohash: string;
+        occurred_at?: string;
+      }[];
+    };
+    expect(payload.events[0]).toMatchObject({
+      name: "post_viewed",
+      post_id: "post-1",
+      geohash: "sr1x",
+    });
+    expect(payload.events[0].occurred_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it("publishing sends a post_created analytics event when consented", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
+    });
+
+    await openComposer();
+    fireEvent.change(screen.getByTestId("composer-message"), {
+      target: { value: "ciao" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+
+    const calls = vi.mocked(fetch).mock.calls.filter(
+      (call): call is [RequestInfo | URL, RequestInit] =>
+        call[0] === "/api/events" && String(call[1]?.body).includes("post_created"),
+    );
+    expect(calls).toHaveLength(1);
+    const payload = JSON.parse(String(calls[0][1].body)) as {
+      events: {
+        name: string;
+        post_id: string;
+        geohash: string;
+        occurred_at?: string;
+      }[];
+    };
+    expect(payload.events[0]).toMatchObject({
+      name: "post_created",
+      post_id: "post-1",
+      geohash: "sr1x",
+    });
+    expect(payload.events[0].occurred_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it("does not send post_created analytics without consent", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+
+    await openComposer();
+    fireEvent.change(screen.getByTestId("composer-message"), {
+      target: { value: "ciao" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+
+    const calls = vi.mocked(fetch).mock.calls.filter(
+      ([url, init]) =>
+        url === "/api/events" && String(init?.body).includes("post_created"),
+    );
+    expect(calls).toHaveLength(0);
+  });
+
   it("keeps Google consent denied when the banner is declined", async () => {
     renderApp();
 
