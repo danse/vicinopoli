@@ -167,6 +167,12 @@ export type GeocodeReverseResponse =
   components["schemas"]["GeocodeReverseResponse"];
 export type HeatmapTileResponse = components["schemas"]["HeatmapTileResponse"];
 
+export type LinkPreview = components["schemas"]["LinkPreviewResponse"];
+
+export function getLinkPreview(url: string): Promise<LinkPreview> {
+  return request(`/api/preview?url=${encodeURIComponent(url)}`);
+}
+
 export function geocode(address: string): Promise<GeocodeResponse> {
   return request(`/api/geocode?address=${encodeURIComponent(address)}`);
 }

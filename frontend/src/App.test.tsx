@@ -714,6 +714,56 @@ describe("App", () => {
     });
   });
 
+  it("renders the inline link and a preview card for a post URL", async () => {
+    const store = mockFetch();
+    store.mockImplementation((url: string, init?: RequestInit) => {
+      if (url.startsWith("/api/feed")) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              ...feedWithMedia,
+              posts: [
+                {
+                  ...feedWithMedia.posts[0],
+                  body: "guarda https://example.com/article ciao",
+                },
+              ],
+            }),
+        });
+      }
+      if (url.startsWith("/api/preview")) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              url: "https://example.com/article",
+              title: "Example title",
+              description: "Example description",
+              image_url: "https://example.com/img.jpg",
+              provider_name: "Example Site",
+              provider_url: null,
+              type: "article",
+            }),
+        });
+      }
+      return mockFetch()(url, init);
+    });
+    vi.stubGlobal("fetch", store);
+
+    renderApp();
+    await submitAddress();
+
+    const inlineLink = await screen.findByTestId("post-link");
+    expect(inlineLink).toHaveAttribute("href", "https://example.com/article");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("link-preview")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Example title")).toBeInTheDocument();
+    expect(screen.getByText("Example Site")).toBeInTheDocument();
+  });
+
   it("persists the address so a refresh restores it", async () => {
     renderApp();
     await submitAddress("Via Roma 1, Roma");

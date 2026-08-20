@@ -3,8 +3,10 @@ import { useTranslation } from "react-i18next";
 
 import { type FeedItem, getFeed, sendAnalyticsEvents } from "@/api/client";
 
+import { LinkPreview } from "@/components/link-preview";
 import { PostMedia } from "@/components/post-media";
 import { PushToggle } from "@/components/push-toggle";
+import { splitFirstUrl } from "@/lib/links";
 
 interface FeedProps {
   address: string;
@@ -135,7 +137,9 @@ export function Feed({
         <p className="text-sm text-muted-foreground">{t("composer.empty")}</p>
       ) : (
         <ul className="grid gap-4">
-        {posts.map((post) => (
+        {posts.map((post) => {
+          const link = splitFirstUrl(post.body);
+          return (
           <li
             key={post.id}
             data-testid="feed-post"
@@ -151,8 +155,26 @@ export function Feed({
                 </span>
               )}
             </div>
-            {post.body.trim() !== "" && <p>{post.body}</p>}
+            {post.body.trim() !== "" &&
+              (link === null ? (
+                <p>{post.body}</p>
+              ) : (
+                <p>
+                  {link.before}
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid="post-link"
+                    className="text-primary underline"
+                  >
+                    {link.url}
+                  </a>
+                  {link.after}
+                </p>
+              ))}
             <PostMedia media={post.media} />
+            {link !== null && <LinkPreview url={link.url} />}
             <p className="mt-2 text-xs text-muted-foreground">
               {post.display_address}
               {post.distance_m != null && (
@@ -166,7 +188,8 @@ export function Feed({
               )}
             </p>
           </li>
-        ))}
+          );
+        })}
         </ul>
       )}
       {nextCursor !== null && (

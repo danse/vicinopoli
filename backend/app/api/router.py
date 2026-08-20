@@ -8,6 +8,7 @@ from app.api.routes import (
     health,
     heatmap,
     identity,
+    linkpreview,
     media,
     posts,
     push,
@@ -24,3 +25,4 @@ api_router.include_router(push.router, tags=["push"])
 api_router.include_router(reports.router, tags=["reports"])
 api_router.include_router(experiments.router, tags=["experiments"])
 api_router.include_router(heatmap.router, tags=["heatmap"])
+api_router.include_router(linkpreview.router, tags=["linkpreview"])

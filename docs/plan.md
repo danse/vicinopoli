@@ -55,7 +55,6 @@ Ordered by priority, remove from the list when done
 
 
 
-- rendering of links and previews from youtube, instagram, facebook, twitter, reddit, soundcloud etcetera
 - link from the composer to the feed
 - realtime feed
 - message page, navigate on click. Image shows full-screen in there

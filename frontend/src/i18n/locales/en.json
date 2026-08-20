@@ -90,6 +90,9 @@
     "toggleLabel": "Notify me when a neighbour posts",
     "error": "Could not enable notifications. Try again."
   },
+  "preview": {
+    "loading": "Loading preview…"
+  },
   "admin": {
     "title": "Content control",
     "subtitle": "All submitted messages, for review",

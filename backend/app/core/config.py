@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     post_rate_limit_per_minute: int | None = 5
     report_threshold: int = 3
 
+    # Link previews (ADR 0028): server-side proxy for oEmbed/OpenGraph metadata.
+    preview_cache_ttl: int = 3600
+    preview_timeout: float = 10.0
+    preview_rate_limit_per_minute: int | None = 30
+
     # Shared secret for the internal admin API (/api/admin/*). Requests without
     # the correct X-Admin-Token header are rejected with 401 (ADR 0021). The
     # admin surface is bound to the loopback interface in both compose files.

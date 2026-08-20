@@ -90,6 +90,9 @@
     "toggleLabel": "Avvisami quando una vicina pubblica",
     "error": "Impossibile attivare le notifiche. Riprova."
   },
+  "preview": {
+    "loading": "Caricamento anteprima…"
+  },
   "admin": {
     "title": "Controllo contenuti",
     "subtitle": "Tutti i messaggi inviati, per la revisione",

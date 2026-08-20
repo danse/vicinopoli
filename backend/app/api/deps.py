@@ -14,9 +14,12 @@ from app.core.ratelimit import RateLimiter, build_rate_limiter
 from app.db import async_session_factory
 from app.models.device import Device
 from app.services.experiments import segment_for
+from app.services.linkpreview import LinkPreviewFetcher
 
 _geocoder: Geocoder | None = None
 _post_rate_limiter: RateLimiter | None = None
+_preview_fetcher: LinkPreviewFetcher | None = None
+_preview_rate_limiter: RateLimiter | None = None
 
 
 def get_geocoder() -> Geocoder:
@@ -87,6 +90,27 @@ def get_post_rate_limiter() -> RateLimiter | None:
             enabled=True,
         )
     return _post_rate_limiter
+
+
+def get_preview_fetcher() -> LinkPreviewFetcher:
+    global _preview_fetcher
+    if _preview_fetcher is None:
+        _preview_fetcher = LinkPreviewFetcher(
+            timeout=settings.preview_timeout,
+            ttl_seconds=settings.preview_cache_ttl,
+        )
+    return _preview_fetcher
+
+
+def get_preview_rate_limiter() -> RateLimiter | None:
+    global _preview_rate_limiter
+    if _preview_rate_limiter is None and settings.preview_rate_limit_per_minute is not None:
+        _preview_rate_limiter = build_rate_limiter(
+            settings.preview_rate_limit_per_minute,
+            window_seconds=60,
+            enabled=True,
+        )
+    return _preview_rate_limiter
 
 
 def require_admin(
