@@ -7,8 +7,13 @@ author's feed. The send path is a recording sender injected into
 ``notify_new_post``; the API routes exercise the real subscription lifecycle.
 """
 
+import base64
+
 from app.core.geocoder import geohash_encode
 from app.services.push import CELL_SLACK_M, notify_new_post
+
+VALID_P256DH = base64.urlsafe_b64encode(b"\x04" + b"\x00" * 64).decode()
+VALID_AUTH = base64.urlsafe_b64encode(b"\x00" * 16).decode()
 
 
 class RecordingSender:
@@ -29,8 +34,8 @@ async def _subscribe(client, address: str, endpoint: str = "https://push.example
         "/api/push/subscriptions",
         json={
             "endpoint": endpoint,
-            "p256dh": "cGF5bG9hZA==",
-            "auth": "YXV0aA==",
+            "p256dh": VALID_P256DH,
+            "auth": VALID_AUTH,
             "address": address,
         },
     )
@@ -60,8 +65,8 @@ async def test_subscribe_unknown_address_404(client) -> None:
         "/api/push/subscriptions",
         json={
             "endpoint": "https://push.example.test/sub",
-            "p256dh": "cGF5bG9hZA==",
-            "auth": "YXV0aA==",
+            "p256dh": VALID_P256DH,
+            "auth": VALID_AUTH,
             "address": "Via Inesistente 99, Nowhere",
         },
     )
@@ -186,3 +191,33 @@ async def test_notify_excludes_the_author(client, session_factory) -> None:
 async def test_notify_uses_cell_slack_above_reach(client, session_factory) -> None:
     """The search widens by CELL_SLACK_M beyond the post's reach."""
     assert CELL_SLACK_M > 0
+
+
+async def test_webpush_sender_passes_base64url_keys(monkeypatch) -> None:
+    """Regression: pywebpush decodes the keys itself, so the sender must hand
+    it the base64url strings — pre-decoded raw bytes made every delivery fail
+    with ``WebPushException: Invalid p256dh key specified``."""
+    captured: dict[str, object] = {}
+
+    class FakeWebPusher:
+        def __init__(self, subscription_info: dict) -> None:
+            captured["subscription_info"] = subscription_info
+
+        def send(self, payload, vapid_private_key, vapid_claims) -> None:
+            captured["sent"] = True
+
+    monkeypatch.setattr("pywebpush.WebPusher", FakeWebPusher)
+
+    from app.services.push import WebPushSender
+
+    await WebPushSender().send(
+        "https://push.example.test/sub",
+        VALID_P256DH,
+        VALID_AUTH,
+        {"body": "ciao"},
+    )
+
+    keys = captured["subscription_info"]["keys"]
+    assert keys["p256dh"] == VALID_P256DH
+    assert keys["auth"] == VALID_AUTH
+    assert captured.get("sent") is True

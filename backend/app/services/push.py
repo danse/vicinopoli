@@ -60,25 +60,25 @@ class MockPushSender:
 
 
 class WebPushSender:
-    """Deliver via the Web Push protocol, signed with the VAPID private key."""
+    """Deliver via the Web Push protocol, signed with the VAPID private key.
+
+    ``pywebpush`` decodes the base64url keys itself, so the subscription's
+    stored ``p256dh``/``auth`` strings are passed through verbatim — decoding
+    them here made every delivery fail with ``Invalid p256dh key specified``.
+    """
 
     async def send(
         self, endpoint: str, p256dh: str, auth: str, payload: dict[str, object]
     ) -> None:
         from pywebpush import WebPusher  # type: ignore[import-untyped]
 
-        def _from_b64url(value: str) -> bytes:
-            import base64
-
-            return base64.urlsafe_b64decode(value + "==")
-
         _, private_key = vapid_keys()
         WebPusher(
             {
                 "endpoint": endpoint,
                 "keys": {
-                    "p256dh": _from_b64url(p256dh),
-                    "auth": _from_b64url(auth),
+                    "p256dh": p256dh,
+                    "auth": auth,
                 },
             }
         ).send(
