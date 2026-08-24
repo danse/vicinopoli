@@ -12,7 +12,12 @@ import {
   type PostVoice,
   uploadPhotoToUrl,
 } from "@/api/client";
-import { useApp } from "@/context/app-context";
+import {
+  EMPTY_DRAFT,
+  useApp,
+  type ComposerDraft,
+  type ComposerMessageType,
+} from "@/context/app-context";
 import { Button } from "@/components/ui/button";
 import { hashAddress } from "@/lib/utils";
 import { QuotaHelpModal } from "@/components/quota-help-modal";
@@ -23,7 +28,7 @@ interface ComposerProps {
   onPosted: () => void;
 }
 
-type MessageType = "text" | "photo" | "voice";
+type MessageType = ComposerMessageType;
 
 const MESSAGE_TYPE_OPTIONS: MessageType[] = ["text", "photo", "voice"];
 
@@ -77,12 +82,13 @@ async function resizeImage(file: File): Promise<Blob> {
 
 export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
   const { t } = useTranslation();
-  const { postsLeftToday, refreshDevice, analyticsConsented } = useApp();
-  const [type, setType] = useState<MessageType>("text");
-  const [body, setBody] = useState("");
-  const [scope, setScope] = useState<PostVoice>("city");
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [voice, setVoice] = useState<Recording | null>(null);
+  const { postsLeftToday, refreshDevice, analyticsConsented, draft, setDraft } =
+    useApp();
+  const [type, setType] = useState<MessageType>(draft.type);
+  const [body, setBody] = useState(draft.body);
+  const [scope, setScope] = useState<PostVoice>(draft.scope);
+  const [photo, setPhoto] = useState<File | null>(draft.photo);
+  const [voice, setVoice] = useState<Recording | null>(draft.voice);
   const [recording, setRecording] = useState(false);
   const [recordingError, setRecordingError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -104,8 +110,18 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
     canSubmit = canSubmit && voice !== null;
   }
 
+  const updateDraft = (patch: Partial<ComposerDraft>) => {
+    setDraft((prev) => ({ ...prev, ...patch }));
+  };
+
   const handlePhotoChange = (file: File | null) => {
     setPhoto(file);
+    updateDraft({ photo: file });
+  };
+
+  const handleBodyChange = (value: string) => {
+    setBody(value);
+    updateDraft({ body: value });
   };
 
   const startRecording = async () => {
@@ -126,6 +142,7 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
         const duration_s = (Date.now() - startTimeRef.current) / 1000;
         const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
         setVoice({ blob, duration_s });
+        updateDraft({ voice: { blob, duration_s } });
         tracksRef.current.forEach((track) => track.stop());
       };
       startTimeRef.current = Date.now();
@@ -204,6 +221,7 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
       setBody("");
       setPhoto(null);
       setVoice(null);
+      setDraft(EMPTY_DRAFT);
       if (fileInputRef.current) fileInputRef.current.value = "";
       refreshDevice();
       onPosted();
@@ -263,7 +281,10 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
                 data-testid={`composer-type-${option}`}
                 value={option}
                 checked={type === option}
-                onChange={() => setType(option)}
+                onChange={() => {
+                  setType(option);
+                  updateDraft({ type: option });
+                }}
                 className="h-4 w-4"
               />
               {t(messageTypeLabel(option))}
@@ -286,7 +307,7 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
               className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               value={body}
               placeholder={t("composer.messagePlaceholder")}
-              onChange={(e) => setBody(e.target.value)}
+              onChange={(e) => handleBodyChange(e.target.value)}
             />
           </>
         ) : (
@@ -303,7 +324,7 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               value={body}
               placeholder={t("composer.captionPlaceholder")}
-              onChange={(e) => setBody(e.target.value)}
+              onChange={(e) => handleBodyChange(e.target.value)}
             />
           </>
         )}
@@ -324,7 +345,10 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
                 data-testid={`composer-voice-${option}`}
                 value={option}
                 checked={scope === option}
-                onChange={() => setScope(option)}
+                onChange={() => {
+                  setScope(option);
+                  updateDraft({ scope: option });
+                }}
                 className="h-4 w-4"
               />
               {t(voiceLabel(option))}

@@ -7,8 +7,26 @@ import {
   type ReactNode,
 } from "react";
 
-import { getMe, sendAnalyticsEvents } from "@/api/client";
+import { getMe, sendAnalyticsEvents, type PostVoice } from "@/api/client";
 import { initGtag, setConsent } from "@/lib/analytics";
+
+export type ComposerMessageType = "text" | "photo" | "voice";
+
+export interface ComposerDraft {
+  type: ComposerMessageType;
+  body: string;
+  scope: PostVoice;
+  photo: File | null;
+  voice: { blob: Blob; duration_s: number } | null;
+}
+
+export const EMPTY_DRAFT: ComposerDraft = {
+  type: "text",
+  body: "",
+  scope: "city",
+  photo: null,
+  voice: null,
+};
 
 const ADDRESS_STORAGE_KEY = "vicinopoli.address";
 const ADDRESS_SET_STORAGE_KEY = "vicinopoli.address-set";
@@ -50,6 +68,8 @@ interface AppContextValue {
   setAddress: (address: string) => void;
   pseudonym: string;
   setPseudonym: (pseudonym: string) => void;
+  draft: ComposerDraft;
+  setDraft: (draft: ComposerDraft | ((prev: ComposerDraft) => ComposerDraft)) => void;
   consentDecided: boolean;
   analyticsConsented: boolean;
   decideConsent: (consented: boolean) => void;
@@ -66,6 +86,9 @@ const AppContext = createContext<AppContextValue | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState(readStoredAddress);
   const [pseudonym, setPseudonym] = useState("");
+  // In-memory composer draft: survives route changes (e.g. the pseudonym
+  // detour) but never touches storage — a message is user content.
+  const [draft, setDraft] = useState<ComposerDraft>(EMPTY_DRAFT);
   const [consentDecided, setConsentDecided] = useState(true);
   const [analyticsConsented, setAnalyticsConsented] = useState(false);
   const [addressSetPending, setAddressSetPending] = useState(
@@ -151,6 +174,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setAddress: handleSetAddress,
         pseudonym,
         setPseudonym,
+        draft,
+        setDraft,
         consentDecided,
         analyticsConsented,
         decideConsent,

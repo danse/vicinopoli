@@ -899,6 +899,131 @@ describe("App", () => {
     });
   });
 
+  it("keeps the composer message draft when the pseudonym is changed", async () => {
+    renderApp();
+    await openComposer();
+    fireEvent.change(screen.getByTestId("composer-message"), {
+      target: { value: "Messaggio da non perdere" },
+    });
+    fireEvent.click(screen.getByTestId("composer-change-pseudonym"));
+    await waitFor(() => {
+      expect(screen.getByTestId("pseudonym-input")).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByTestId("pseudonym-input"), {
+      target: { value: "Gina" },
+    });
+    fireEvent.click(screen.getByTestId("pseudonym-submit"));
+    await waitFor(() => {
+      expect(screen.getByTestId("composer-message")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("composer-message")).toHaveValue(
+      "Messaggio da non perdere",
+    );
+  });
+
+  it("clears the composer message draft after publishing", async () => {
+    renderApp();
+    await openComposer();
+    fireEvent.change(screen.getByTestId("composer-message"), {
+      target: { value: "ciao" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("feed-compose"));
+    await waitFor(() => {
+      expect(screen.getByTestId("composer-message")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("composer-message")).toHaveValue("");
+  });
+
+  it("keeps the photo draft when the pseudonym is changed", async () => {
+    renderApp();
+    await openComposer();
+    fireEvent.click(screen.getByTestId("composer-type-photo"));
+    const file = new File(["x"], "photo.png", { type: "image/png" });
+    fireEvent.change(screen.getByTestId("composer-photo"), {
+      target: { files: [file] },
+    });
+    const publish = () =>
+      screen.getByRole("button", { name: "Pubblica" }) as HTMLButtonElement;
+    expect(publish().disabled).toBe(false);
+
+    fireEvent.click(screen.getByTestId("composer-change-pseudonym"));
+    await waitFor(() => {
+      expect(screen.getByTestId("pseudonym-input")).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByTestId("pseudonym-input"), {
+      target: { value: "Gina" },
+    });
+    fireEvent.click(screen.getByTestId("pseudonym-submit"));
+    await waitFor(() => {
+      expect(screen.getByTestId("composer-photo")).toBeInTheDocument();
+    });
+    expect(publish().disabled).toBe(false);
+  });
+
+  it("keeps the voice draft when the pseudonym is changed", async () => {
+    const FakeMediaRecorder = vi.fn().mockImplementation(() => {
+      const instance = {
+        state: "inactive",
+        ondataavailable: null as ((e: { data: Blob }) => void) | null,
+        onstop: null as (() => void) | null,
+        start: () => {
+          instance.state = "recording";
+        },
+        stop: () => {
+          instance.state = "inactive";
+          instance.ondataavailable?.({ data: new Blob(["voice"]) });
+          instance.onstop?.();
+        },
+      };
+      return instance;
+    });
+    (
+      FakeMediaRecorder as unknown as {
+        isTypeSupported: (t: string) => boolean;
+      }
+    ).isTypeSupported = vi.fn().mockReturnValue(true);
+    vi.stubGlobal("MediaRecorder", FakeMediaRecorder);
+    Object.defineProperty(window.navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue({
+          getTracks: () => [{ stop: vi.fn() }],
+        }),
+      },
+    });
+
+    renderApp();
+    await openComposer();
+    fireEvent.click(screen.getByTestId("composer-type-voice"));
+    fireEvent.click(screen.getByTestId("composer-voice-start"));
+    await waitFor(() => {
+      expect(screen.getByTestId("composer-voice-stop")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("composer-voice-stop"));
+    const publish = () =>
+      screen.getByRole("button", { name: "Pubblica" }) as HTMLButtonElement;
+    await waitFor(() => {
+      expect(publish().disabled).toBe(false);
+    });
+
+    fireEvent.click(screen.getByTestId("composer-change-pseudonym"));
+    await waitFor(() => {
+      expect(screen.getByTestId("pseudonym-input")).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByTestId("pseudonym-input"), {
+      target: { value: "Gina" },
+    });
+    fireEvent.click(screen.getByTestId("pseudonym-submit"));
+    await waitFor(() => {
+      expect(publish().disabled).toBe(false);
+    });
+  });
+
   it("the feed shows the address with a change link back to the address page", async () => {
     renderApp();
     await submitAddress();
