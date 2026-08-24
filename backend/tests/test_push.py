@@ -193,20 +193,17 @@ async def test_notify_uses_cell_slack_above_reach(client, session_factory) -> No
     assert CELL_SLACK_M > 0
 
 
-async def test_webpush_sender_passes_base64url_keys(monkeypatch) -> None:
-    """Regression: pywebpush decodes the keys itself, so the sender must hand
-    it the base64url strings — pre-decoded raw bytes made every delivery fail
-    with ``WebPushException: Invalid p256dh key specified``."""
+async def test_webpush_sender_calls_webpush_with_base64url_keys(monkeypatch) -> None:
+    """Regression: the sender must hand pywebpush's ``webpush()`` the stored
+    base64url strings verbatim (it decodes them itself) with a JSON-serialized
+    payload and VAPID signing — pre-decoded raw bytes or per-kwargs ``send``
+    both made every delivery fail in prod."""
     captured: dict[str, object] = {}
 
-    class FakeWebPusher:
-        def __init__(self, subscription_info: dict) -> None:
-            captured["subscription_info"] = subscription_info
+    def fake_webpush(**kwargs) -> None:
+        captured["kwargs"] = kwargs
 
-        def send(self, payload, vapid_private_key, vapid_claims) -> None:
-            captured["sent"] = True
-
-    monkeypatch.setattr("pywebpush.WebPusher", FakeWebPusher)
+    monkeypatch.setattr("pywebpush.webpush", fake_webpush)
 
     from app.services.push import WebPushSender
 
@@ -214,10 +211,16 @@ async def test_webpush_sender_passes_base64url_keys(monkeypatch) -> None:
         "https://push.example.test/sub",
         VALID_P256DH,
         VALID_AUTH,
-        {"body": "ciao"},
+        {"body": "ciao", "voice": "some"},
     )
 
-    keys = captured["subscription_info"]["keys"]
-    assert keys["p256dh"] == VALID_P256DH
-    assert keys["auth"] == VALID_AUTH
-    assert captured.get("sent") is True
+    import json
+
+    kwargs = captured["kwargs"]
+    info = kwargs["subscription_info"]
+    assert info["endpoint"] == "https://push.example.test/sub"
+    assert info["keys"]["p256dh"] == VALID_P256DH
+    assert info["keys"]["auth"] == VALID_AUTH
+    assert json.loads(kwargs["data"]) == {"body": "ciao", "voice": "some"}
+    assert kwargs["vapid_private_key"] is not None
+    assert kwargs["vapid_claims"]["sub"]
