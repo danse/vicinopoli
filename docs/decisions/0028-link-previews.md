@@ -41,7 +41,11 @@ viewer's behalf:
 
 The client renders a preview card for the **first** URL found in a post body,
 fetched lazily via the proxy; that same URL becomes a clickable link in the
-text. Cards are never rendered from raw HTML.
+text. Every URL in the body is linked: a link is either an `http(s)://` URL or
+a bare domain token (a contiguous, space-free run of dot-separated labels whose
+final label is 2+ letters). Bare domains open with an `https://` scheme; the
+space-free rule keeps sentence punctuation like "al bar. Fai presto" from being
+mistaken for a domain. Cards are never rendered from raw HTML.
 
 ## Consequences
 

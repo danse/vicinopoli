@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { extractFirstUrl, splitFirstUrl } from "./links";
+import { extractFirstUrl, linkify, splitFirstUrl } from "./links";
 
 describe("splitFirstUrl", () => {
   it("returns null for text without a URL", () => {
@@ -53,5 +53,83 @@ describe("extractFirstUrl", () => {
       "https://example.com/a",
     );
     expect(extractFirstUrl("niente link")).toBeNull();
+  });
+});
+
+describe("linkify", () => {
+  it("keeps text without URLs as a single plain segment", () => {
+    expect(linkify("ciao vicini")).toEqual([{ text: "ciao vicini" }]);
+  });
+
+  it("turns a single URL into a link segment", () => {
+    expect(linkify("guarda https://example.com/a qui")).toEqual([
+      { text: "guarda " },
+      { text: "https://example.com/a", url: "https://example.com/a" },
+      { text: " qui" },
+    ]);
+  });
+
+  it("turns every URL in the message into a link segment", () => {
+    expect(linkify("https://a.test/1 e https://b.test/2 fine")).toEqual([
+      { text: "https://a.test/1", url: "https://a.test/1" },
+      { text: " e " },
+      { text: "https://b.test/2", url: "https://b.test/2" },
+      { text: " fine" },
+    ]);
+  });
+
+  it("trims trailing punctuation from each URL, keeping it as text", () => {
+    expect(linkify("vedi https://example.com/a. e https://example.com/b!")).toEqual(
+      [
+        { text: "vedi " },
+        { text: "https://example.com/a", url: "https://example.com/a" },
+        { text: ". e " },
+        { text: "https://example.com/b", url: "https://example.com/b" },
+        { text: "!" },
+      ],
+    );
+  });
+
+  it("keeps query strings intact", () => {
+    expect(linkify("https://example.com/?q=1&x=2")).toEqual([
+      { text: "https://example.com/?q=1&x=2", url: "https://example.com/?q=1&x=2" },
+    ]);
+  });
+
+  it("turns a bare domain into a link with an https scheme", () => {
+    expect(linkify("ascolta radiofrance.fr")).toEqual([
+      { text: "ascolta " },
+      { text: "radiofrance.fr", url: "https://radiofrance.fr" },
+    ]);
+  });
+
+  it("turns a bare domain with a path into a link", () => {
+    expect(linkify("radiofrance.fr/musique")).toEqual([
+      {
+        text: "radiofrance.fr/musique",
+        url: "https://radiofrance.fr/musique",
+      },
+    ]);
+  });
+
+  it("mixes bare domains and full URLs in one message", () => {
+    expect(linkify("guarda https://example.com/a e radiofrance.fr")).toEqual([
+      { text: "guarda " },
+      { text: "https://example.com/a", url: "https://example.com/a" },
+      { text: " e " },
+      { text: "radiofrance.fr", url: "https://radiofrance.fr" },
+    ]);
+  });
+
+  it("does not mistake sentence punctuation for a domain", () => {
+    expect(linkify("al bar. Fai presto")).toEqual([
+      { text: "al bar. Fai presto" },
+    ]);
+  });
+
+  it("ignores dot-separated numbers and IP addresses", () => {
+    expect(linkify("versione 1.2.3 o 127.0.0.1")).toEqual([
+      { text: "versione 1.2.3 o 127.0.0.1" },
+    ]);
   });
 });

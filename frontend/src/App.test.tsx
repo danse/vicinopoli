@@ -764,6 +764,38 @@ describe("App", () => {
     expect(screen.getByText("Example Site")).toBeInTheDocument();
   });
 
+  it("renders every URL in a post as an anchor, including bare domains", async () => {
+    const store = mockFetch();
+    store.mockImplementation((url: string, init?: RequestInit) => {
+      if (url.startsWith("/api/feed")) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              ...feedWithMedia,
+              posts: [
+                {
+                  ...feedWithMedia.posts[0],
+                  body: "ascolta radiofrance.fr e https://example.com/articolo",
+                },
+              ],
+            }),
+        });
+      }
+      return mockFetch()(url, init);
+    });
+    vi.stubGlobal("fetch", store);
+
+    renderApp();
+    await submitAddress();
+
+    const links = await screen.findAllByTestId("post-link");
+    expect(links).toHaveLength(2);
+    expect(links[0]).toHaveAttribute("href", "https://radiofrance.fr");
+    expect(links[0]).toHaveTextContent("radiofrance.fr");
+    expect(links[1]).toHaveAttribute("href", "https://example.com/articolo");
+  });
+
   it("persists the address so a refresh restores it", async () => {
     renderApp();
     await submitAddress("Via Roma 1, Roma");

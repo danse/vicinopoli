@@ -37,3 +37,21 @@ test("a post with a very long URL does not overflow horizontally", async ({
   );
   expect(fits).toBe(true);
 });
+
+test("every URL in a message becomes an anchor, including bare domains", async ({
+  page,
+}) => {
+  await setAddress(page, "Via Roma 1, Roma");
+  await page.getByTestId("feed-compose").click();
+  await publish(page, "ascolta radiofrance.fr e https://example.com/articolo");
+
+  const item = page.getByTestId("feed-post").filter({ hasText: "radiofrance.fr" });
+  const links = item.getByTestId("post-link");
+  await expect(links).toHaveCount(2);
+  await expect(links.nth(0)).toHaveAttribute("href", "https://radiofrance.fr");
+  await expect(links.nth(0)).toHaveText("radiofrance.fr");
+  await expect(links.nth(1)).toHaveAttribute(
+    "href",
+    "https://example.com/articolo",
+  );
+});

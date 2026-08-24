@@ -6,7 +6,7 @@ import { type FeedItem, getFeed, sendAnalyticsEvents } from "@/api/client";
 import { LinkPreview } from "@/components/link-preview";
 import { PostMedia } from "@/components/post-media";
 import { PushToggle } from "@/components/push-toggle";
-import { splitFirstUrl } from "@/lib/links";
+import { extractFirstUrl, linkify } from "@/lib/links";
 
 interface FeedProps {
   address: string;
@@ -138,7 +138,7 @@ export function Feed({
       ) : (
         <ul className="grid gap-4">
         {posts.map((post) => {
-          const link = splitFirstUrl(post.body);
+          const firstUrl = extractFirstUrl(post.body);
           return (
           <li
             key={post.id}
@@ -155,26 +155,28 @@ export function Feed({
                 </span>
               )}
             </div>
-            {post.body.trim() !== "" &&
-              (link === null ? (
-                <p className="break-words">{post.body}</p>
-              ) : (
-                <p className="break-words">
-                  {link.before}
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-testid="post-link"
-                    className="break-all text-primary underline"
-                  >
-                    {link.url}
-                  </a>
-                  {link.after}
-                </p>
-              ))}
+            {post.body.trim() !== "" && (
+              <p className="break-words">
+                {linkify(post.body).map((segment, index) =>
+                  segment.url === undefined ? (
+                    <span key={index}>{segment.text}</span>
+                  ) : (
+                    <a
+                      key={index}
+                      href={segment.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid="post-link"
+                      className="break-all text-primary underline"
+                    >
+                      {segment.text}
+                    </a>
+                  ),
+                )}
+              </p>
+            )}
             <PostMedia media={post.media} />
-            {link !== null && <LinkPreview url={link.url} />}
+            {firstUrl !== null && <LinkPreview url={firstUrl} />}
             <p className="mt-2 text-xs text-muted-foreground">
               {post.display_address}
               {post.distance_m != null && (
