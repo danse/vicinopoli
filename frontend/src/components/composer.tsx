@@ -214,7 +214,6 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
             name: "post_created",
             post_id: created.id,
             geohash: created.location.geohash,
-            occurred_at: new Date().toISOString(),
           },
         ]);
       }

@@ -151,12 +151,14 @@ export async function sendAnalyticsEvents(
     name: AnalyticsEventName;
     geohash?: string;
     post_id?: string;
-    occurred_at?: string;
   }[],
 ): Promise<void> {
+  // Stamp every event here so no call site can forget the timestamp.
+  const occurred_at = new Date().toISOString();
+  const stamped = events.map((event) => ({ ...event, occurred_at }));
   await request("/api/events", {
     method: "POST",
-    body: JSON.stringify({ events }),
+    body: JSON.stringify({ events: stamped }),
   });
 }
 

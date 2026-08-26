@@ -44,13 +44,11 @@ export function Feed({
       const key = batch.map((p) => p.id).join(",");
       if (key === lastReported.current) return;
       lastReported.current = key;
-      const occurredAt = new Date().toISOString();
       void sendAnalyticsEvents(
         batch.slice(0, 10).map((p) => ({
           name: "post_viewed",
           geohash: p.geohash,
           post_id: p.id,
-          occurred_at: occurredAt,
         })),
       );
     },

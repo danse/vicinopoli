@@ -292,6 +292,16 @@ describe("App", () => {
         body: expect.stringContaining("onboarding_completed"),
       }),
     );
+    const onboardingCalls = vi.mocked(fetch).mock.calls.filter(
+      (call): call is [RequestInfo | URL, RequestInit] =>
+        call[0] === "/api/events" &&
+        String(call[1]?.body).includes("onboarding_completed"),
+    );
+    expect(onboardingCalls).toHaveLength(1);
+    const onboardingPayload = JSON.parse(String(onboardingCalls[0][1].body)) as {
+      events: { name: string; occurred_at?: string }[];
+    };
+    expect(onboardingPayload.events[0].occurred_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(analytics.initGtag).toHaveBeenCalledTimes(1);
     expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
   });
@@ -450,9 +460,10 @@ describe("App", () => {
     );
     expect(calls).toHaveLength(1);
     const payload = JSON.parse(String(calls[0][1].body)) as {
-      events: { name: string }[];
+      events: { name: string; occurred_at?: string }[];
     };
     expect(payload.events[0].name).toBe("address_set");
+    expect(payload.events[0].occurred_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
   it("does not re-send address_set when the address changes", async () => {

@@ -19,14 +19,16 @@ devices (`POST /api/events` returns `202` with `stored: 0`).
 | `occurred_at` | timestamp (nullable) | client-reported moment of the event |
 | `created_at` | timestamp | server receipt time |
 
-Event types (schema `EventName`, `backend/app/schemas/experiments.py`):
+Event types (schema `EventName`, `backend/app/schemas/experiments.py`).
+`occurred_at` is stamped automatically by the client's `sendAnalyticsEvents` on
+every event — call sites never set it themselves:
 
 | name | sent by | payload |
 | --- | --- | --- |
 | `post_viewed` | feed (batch, ≤10/page) | `geohash`, `post_id`, `occurred_at` |
 | `post_created` | composer on publish | `geohash`, `post_id`, `occurred_at` |
-| `onboarding_completed` | consent banner on accept | none |
-| `address_set` | first address set (once per device, on consent) | none |
+| `onboarding_completed` | consent banner on accept | `occurred_at` |
+| `address_set` | first address set (once per device, on consent) | `occurred_at` |
 
 Privacy: no IP, no raw address, no exact coordinates, no pseudonym. The
 Google Ads tag (ADR 0026) is separate — client-side, consent-gated, and lives
