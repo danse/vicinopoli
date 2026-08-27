@@ -24,10 +24,16 @@ self-hosted, privacy-safe and gated behind an explicit GDPR consent banner.
 - SPA route changes push `page_view` config calls so Ads attribution sees real
   paths.
 - Loading the feed fires the "Page view" conversion event
-  (`AW-18396502888/fiC1CP7z0eMcEOi2kcRE`, `value: 1.0`, `currency: views`)
-  — only for users who consented to the tag.
+  (`AW-18396502888/fiC1CP7z0eMcEOi2kcRE`) — only for users who consented to the
+  tag. The event carries no `value`/`currency` (a page view counts as one
+  conversion regardless of value).
 - The module (`frontend/src/lib/analytics.ts`) no-ops when the id is unset,
   so the whole feature is inert unless a tag id is supplied at build time.
+- **Ordering guarantee:** the consent update is enqueued to the dataLayer
+  *before* the conversion event (the feed page syncs consent to the tag first),
+  so gtag.js never processes the conversion while consent is still `denied`.
+  This matters because React fires child effects (the feed page) before parent
+  effects (the consent-sync effect in `app-context`).
 
 ## Consequences
 
@@ -37,3 +43,10 @@ self-hosted, privacy-safe and gated behind an explicit GDPR consent banner.
 - No backend/API changes; no CSP changes (the site sets no CSP header).
 - Data leaves the app to Google only for consenting devices — a deliberate
   trade-off vs the fully self-hosted ADR 0014 analytics.
+- **Stale-build trap:** `VITE_GTAG_ID` is a build-time ARG baked into the
+  frontend image. Changing it (or adding it to the deployment `.env`) does not
+  affect a running container — the frontend must be rebuilt
+  (`docker compose -f deploy/docker-compose.prod.yml --env-file .env up -d
+  --build frontend`) and the served JS verified to contain the tag. A tag id
+  that is empty at build time makes the whole module inert (no page views, no
+  conversions).

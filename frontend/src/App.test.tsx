@@ -341,6 +341,25 @@ describe("App", () => {
     expect(analytics.trackConversion).not.toHaveBeenCalled();
   });
 
+  it("fires the feed conversion when consent is accepted on the feed page", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+
+    submitAddress();
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    expect(analytics.trackConversion).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
+    });
+    expect(analytics.trackConversion).toHaveBeenCalledTimes(1);
+  });
+
   it("reports viewed posts to analytics with post ids", async () => {
     renderApp("/");
     await waitFor(() => {

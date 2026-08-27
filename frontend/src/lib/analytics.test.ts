@@ -111,22 +111,50 @@ describe("analytics (Google Ads gtag)", () => {
     ]);
   });
 
-  it("fires the feed conversion with value and currency", () => {
+  it("fires the feed conversion without a value or currency", () => {
     analytics.initGtag(ID);
+    analytics.setConsent(true, ID);
     analytics.trackConversion(ID);
     expect(lastCall()).toEqual([
       "event",
       "conversion",
+      { send_to: "AW-18396502888/fiC1CP7z0eMcEOi2kcRE" },
+    ]);
+  });
+
+  it("enqueues the conversion only after the consent update", () => {
+    analytics.initGtag(ID);
+    analytics.setConsent(true, ID);
+    analytics.trackConversion(ID);
+    const calls = dataLayerArgs();
+    const conversionIdx = calls.findIndex(
+      (call) => call[0] === "event" && call[1] === "conversion",
+    );
+    expect(conversionIdx).toBeGreaterThan(0);
+    expect(calls[conversionIdx - 1]).toEqual([
+      "consent",
+      "update",
       {
-        send_to: "AW-18396502888/fiC1CP7z0eMcEOi2kcRE",
-        value: 1.0,
-        currency: "views",
+        ad_storage: "granted",
+        ad_user_data: "granted",
+        ad_personalization: "granted",
       },
     ]);
   });
 
+  it("does not fire the conversion before consent is granted", () => {
+    analytics.initGtag(ID);
+    analytics.trackConversion(ID);
+    expect(
+      dataLayerArgs().some(
+        (call) => call[0] === "event" && call[1] === "conversion",
+      ),
+    ).toBe(false);
+  });
+
   it("does not fire the conversion when the id is unset", () => {
     analytics.initGtag("");
+    analytics.setConsent(true, "");
     analytics.trackConversion("");
     expect(window.dataLayer).toBeUndefined();
   });

@@ -31,6 +31,7 @@ function state(granted: boolean): Record<string, ConsentSignal> {
 }
 
 let loaded = false;
+let consentGranted: boolean | null = null;
 
 function ensureGtag(id: string): void {
   window.dataLayer = window.dataLayer ?? [];
@@ -63,6 +64,7 @@ export function setConsent(
   id = import.meta.env.VITE_GTAG_ID ?? "",
 ): void {
   if (id === "" || typeof window === "undefined") return;
+  consentGranted = granted;
   window.gtag?.("consent", "update", state(granted));
 }
 
@@ -78,13 +80,21 @@ export function trackPageView(
 /** Feed-page view conversion (Google Ads). */
 const FEED_CONVERSION_ID = "AW-18396502888/fiC1CP7z0eMcEOi2kcRE";
 
+/**
+ * Fire the feed conversion.
+ *
+ * Only fires once consent has been granted to the tag (``setConsent`` records
+ * the decision synchronously, so callers must sync consent — e.g. feed-page
+ * calls ``setConsent(true)`` first — before this). gtag.js processes the
+ * dataLayer in order, so the consent update always precedes the event and the
+ * conversion is never counted while consent is denied.
+ */
 export function trackConversion(
   id = import.meta.env.VITE_GTAG_ID ?? "",
 ): void {
   if (id === "" || typeof window === "undefined") return;
+  if (consentGranted !== true) return;
   window.gtag?.("event", "conversion", {
     send_to: FEED_CONVERSION_ID,
-    value: 1.0,
-    currency: "views",
   });
 }

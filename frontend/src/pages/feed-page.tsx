@@ -6,7 +6,7 @@ import { Feed } from "@/components/feed";
 import { Heatmap } from "@/components/heatmap";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/app-context";
-import { trackConversion } from "@/lib/analytics";
+import { setConsent, trackConversion } from "@/lib/analytics";
 
 export function FeedPage() {
   const { t } = useTranslation();
@@ -14,8 +14,13 @@ export function FeedPage() {
   const { address, analyticsConsented, experimentFlags, feedTick } = useApp();
 
   // Feed-page view conversion (ADR 0026): only for users who consented.
+  // Sync consent to the tag first so the conversion event is never processed
+  // while the tag still holds the denied default (React runs this effect before
+  // the AppProvider consent-sync effect).
   useEffect(() => {
-    if (analyticsConsented) trackConversion();
+    if (!analyticsConsented) return;
+    setConsent(true);
+    trackConversion();
   }, [analyticsConsented]);
 
   return (
