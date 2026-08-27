@@ -1,6 +1,8 @@
+# Ship this repo to the server and redeploy (see deploy/README.md).
+# First-time setup uses setup-vps.sh; this is the routine redeploy path.
 git rev-parse --short HEAD > .commit
 rsync -a --exclude '.git' --exclude 'node_modules' \
     --exclude 'backend/.venv' --exclude 'frontend/dist' \
     --exclude 'frontend/src/api/generated' \
-    ./ root@49.12.223.210:/tmp/vicinopoli/
-ssh root@49.12.223.210 'bash /tmp/vicinopoli/deploy/setup-vps.sh /tmp/vicinopoli /tmp/vicinopoli/deploy/.env.prod'
+    ./ root@49.12.223.210:/opt/vicinopoli/
+ssh root@49.12.223.210 'cd /opt/vicinopoli && ./deploy/deploy.sh'
