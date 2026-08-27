@@ -19,6 +19,7 @@ export function PostMedia({ media }: { media?: MediaInfo[] | null }) {
           <audio
             key={item.id}
             controls
+            preload="metadata"
             src={item.url}
             aria-label={t("composer.voiceAlt")}
             className="max-w-full"
