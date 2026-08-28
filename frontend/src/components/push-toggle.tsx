@@ -6,6 +6,7 @@ import { getPushConfig, subscribePush, unsubscribePush } from "@/api/client";
 import { Switch } from "@/components/ui/switch";
 
 const ENABLED_KEY = "vicinopoli.pushEnabled";
+export const HAS_POSTED_KEY = "vicinopoli.hasPosted";
 
 function urlBase64ToUint8Array(base64url: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64url.length % 4)) % 4);
@@ -55,12 +56,15 @@ interface PushToggleProps {
 /**
  * Push notifications toggle (ADR 0025), shown in the feed.
  *
- * **On by default**: the very first visit attempts to enable push (request the
- * Notification permission, subscribe with the VAPID public key and register
- * the subscription with the current address — only a geohash cell is stored
- * server-side). A denied permission or failed subscription flips the toggle
- * off and remembers the choice, so it is never forced again. Changing address
- * while enabled moves the cell. Failures always surface a short error.
+ * **On after the first post**: once the device has published a message, the
+ * next feed visit attempts to enable push (request the Notification
+ * permission, subscribe with the VAPID public key and register the
+ * subscription with the current address — only a geohash cell is stored
+ * server-side). The permission prompt is withheld from brand-new devices so
+ * it does not add to first-visit friction. A denied permission or failed
+ * subscription flips the toggle off and remembers the choice, so it is never
+ * forced again. Changing address while enabled moves the cell. Failures
+ * always surface a short error.
  */
 export function PushToggle({ address }: PushToggleProps) {
   const { t } = useTranslation();
@@ -134,10 +138,12 @@ export function PushToggle({ address }: PushToggleProps) {
     }
   }, []);
 
-  // Default-on: on the first visit (or after a successful previous session)
-  // subscribe without waiting for the user to touch the switch. Runs at most
-  // once; opting out persists so it never nags again.
+  // Default-on, but only after the device has posted at least once: the
+  // notification permission prompt is a first-visit bounce driver, so it is
+  // withheld until an explicit engagement signal (the first post). Runs at
+  // most once; opting out persists so it never nags again.
   useEffect(() => {
+    if (localStorage.getItem(HAS_POSTED_KEY) !== "1") return;
     if (autoAttempted.current) return;
     autoAttempted.current = true;
     if (!enabled || address === "") return;

@@ -21,6 +21,11 @@ self-hosted, privacy-safe and gated behind an explicit GDPR consent banner.
   `denied` at load; accepting the banner updates them to `granted`, declining
   keeps them `denied`. The server-side consent gate (ADR 0014) is untouched —
   Google consent is enforced purely client-side, before any data is sent.
+- The banner is **deferred off the `/address` landing page** and shown from the
+  feed onward: the address page shares no Google data (geocoding is
+  self-hosted), and the tag loads there with `denied` anyway (Consent Mode v2).
+  Asking consent after the user has typed their address raises acceptance and
+  removes a first-visit bounce prompt.
 - SPA route changes push `page_view` config calls so Ads attribution sees real
   paths.
 - Loading the feed fires the "Page view" conversion event

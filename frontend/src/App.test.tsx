@@ -268,9 +268,19 @@ describe("App", () => {
     expect(version.textContent).toMatch(/^(dev|[0-9a-f]{7,})$/);
   });
 
-  it("shows the consent banner and sends onboarding events when accepted", async () => {
+  it("shows the consent banner on the feed and sends onboarding events when accepted", async () => {
     renderApp();
 
+    // The banner is deferred off the address page: it appears once the user
+    // reaches the feed (no Google data flows from the address page).
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByRole("button", { name: "Accetta" }),
+    ).not.toBeInTheDocument();
+
+    submitAddress();
     await waitFor(() => {
       expect(
         screen.getByRole("button", { name: "Accetta" }),
@@ -311,15 +321,16 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByTestId("address-input")).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
-    await waitFor(() => {
-      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
-    });
-    expect(analytics.trackConversion).not.toHaveBeenCalled();
 
     submitAddress();
     await waitFor(() => {
       expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    expect(analytics.trackConversion).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
     });
     expect(analytics.trackConversion).toHaveBeenCalledTimes(1);
   });
@@ -329,14 +340,14 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByTestId("address-input")).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole("button", { name: "Rifiuta" }));
-    await waitFor(() => {
-      expect(analytics.setConsent).toHaveBeenLastCalledWith(false);
-    });
 
     submitAddress();
     await waitFor(() => {
       expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Rifiuta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(false);
     });
     expect(analytics.trackConversion).not.toHaveBeenCalled();
   });
@@ -365,14 +376,14 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByTestId("address-input")).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
-    await waitFor(() => {
-      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
-    });
 
     submitAddress();
     await waitFor(() => {
       expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
     });
 
     const calls = vi.mocked(fetch).mock.calls.filter(
@@ -401,12 +412,13 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByTestId("address-input")).toBeInTheDocument();
     });
+
+    await openComposer();
     fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
     await waitFor(() => {
       expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
     });
 
-    await openComposer();
     fireEvent.change(screen.getByTestId("composer-message"), {
       target: { value: "ciao" },
     });
@@ -463,14 +475,14 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByTestId("address-input")).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
-    await waitFor(() => {
-      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
-    });
 
     submitAddress();
     await waitFor(() => {
       expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
     });
 
     const calls = vi.mocked(fetch).mock.calls.filter(
@@ -490,14 +502,14 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByTestId("address-input")).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
-    await waitFor(() => {
-      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
-    });
 
     submitAddress();
     await waitFor(() => {
       expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Accetta" }));
+    await waitFor(() => {
+      expect(analytics.setConsent).toHaveBeenLastCalledWith(true);
     });
 
     fireEvent.click(screen.getByTestId("feed-change-address"));
@@ -569,6 +581,14 @@ describe("App", () => {
     renderApp();
 
     await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+
+    submitAddress();
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    await waitFor(() => {
       expect(
         screen.getByRole("button", { name: "Rifiuta" }),
       ).toBeInTheDocument();
@@ -623,6 +643,11 @@ describe("App", () => {
 
     renderApp();
     await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("address-input")).toHaveValue("");
+    fireEvent.click(screen.getByTestId("address-locate"));
+    await waitFor(() => {
       expect(screen.getByTestId("address-input")).toHaveValue(
         "Piazza Venezia, Roma",
       );
@@ -646,7 +671,10 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByTestId("address-input")).toBeInTheDocument();
     });
-    expect(screen.getByTestId("address-input")).toHaveValue("");
+    fireEvent.click(screen.getByTestId("address-locate"));
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toHaveValue("");
+    });
   });
 
   it("leaves the address empty when the reverse geocode finds nothing", async () => {
@@ -678,7 +706,10 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByTestId("address-input")).toBeInTheDocument();
     });
-    expect(screen.getByTestId("address-input")).toHaveValue("");
+    fireEvent.click(screen.getByTestId("address-locate"));
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toHaveValue("");
+    });
   });
 
   it("does not overwrite a typed address with a located one", async () => {
@@ -701,6 +732,7 @@ describe("App", () => {
     fireEvent.change(screen.getByTestId("address-input"), {
       target: { value: "Milano Centrale, Milano" },
     });
+    fireEvent.click(screen.getByTestId("address-locate"));
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(screen.getByTestId("address-input")).toHaveValue(
       "Milano Centrale, Milano",

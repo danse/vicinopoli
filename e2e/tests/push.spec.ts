@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { setAddress } from "./helpers";
+import { openComposer, publish, setAddress } from "./helpers";
 
 const BASE = process.env.PUBLIC_BASE_URL ?? "http://localhost:8080";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? "dev-admin-token";
@@ -119,7 +119,16 @@ test("the feed toggle subscribes and unsubscribes the device", async ({
 
   await setAddress(page, "Via Roma 1, Roma");
 
-  // Default-on: the first visit subscribes automatically, no click needed.
+  // The permission prompt is withheld until the device has posted: no
+  // auto-subscribe on the first feed visit.
+  await expect
+    .poll(() => posted.some((p) => p.method === "POST"))
+    .toBe(false);
+
+  await openComposer(page);
+  await publish(page, `push ${Date.now()}`);
+
+  // After the first post, returning to the feed subscribes automatically.
   await expect
     .poll(() => posted.some((p) => p.method === "POST"))
     .toBe(true);

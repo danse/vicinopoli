@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import "../i18n";
-import { PushToggle } from "./push-toggle";
+import { HAS_POSTED_KEY, PushToggle } from "./push-toggle";
 
 const api = vi.hoisted(() => ({
   getPushConfig: vi.fn().mockResolvedValue({
@@ -69,8 +69,16 @@ describe("PushToggle", () => {
     api.unsubscribePush.mockClear();
   });
 
-  it("is on by default and subscribes on the first visit", async () => {
+  it("does not auto-subscribe before the device has posted", async () => {
     stubBrowser();
+    render(<PushToggle address={address} />);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(api.subscribePush).not.toHaveBeenCalled();
+  });
+
+  it("subscribes on the first visit after a post", async () => {
+    stubBrowser();
+    localStorage.setItem(HAS_POSTED_KEY, "1");
     render(<PushToggle address={address} />);
     const toggle = screen.getByTestId("feed-push-toggle");
     await waitFor(() => expect(api.subscribePush).toHaveBeenCalled());
@@ -88,6 +96,7 @@ describe("PushToggle", () => {
 
   it("respects a previous opt-out and never nags again", async () => {
     stubBrowser();
+    localStorage.setItem(HAS_POSTED_KEY, "1");
     localStorage.setItem("vicinopoli.pushEnabled", "0");
     render(<PushToggle address={address} />);
     expect(screen.getByTestId("feed-push-toggle")).not.toBeChecked();
@@ -109,6 +118,7 @@ describe("PushToggle", () => {
 
   it("flips off and remembers the choice when permission is denied", async () => {
     stubBrowser({ permission: "denied" });
+    localStorage.setItem(HAS_POSTED_KEY, "1");
     render(<PushToggle address={address} />);
     const toggle = screen.getByTestId("feed-push-toggle");
     await waitFor(() => expect(toggle).not.toBeChecked());
@@ -121,6 +131,7 @@ describe("PushToggle", () => {
 
   it("flips off and remembers the choice when the config call fails", async () => {
     stubBrowser();
+    localStorage.setItem(HAS_POSTED_KEY, "1");
     api.getPushConfig.mockRejectedValueOnce(new Error("boom"));
     render(<PushToggle address={address} />);
     const toggle = screen.getByTestId("feed-push-toggle");
@@ -133,6 +144,7 @@ describe("PushToggle", () => {
 
   it("unsubscribes locally and on the server when disabled", async () => {
     stubBrowser();
+    localStorage.setItem(HAS_POSTED_KEY, "1");
     render(<PushToggle address={address} />);
     await waitFor(() => expect(api.subscribePush).toHaveBeenCalled());
     const toggle = screen.getByTestId("feed-push-toggle");
@@ -149,6 +161,7 @@ describe("PushToggle", () => {
 
   it("moves the server-side cell when the address changes while enabled", async () => {
     stubBrowser();
+    localStorage.setItem(HAS_POSTED_KEY, "1");
     const { rerender } = render(<PushToggle address={address} />);
     await waitFor(() =>
       expect(api.subscribePush).toHaveBeenCalledWith(

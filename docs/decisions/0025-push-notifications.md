@@ -34,6 +34,13 @@ permission, subscribes via the service worker with the VAPID public key, and
 POSTs the subscription to the backend. Disabling unsubscribes and deletes the
 server-side row. Re-enabling (or a changed address) updates the stored cell.
 
+**Default-on, but only after the first post.** The permission prompt is a
+first-visit bounce driver (it stacks with the consent banner and the
+geolocation prompt), so the auto-subscribe is withheld until the device has
+published at least one message — an explicit engagement signal recorded
+client-side (`vicinopoli.hasPosted`). The manual toggle is always available and
+moving-house re-registration (no prompt) is unaffected.
+
 ### The subscription: device + cell, no raw coords
 
 `push_subscriptions` holds, per device: the Web Push `endpoint`, the

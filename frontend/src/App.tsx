@@ -61,7 +61,7 @@ function AppRoutes() {
           {t("app.switchLanguage")}
         </button>
       </header>
-      {!consentDecided && (
+      {!consentDecided && location.pathname !== "/address" && (
         <ConsentBanner onDecide={(consented) => decideConsent(consented)} />
       )}
       <UpdatePrompt />

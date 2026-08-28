@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { setAddress } from "./helpers";
 
-test("the address page pre-fills the input from the browser location", async ({
+test("the address page fills the input from the browser location on demand", async ({
   page,
   context,
 }) => {
@@ -15,12 +15,15 @@ test("the address page pre-fills the input from the browser location", async ({
   await page.goto("/");
   await expect(page).toHaveURL(/\/address$/);
 
+  // Opt-in: nothing is filled until the button is clicked.
+  await expect(page.getByTestId("address-input")).toHaveValue("");
+  await page.getByTestId("address-locate").click();
   await expect(page.getByTestId("address-input")).toHaveValue(
     "Piazza Venezia, Roma",
   );
 });
 
-test("a pre-filled location can be submitted to reach the feed", async ({
+test("a located address can be submitted to reach the feed", async ({
   page,
   context,
 }) => {
@@ -30,6 +33,7 @@ test("a pre-filled location can be submitted to reach the feed", async ({
   await context.setGeolocation({ latitude: 41.8933, longitude: 12.4829 });
 
   await page.goto("/");
+  await page.getByTestId("address-locate").click();
   await expect(page.getByTestId("address-input")).toHaveValue("Via Roma 1, Roma");
   await page.getByTestId("address-submit").click();
   await expect(page).toHaveURL(/\/feed$/);
@@ -39,13 +43,14 @@ test("an unknown location leaves the address input empty", async ({
   page,
   context,
 }) => {
-  // In the middle of the ocean: nothing to pre-fill.
+  // In the middle of the ocean: nothing to fill in.
   await context.grantPermissions(["geolocation"], {
     origin: "http://localhost:8080",
   });
   await context.setGeolocation({ latitude: 0, longitude: 0 });
 
   await page.goto("/");
+  await page.getByTestId("address-locate").click();
   await expect(page.getByTestId("address-input")).toHaveValue("");
 });
 
@@ -57,6 +62,7 @@ test("denied geolocation leaves the address input empty", async ({
   // Do not grant the permission: the page must fall back to an empty input.
 
   await page.goto("/");
+  await page.getByTestId("address-locate").click();
   await expect(page.getByTestId("address-input")).toHaveValue("");
 });
 
@@ -72,6 +78,10 @@ test("an already-stored address is not overwritten by geolocation", async ({
   // stay untouched.
   await context.setGeolocation({ latitude: 41.8957, longitude: 12.4823 });
   await page.reload();
+  await expect(page.getByTestId("address-input")).toHaveValue(
+    "Milano Centrale, Milano",
+  );
+  await page.getByTestId("address-locate").click();
   await expect(page.getByTestId("address-input")).toHaveValue(
     "Milano Centrale, Milano",
   );

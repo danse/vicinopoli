@@ -1,11 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { AddressCombobox } from "@/components/address-combobox";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/app-context";
-import { useBrowserAddress } from "@/lib/use-browser-address";
+import { geolocationSupported, locateAddress } from "@/lib/use-browser-address";
 
 export function AddressPage() {
   const { t } = useTranslation();
@@ -25,16 +25,24 @@ export function AddressPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Pre-fill from the browser location only when nothing is set yet, and never
-  // clobber an address the user has already typed.
+  // Opt-in location: only runs when the user clicks "use my location", never on
+  // mount (the browser permission prompt is a first-visit bounce driver).
   const addressRef = useRef(address);
   addressRef.current = address;
-  useBrowserAddress(
-    (located) => {
+  const [locating, setLocating] = useState(false);
+  const handleLocate = async () => {
+    if (locating || !geolocationSupported()) return;
+    setLocating(true);
+    try {
+      const located = await locateAddress();
+      // Never clobber an address the user has already typed.
       if (addressRef.current.trim() === "") setAddress(located);
-    },
-    address.trim() === "",
-  );
+    } catch {
+      // Denied or unavailable location, or nothing to resolve: stay empty.
+    } finally {
+      setLocating(false);
+    }
+  };
 
   const canSubmit = address.trim() !== "";
 
@@ -69,7 +77,16 @@ export function AddressPage() {
             {t("address.enter")}
           </Button>
         </div>
-        <p className="text-sm text-muted-foreground">{t("address.hint")}</p>
+        <Button
+          type="button"
+          variant="outline"
+          data-testid="address-locate"
+          disabled={locating}
+          onClick={() => void handleLocate()}
+          className="justify-self-start"
+        >
+          {locating ? t("address.locating") : t("address.locate")}
+        </Button>
       </div>
     </section>
   );

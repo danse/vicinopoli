@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { hashAddress } from "@/lib/utils";
 import { QuotaHelpModal } from "@/components/quota-help-modal";
+import { HAS_POSTED_KEY } from "@/components/push-toggle";
 
 interface ComposerProps {
   address: string;
@@ -221,6 +222,7 @@ export function Composer({ address, pseudonym, onPosted }: ComposerProps) {
       setPhoto(null);
       setVoice(null);
       setDraft(EMPTY_DRAFT);
+      localStorage.setItem(HAS_POSTED_KEY, "1");
       if (fileInputRef.current) fileInputRef.current.value = "";
       refreshDevice();
       onPosted();

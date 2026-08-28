@@ -13,9 +13,10 @@
   },
   "address": {
     "title": "Where are you?",
-    "intro": "vicinopoli is your neighbourhood's square. Enter your address to read messages — text, voice and photos — from the people who live near you. Free, no account or password.",
-    "hint": "Enter your address to see your neighbours' messages.",
-    "enter": "Enter"
+    "intro": "Your neighbourhood's square: messages, voice and photos from the people who live near you. Free, no account.",
+    "enter": "Enter",
+    "locate": "Use my location",
+    "locating": "Locating you…"
   },
   "feed": {
     "compose": "Write a message",
@@ -76,8 +77,8 @@
     "error": "Could not save. Try again."
   },
   "consent": {
-    "title": "Analytics",
-    "body": "May we collect anonymous statistics about how you use vicinopoli and share your choice with Google for advertising campaigns? No address or exact location is ever recorded.",
+    "title": "Anonymous statistics",
+    "body": "May we collect anonymous statistics and share them with Google for campaigns? Your address is never recorded.",
     "accept": "Accept",
     "decline": "Decline"
   },

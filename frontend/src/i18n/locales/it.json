@@ -13,9 +13,10 @@
   },
   "address": {
     "title": "Dove ti trovi?",
-    "intro": "vicinopoli è la piazza del tuo quartiere. Inserisci il tuo indirizzo e leggi i messaggi — testi, voce e foto — delle persone che vivono vicino a te. Gratis, senza account né password.",
-    "hint": "Inserisci il tuo indirizzo per vedere i messaggi delle vicine.",
-    "enter": "Entra"
+    "intro": "La piazza del tuo quartiere: messaggi, voce e foto delle persone che vivono vicino a te. Gratis, senza account.",
+    "enter": "Entra",
+    "locate": "Usa la mia posizione",
+    "locating": "Cerco la tua posizione…"
   },
   "feed": {
     "compose": "Scrivi un messaggio",
@@ -76,8 +77,8 @@
     "error": "Non è stato possibile salvare. Riprova."
   },
   "consent": {
-    "title": "Analisi statistiche",
-    "body": "Possiamo raccogliere statistiche anonime su come usi vicinopoli e condividere la tua scelta con Google per le campagne pubblicitarie? Nessun indirizzo né posizione esatta viene mai registrato.",
+    "title": "Statistiche anonime",
+    "body": "Possiamo raccogliere statistiche anonime e condividerle con Google per le campagne? Il tuo indirizzo non viene mai registrato.",
     "accept": "Accetta",
     "decline": "Rifiuta"
   },
