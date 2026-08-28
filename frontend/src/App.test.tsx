@@ -245,6 +245,7 @@ async function openComposer() {
 describe("App", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", mockFetch());
+    localStorage.clear();
     clearSuggestionCache();
     analytics.initGtag.mockClear();
     analytics.setConsent.mockClear();
@@ -913,6 +914,27 @@ describe("App", () => {
     renderApp();
     await openComposer();
     expect(screen.getByTestId("composer-message")).toBeInTheDocument();
+  });
+
+  it("shows a ring on the compose button for a device that never posted", async () => {
+    renderApp();
+    await submitAddress();
+    expect(screen.getByTestId("feed-compose").className).toContain("fab-nudge");
+  });
+
+  it("removes the ring from the compose button once the device has posted", async () => {
+    renderApp();
+    await openComposer();
+    fireEvent.change(screen.getByTestId("composer-message"), {
+      target: { value: "ciao" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Pubblica" }));
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-compose")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("feed-compose").className).not.toContain(
+      "fab-nudge",
+    );
   });
 
   it("shows only the inputs for the selected message type", async () => {
