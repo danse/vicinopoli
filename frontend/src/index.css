@@ -38,7 +38,7 @@
 /* Compose-button cue: a one-shot amber ring for devices that have never
    posted, so the + button is noticed without adding any UI. */
 .fab-nudge {
-  animation: fab-nudge 3s ease-in-out forwards;
+  animation: fab-nudge 6s ease-in-out forwards;
 }
 
 @keyframes fab-nudge {
