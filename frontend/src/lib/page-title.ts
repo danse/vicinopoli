@@ -6,6 +6,7 @@ const PAGE_TITLE_KEYS: Record<string, string> = {
   "/address": "address.title",
   "/feed": "app.tagline",
   "/support": "support.title",
+  "/privacy": "privacy.title",
 };
 
 export function pageTitle(pathname: string, t: TFunction): string {

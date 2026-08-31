@@ -10,6 +10,7 @@ import { pageTitle } from "@/lib/page-title";
 import { AddressPage } from "@/pages/address-page";
 import { ComposerPage } from "@/pages/composer-page";
 import { FeedPage } from "@/pages/feed-page";
+import { PrivacyPage } from "@/pages/privacy-page";
 import { PseudonymPage } from "@/pages/pseudonym-page";
 import { SupportPage } from "@/pages/support-page";
 
@@ -70,6 +71,7 @@ function AppRoutes() {
         <Route path="/address" element={<AddressPage />} />
         <Route path="/pseudonym" element={<PseudonymPage />} />
         <Route path="/support" element={<SupportPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         <Route
           path="/feed"
           element={
@@ -102,6 +104,13 @@ function AppRoutes() {
           className="text-primary hover:underline"
         >
           {t("support.title")}
+        </Link>
+        <Link
+          to="/privacy"
+          data-testid="footer-privacy"
+          className="text-primary hover:underline"
+        >
+          {t("privacy.footerLink")}
         </Link>
       </footer>
     </main>

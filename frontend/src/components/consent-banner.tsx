@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
 import { sendAnalyticsEvents, updateMe } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,13 @@ export function ConsentBanner({ onDecide }: ConsentBannerProps) {
     >
       <h2 className="text-sm font-semibold">{t("consent.title")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">{t("consent.body")}</p>
+      <Link
+        to="/privacy"
+        data-testid="consent-policy-link"
+        className="mt-1 inline-block text-xs text-primary hover:underline"
+      >
+        {t("privacy.bannerLink")}
+      </Link>
       <div className="mt-3 flex gap-2">
         <Button size="sm" disabled={leaving} onClick={() => decide(true)}>
           {t("consent.accept")}

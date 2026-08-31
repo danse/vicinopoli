@@ -87,6 +87,26 @@
     "hint": "Write to {{email}} to report a problem or ask a question.",
     "back": "Back to the start"
   },
+  "privacy": {
+    "title": "Privacy & Cookie Policy",
+    "footerLink": "Privacy",
+    "bannerLink": "Privacy policy",
+    "intro": "vicinopoli is a neighbourhood square without accounts: we never ask for an email, a name or a password. Here is a plain-language explanation of what data we process.",
+    "contactTitle": "Contact",
+    "contactBody": "For questions, access or deletion requests write to:",
+    "cookiesTitle": "Cookies",
+    "cookiesBody1": "We use a single technical cookie, “device_id”: an anonymous random identifier that lets the app work without an account. It is essential and needs no consent.",
+    "cookiesBody2": "The Google Ads tag loads only after you accept the consent banner and may set advertising cookies (e.g. “_gcl_*”). You can decline and change your choice later by clearing the site's cookies.",
+    "localTitle": "Data on your device",
+    "localBody": "In your browser (localStorage) we only keep functional data: the address, a message draft, notification preferences. They never leave your device beyond their intended use.",
+    "serverTitle": "Data we store",
+    "serverBody1": "On the server we keep the anonymous device identifier, the published messages and a coarse geographic cell (never your address or exact coordinates).",
+    "serverBody2": "With your consent we collect anonymous statistics about how you use vicinopoli. If you enable notifications, we store the subscription endpoint and the coarse cell.",
+    "noAccountsTitle": "No accounts, no personal data",
+    "noAccountsBody": "We never record an email, name or password. The pseudonym is optional and your choice; it can make you recognisable, so use it with awareness.",
+    "rightsTitle": "Your rights",
+    "rightsBody": "Because we do not identify people, we hold no personal data to delete. For any question, write to us:"
+  },
   "push": {
     "toggleLabel": "Notify me when a neighbour posts",
     "error": "Could not enable notifications. Try again."

@@ -87,6 +87,26 @@
     "hint": "Scrivi a {{email}} per segnalare un problema o fare una domanda.",
     "back": "Torna all'inizio"
   },
+  "privacy": {
+    "title": "Privacy e Cookie Policy",
+    "footerLink": "Privacy",
+    "bannerLink": "Informativa privacy",
+    "intro": "vicinopoli è una piazza di quartiere senza account: non chiediamo email, nome o password. Qui spieghiamo, in modo semplice, quali dati trattiamo.",
+    "contactTitle": "Contatti",
+    "contactBody": "Per domande, richieste di accesso o cancellazione scrivi a:",
+    "cookiesTitle": "Cookie",
+    "cookiesBody1": "Utilizziamo un unico cookie tecnico, “device_id”: un identificatore anonimo e casuale che permette all'app di funzionare senza un account. È un cookie essenziale e non richiede consenso.",
+    "cookiesBody2": "Il tag Google Ads viene caricato solo dopo che accetti il banner del consenso e può impostare cookie pubblicitari (ad es. “_gcl_*”). Puoi rifiutare e, in seguito, modificare la tua scelta cancellando i cookie del sito.",
+    "localTitle": "Dati sul tuo dispositivo",
+    "localBody": "Nel tuo browser (localStorage) salviamo solo dati funzionali: l'indirizzo, la bozza di un messaggio, le preferenze delle notifiche. Non lasciano il tuo dispositivo se non per l'uso previsto.",
+    "serverTitle": "Dati che conserviamo",
+    "serverBody1": "Sul server conserviamo l'identificatore anonimo del dispositivo, i messaggi pubblicati e la cella geografica approssimativa (mai il tuo indirizzo o le coordinate esatte).",
+    "serverBody2": "Con il tuo consenso raccogliamo statistiche anonime su come usi vicinopoli. Se attivi le notifiche, salviamo l'endpoint di sottoscrizione e la cella approssimativa.",
+    "noAccountsTitle": "Nessun account, nessun dato personale",
+    "noAccountsBody": "Non registriamo email, nome o password. Il soprannome è facoltativo e lo scegli tu; può renderti riconoscibile, quindi usalo con consapevolezza.",
+    "rightsTitle": "I tuoi diritti",
+    "rightsBody": "Poiché non identifichiamo le persone, non conserviamo dati personali da cancellare. Per qualsiasi domanda, scrivici:"
+  },
   "push": {
     "toggleLabel": "Avvisami quando una vicina pubblica",
     "error": "Impossibile attivare le notifiche. Riprova."

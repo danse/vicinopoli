@@ -269,6 +269,31 @@ describe("App", () => {
     expect(version.textContent).toMatch(/^(dev|[0-9a-f]{7,})$/);
   });
 
+  it("links to the privacy and cookie policy from the footer", async () => {
+    renderApp();
+    fireEvent.click(screen.getByTestId("footer-privacy"));
+    await waitFor(() => {
+      expect(screen.getByTestId("privacy-page")).toBeInTheDocument();
+    });
+    expect(document.title).toBe("Privacy e Cookie Policy — vicinopoli");
+  });
+
+  it("shows the consent banner with a link to the privacy policy", async () => {
+    renderApp("/");
+    await waitFor(() => {
+      expect(screen.getByTestId("address-input")).toBeInTheDocument();
+    });
+
+    submitAddress();
+    await waitFor(() => {
+      expect(screen.getByTestId("consent-policy-link")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("consent-policy-link"));
+    await waitFor(() => {
+      expect(screen.getByTestId("privacy-page")).toBeInTheDocument();
+    });
+  });
+
   it("shows the consent banner on the feed and sends onboarding events when accepted", async () => {
     renderApp();
 
