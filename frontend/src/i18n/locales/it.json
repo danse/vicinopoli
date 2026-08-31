@@ -72,7 +72,7 @@
   },
   "pseudonym": {
     "title": "Come vuoi chiamarti?",
-    "hint": "Un nome per firmare i tuoi messaggi. Nessuno scoprirà chi sei.",
+    "hint": "Un nome per firmare i tuoi messaggi.",
     "save": "Salva",
     "error": "Non è stato possibile salvare. Riprova."
   },

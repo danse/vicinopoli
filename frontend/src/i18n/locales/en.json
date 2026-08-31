@@ -72,7 +72,7 @@
   },
   "pseudonym": {
     "title": "What should we call you?",
-    "hint": "A name to sign your messages. No one will find out who you are.",
+    "hint": "A name to sign your messages.",
     "save": "Save",
     "error": "Could not save. Try again."
   },
