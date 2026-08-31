@@ -155,3 +155,71 @@ test("the feed toggle subscribes and unsubscribes the device", async ({
     )
     .toBe(true);
 });
+
+test("re-subscribes with a fresh endpoint after the backend drops the subscription", async ({
+  context,
+  page,
+}) => {
+  await context.grantPermissions(["notifications"], { origin: BASE });
+  await page.addInitScript(() => {
+    Notification.requestPermission = async () => "granted";
+    const fake = {
+      endpoint: `https://push.example.test/sub-${Date.now()}`,
+      keys: { p256dh: "cGF5bG9hZA==", auth: "YXV0aA==" },
+      getKey(name: "p256dh" | "auth") {
+        if (name === "p256dh") return new Uint8Array(65);
+        return new Uint8Array(16);
+      },
+      async unsubscribe() {
+        return true;
+      },
+    };
+    // @ts-expect-error overridden in the page context
+    PushManager.prototype.subscribe = async () => fake;
+    // @ts-expect-error overridden in the page context
+    PushManager.prototype.getSubscription = async () => fake;
+  });
+
+  const posted: Array<Record<string, unknown>> = [];
+  await page.route("**/api/push/subscriptions", async (route) => {
+    const method = route.request().method();
+    if (method === "POST" || method === "DELETE") {
+      posted.push({ method, body: route.request().postDataJSON() });
+    }
+    await route.continue();
+  });
+
+  await setAddress(page, "Via Roma 1, Roma");
+  await openComposer(page);
+  await publish(page, `push ${Date.now()}`);
+
+  // The first auto-subscribe (after a post) registers endpoint1.
+  await expect
+    .poll(() => posted.find((p) => p.method === "POST"))
+    .toBeTruthy();
+  const first = posted.find((p) => p.method === "POST")!.body as {
+    endpoint: string;
+  };
+  const endpoint1 = first.endpoint;
+
+  // Simulate the backend's 404/410 cleanup: drop the row for this device.
+  // page.request shares the page's device cookie, so it deletes this device's row.
+  const del = await page.request.delete(`${BASE}/api/push/subscriptions`, {
+    data: { endpoint: endpoint1 },
+  });
+  expect(del.status()).toBe(204);
+
+  // Reloading the feed detects the mismatch and re-subscribes with a fresh endpoint.
+  await page.reload();
+  await expect(page.getByTestId("feed-compose")).toBeVisible();
+
+  await expect
+    .poll(() =>
+      posted.some(
+        (p) =>
+          p.method === "POST" &&
+          (p.body as { endpoint: string }).endpoint !== endpoint1,
+      ),
+    )
+    .toBe(true);
+});

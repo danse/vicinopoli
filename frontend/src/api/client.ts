@@ -98,6 +98,13 @@ export function unsubscribePush(endpoint: string): Promise<void> {
   });
 }
 
+export type PushSubscriptionsResponse =
+  components["schemas"]["PushSubscriptionsResponse"];
+
+export function getPushSubscriptions(): Promise<PushSubscriptionsResponse> {
+  return request("/api/push/subscriptions");
+}
+
 export function presignMedia(
   payload: MediaPresignRequest,
 ): Promise<MediaPresignResponse> {

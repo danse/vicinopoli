@@ -10,12 +10,16 @@ const api = vi.hoisted(() => ({
   }),
   subscribePush: vi.fn().mockResolvedValue(undefined),
   unsubscribePush: vi.fn().mockResolvedValue(undefined),
+  getPushSubscriptions: vi.fn().mockResolvedValue({
+    endpoints: ["https://push.example.test/sub/abc"],
+  }),
 }));
 
 vi.mock("@/api/client", () => ({
   getPushConfig: api.getPushConfig,
   subscribePush: api.subscribePush,
   unsubscribePush: api.unsubscribePush,
+  getPushSubscriptions: api.getPushSubscriptions,
 }));
 
 function stubSubscription() {
@@ -67,6 +71,7 @@ describe("PushToggle", () => {
     api.getPushConfig.mockClear();
     api.subscribePush.mockClear();
     api.unsubscribePush.mockClear();
+    api.getPushSubscriptions.mockClear();
   });
 
   it("does not auto-subscribe before the device has posted", async () => {
@@ -113,6 +118,16 @@ describe("PushToggle", () => {
         expect.objectContaining({ address }),
       ),
     );
+    expect(screen.getByTestId("feed-push-toggle")).toBeChecked();
+  });
+
+  it("re-subscribes with a fresh endpoint when the backend dropped the subscription", async () => {
+    const { subscription } = stubBrowser({ subscribed: true });
+    localStorage.setItem("vicinopoli.pushEnabled", "1");
+    api.getPushSubscriptions.mockResolvedValue({ endpoints: [] });
+    render(<PushToggle address={address} />);
+    await waitFor(() => expect(subscription.unsubscribe).toHaveBeenCalled());
+    await waitFor(() => expect(api.subscribePush).toHaveBeenCalled());
     expect(screen.getByTestId("feed-push-toggle")).toBeChecked();
   });
 

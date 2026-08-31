@@ -20,6 +20,7 @@ from app.schemas.push import (
     PushConfigResponse,
     PushSubscriptionCreate,
     PushSubscriptionDelete,
+    PushSubscriptionsResponse,
 )
 from app.services.push import CELL_PRECISION
 from app.services.vapid import vapid_keys
@@ -35,6 +36,18 @@ DeviceDep = Annotated[Device, Depends(get_device)]
 async def push_config() -> PushConfigResponse:
     public_key, _ = vapid_keys()
     return PushConfigResponse(enabled=True, vapid_public_key=public_key)
+
+
+@router.get("/push/subscriptions", response_model=PushSubscriptionsResponse)
+async def list_subscriptions(
+    session: SessionDep,
+    device: DeviceDep,
+) -> PushSubscriptionsResponse:
+    """The calling device's registered endpoints (client-side self-healing)."""
+    rows = await session.scalars(
+        select(PushSubscription).where(PushSubscription.device_id == device.id)
+    )
+    return PushSubscriptionsResponse(endpoints=[row.endpoint for row in rows])
 
 
 @router.post("/push/subscriptions", status_code=status.HTTP_201_CREATED)

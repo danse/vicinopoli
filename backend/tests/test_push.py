@@ -9,6 +9,8 @@ author's feed. The send path is a recording sender injected into
 
 import base64
 
+from pywebpush import WebPushException
+
 from app.core.geocoder import geohash_encode
 from app.services.push import CELL_SLACK_M, notify_new_post
 
@@ -130,6 +132,27 @@ async def test_unsubscribe_deletes(client, session_factory) -> None:
         assert count == 0
 
 
+async def test_list_subscriptions_returns_the_devices_endpoints(client) -> None:
+    """``GET /api/push/subscriptions`` lists the calling device's endpoints, so
+    the client can tell when the backend has dropped one (404/410 cleanup)."""
+    await _subscribe(client, "Piazza Venezia, Roma", endpoint="https://push.example.test/a")
+
+    response = await client.get("/api/push/subscriptions")
+    assert response.status_code == 200
+    assert response.json() == {"endpoints": ["https://push.example.test/a"]}
+
+    delete = await client.request(
+        "DELETE",
+        "/api/push/subscriptions",
+        json={"endpoint": "https://push.example.test/a"},
+    )
+    assert delete.status_code == 204
+
+    response = await client.get("/api/push/subscriptions")
+    assert response.status_code == 200
+    assert response.json() == {"endpoints": []}
+
+
 async def test_notify_delivers_when_reach_covers_subscriber(client, session_factory) -> None:
     """A ``some`` post (500m reach) at Via Roma covers Piazza Venezia (~270m)."""
     await _subscribe(client, "Piazza Venezia, Roma", endpoint="https://push.example.test/a")
@@ -224,3 +247,73 @@ async def test_webpush_sender_calls_webpush_with_base64url_keys(monkeypatch) -> 
     assert json.loads(kwargs["data"]) == {"body": "ciao", "voice": "some"}
     assert kwargs["vapid_private_key"] is not None
     assert kwargs["vapid_claims"]["sub"]
+
+
+def _fake_response(status_code: int):
+    return type("FakeResponse", (), {"status_code": status_code})
+
+
+class GoneSender:
+    """Deliver to every endpoint except the dead ones (which raise 404/410)."""
+
+    def __init__(self, gone: set[str]) -> None:
+        self.sent: list[str] = []
+        self.gone = gone
+
+    async def send(self, endpoint: str, p256dh: str, auth: str, payload: dict) -> None:
+        if endpoint in self.gone:
+            raise WebPushException(
+                "Push failed: 410 Gone", response=_fake_response(410)
+            )
+        self.sent.append(endpoint)
+
+
+class ErrorSender:
+    """Fail every delivery with a transient error."""
+
+    async def send(self, endpoint: str, p256dh: str, auth: str, payload: dict) -> None:
+        raise WebPushException("Push failed: 500", response=_fake_response(500))
+
+
+async def test_notify_deletes_dead_subscriptions(client, session_factory) -> None:
+    """A 410/404 from the push service means the subscription is permanently
+    gone: the row is deleted (so it stops being retried on every covered post)
+    instead of raising to Sentry, and other subscribers are still delivered."""
+    await _subscribe(client, "Piazza Venezia, Roma", endpoint="https://push.example.test/alive")
+    await _subscribe(client, "Piazza Venezia, Roma", endpoint="https://push.example.test/gone")
+
+    post_id = await _post(client, "ciao some", voice="some")
+
+    sender = GoneSender(gone={"https://push.example.test/gone"})
+    await notify_new_post(session_factory, post_id, sender)
+
+    assert sender.sent == ["https://push.example.test/alive"]
+
+    async with session_factory() as session:
+        from sqlalchemy import select
+
+        from app.models.push_subscription import PushSubscription
+
+        remaining = await session.scalars(select(PushSubscription))
+        assert [row.endpoint for row in remaining] == [
+            "https://push.example.test/alive"
+        ]
+
+
+async def test_notify_keeps_subscription_on_transient_error(client, session_factory) -> None:
+    """A non-404/410 failure (e.g. a 500 or a network error) is logged, never
+    propagates, and the subscription is kept for the next attempt."""
+    await _subscribe(client, "Piazza Venezia, Roma", endpoint="https://push.example.test/a")
+    post_id = await _post(client, "ciao some", voice="some")
+
+    await notify_new_post(session_factory, post_id, ErrorSender())
+
+    async with session_factory() as session:
+        from sqlalchemy import select
+
+        from app.models.push_subscription import PushSubscription
+
+        remaining = await session.scalars(select(PushSubscription))
+        assert [row.endpoint for row in remaining] == [
+            "https://push.example.test/a"
+        ]

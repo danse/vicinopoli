@@ -38,6 +38,18 @@ CELL_PRECISION: int = 7
 CELL_SLACK_M: int = 110
 
 
+def _is_dead_subscription(exc: Exception) -> bool:
+    """Whether a delivery failure means the subscription is permanently gone.
+
+    The push service answers 404 or 410 (RFC 8030) when it no longer knows the
+    subscription; the row can never be delivered again and should be dropped.
+    Detected by duck-typing the exception's ``response`` so the send path stays
+    injectable (the mock sender never raises this).
+    """
+    status = getattr(getattr(exc, "response", None), "status_code", None)
+    return status in (404, 410)
+
+
 class PushSender(Protocol):
     async def send(
         self, endpoint: str, p256dh: str, auth: str, payload: dict[str, object]
@@ -141,7 +153,15 @@ async def notify_new_post(
         for sub in subs:
             try:
                 await sender.send(sub.endpoint, sub.p256dh, sub.auth, payload)
-            except Exception:
+            except Exception as exc:
+                if _is_dead_subscription(exc):
+                    logger.warning(
+                        "dropping dead push subscription",
+                        extra={"endpoint": sub.endpoint},
+                    )
+                    await session.delete(sub)
+                    continue
                 logger.exception(
                     "push delivery failed", extra={"endpoint": sub.endpoint}
                 )
+        await session.commit()

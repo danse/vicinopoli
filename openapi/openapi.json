@@ -608,6 +608,54 @@
       }
     },
     "/api/push/subscriptions": {
+      "get": {
+        "tags": [
+          "push"
+        ],
+        "summary": "List Subscriptions",
+        "description": "The calling device's registered endpoints (client-side self-healing).",
+        "operationId": "list_subscriptions_api_push_subscriptions_get",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushSubscriptionsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "push"
@@ -2217,6 +2265,23 @@
         ],
         "title": "PushSubscriptionDelete",
         "description": "Remove a previously registered subscription by its endpoint."
+      },
+      "PushSubscriptionsResponse": {
+        "properties": {
+          "endpoints": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Endpoints"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoints"
+        ],
+        "title": "PushSubscriptionsResponse",
+        "description": "The calling device's registered push subscription endpoints.\n\nThe client compares its browser endpoint against this list to detect a\nsubscription the backend has dropped (a 404/410 delivery failure cleans it\nup server-side) and re-subscribe with a fresh one."
       },
       "ReportResponse": {
         "properties": {

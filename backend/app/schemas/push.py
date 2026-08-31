@@ -28,3 +28,14 @@ class PushSubscriptionDelete(BaseModel):
     """Remove a previously registered subscription by its endpoint."""
 
     endpoint: str = Field(min_length=8, max_length=512)
+
+
+class PushSubscriptionsResponse(BaseModel):
+    """The calling device's registered push subscription endpoints.
+
+    The client compares its browser endpoint against this list to detect a
+    subscription the backend has dropped (a 404/410 delivery failure cleans it
+    up server-side) and re-subscribe with a fresh one.
+    """
+
+    endpoints: list[str]

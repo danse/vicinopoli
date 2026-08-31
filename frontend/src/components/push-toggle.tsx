@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { getPushConfig, subscribePush, unsubscribePush } from "@/api/client";
+import { getPushConfig, getPushSubscriptions, subscribePush, unsubscribePush } from "@/api/client";
 
 import { Switch } from "@/components/ui/switch";
 
@@ -164,7 +164,10 @@ export function PushToggle({ address }: PushToggleProps) {
     };
   }, [enabled, address, enable]);
 
-  // Moving house while enabled: tell the backend the new area.
+  // Verify the backend still knows this device's subscription and keep its cell
+  // in sync. If the backend dropped the row (a 404/410 delivery failure cleans
+  // it up server-side), re-subscribe with a fresh endpoint so notifications
+  // keep working.
   useEffect(() => {
     if (!enabled || address === "") return;
     const ready = navigator.serviceWorker?.ready;
@@ -174,10 +177,17 @@ export function PushToggle({ address }: PushToggleProps) {
       .then((registration) => registration.pushManager.getSubscription())
       .then(async (subscription) => {
         if (subscription === null || cancelled) return;
-        await subscribePush({
-          ...(await encodeSubscription(subscription)),
-          address,
-        });
+        const { endpoints } = await getPushSubscriptions();
+        if (cancelled) return;
+        if (endpoints.includes(subscription.endpoint)) {
+          await subscribePush({
+            ...(await encodeSubscription(subscription)),
+            address,
+          });
+        } else {
+          await subscription.unsubscribe();
+          await enable();
+        }
       })
       .catch(() => {
         // Non-fatal: the next feed load retries.
@@ -185,7 +195,7 @@ export function PushToggle({ address }: PushToggleProps) {
     return () => {
       cancelled = true;
     };
-  }, [enabled, address]);
+  }, [enabled, address, enable]);
 
   return (
     <div className="flex items-start justify-between gap-3 text-sm">

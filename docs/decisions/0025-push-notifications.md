@@ -84,3 +84,10 @@ and timestamp — never coordinates or the author's device id.
 - Opt-in is explicit and reversible; the composer is untouched.
 - The service worker switches to `injectManifest` (custom `push` and
   `notificationclick` listeners) since `generateSW` cannot handle push.
+- **Dead subscriptions self-heal.** Push services answer `404`/`410` (RFC 8030)
+  when a registration has expired or been unsubscribed outside the app (storage
+  cleared, browser settings, long inactivity). The backend deletes such a row
+  on its first failed delivery — logged as a warning, never raised to Sentry —
+  instead of retrying it on every covered post. The client notices the missing
+  row on the next feed visit (`GET /api/push/subscriptions`) and re-subscribes
+  with a fresh endpoint, so notifications resume without user action.
