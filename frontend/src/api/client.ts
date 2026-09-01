@@ -2,6 +2,7 @@ import type { components, operations } from "./generated/schema";
 
 export type FeedItem = components["schemas"]["FeedItem"];
 export type FeedResponse = components["schemas"]["FeedResponse"];
+export type ScopeStep = components["schemas"]["ScopeStep"];
 export type PostCreate = components["schemas"]["PostCreate"];
 export type PostScope = components["schemas"]["PostScope"];
 export type PostVoice = components["schemas"]["PostVoice"];
@@ -65,6 +66,9 @@ export function getFeed(
   }
   if (params.cursor !== undefined && params.cursor !== null) {
     searchParams.set("cursor", params.cursor);
+  }
+  if (params.radius_m !== undefined && params.radius_m !== null) {
+    searchParams.set("radius_m", params.radius_m);
   }
   return request(`/api/feed?${searchParams.toString()}`);
 }

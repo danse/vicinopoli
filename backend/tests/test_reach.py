@@ -80,18 +80,24 @@ async def test_adaptive_feed_uses_stored_voice_reach(client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_adaptive_feed_effective_radius_is_the_fill_step(client) -> None:
-    """``effective_radius_m`` is the ladder step where the feed filled.
-
-    A lone ``street`` post at the viewer's own address fills the feed at the
-    5m step; two ``city`` posts ~45km apart only fill at the 50km ceiling.
-    """
+async def test_adaptive_feed_effective_radius_is_the_fill_step(
+    client, monkeypatch
+) -> None:
+    """``effective_radius_m`` is the ladder step where the distinct-poster
+    fill target was met (or the 50km ceiling in sparse areas)."""
     await _post_at(client, "Via Roma 1, Roma", body="sotto casa", voice="street")
 
-    same = await client.get(
-        "/api/feed", params={"address": "Via Roma 1, Roma", "target_count": 1}
-    )
+    # With the poster threshold met at 5m, the feed stops at the 5m step.
+    monkeypatch.setattr("app.services.feed.MIN_POSTERS", 1)
+    same = await client.get("/api/feed", params={"address": "Via Roma 1, Roma"})
     assert same.json()["effective_radius_m"] == 5
+
+    # A single author cannot fill the real threshold: the feed reaches the
+    # 50km ceiling but still returns the post.
+    monkeypatch.setattr("app.services.feed.MIN_POSTERS", 10)
+    sparse = await client.get("/api/feed", params={"address": "Via Roma 1, Roma"})
+    assert sparse.json()["effective_radius_m"] == 50000
+    assert [post["body"] for post in sparse.json()["posts"]] == ["sotto casa"]
 
 
 @pytest.mark.asyncio

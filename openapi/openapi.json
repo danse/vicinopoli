@@ -560,6 +560,22 @@
               ],
               "title": "Cursor"
             }
+          },
+          {
+            "name": "radius_m",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ScopeStep"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Radius M"
+            }
           }
         ],
         "responses": {
@@ -2317,6 +2333,17 @@
           "created_at"
         ],
         "title": "ReportResponse"
+      },
+      "ScopeStep": {
+        "type": "string",
+        "enum": [
+          "5m",
+          "500m",
+          "3km",
+          "50km"
+        ],
+        "title": "ScopeStep",
+        "description": "The feed's expanding-radius ladder (human-readable radius strings).\n\nA static ``StrEnum`` so it is usable as a type annotation and accepted as\nthe feed's ``radius_m`` query param; an import-time assertion below keeps\nits values in lockstep with ``VOICE_TO_REACH_M``."
       },
       "ValidationError": {
         "properties": {

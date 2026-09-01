@@ -26,10 +26,11 @@ synonyms. The essentials:
   `some -> 500m`, `area -> 3km`, `city -> 50km`. It is trust-free and
   density-free (ADR 0024; trust gates daily volume instead, ADR 0022).
 - The **adaptive feed** walks `SCOPE_STEPS` (5m -> 500m -> 3km -> 50km),
-  keeping posts whose reach covers the viewer, until `target_count` posts are
-  gathered or the 50km ceiling; **scope** is the step where it stopped —
-  `effective_radius_m` — so the "Entro <x>" label is honest. `target_count`
-  (= K) is a fill target, not a distance.
+  keeping posts whose reach covers the viewer, until `MIN_POSTERS` **distinct
+  posters** are covered or the 50km ceiling; **scope** is the step where it
+  stopped — `effective_radius_m` — so the "Entro <x>" label is honest. The
+  scope is stable across pages (the client echoes `radius_m`), and `target_count`
+  (= K) caps the page size, not the widening.
 
 ### Cold bootstrap
 

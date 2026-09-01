@@ -39,22 +39,32 @@ address key match.
 How far the feed had to look to fill the page — the only *scope* in the
 product, and the value behind the "Entro <x>" label. The adaptive feed widens
 step by step (`SCOPE_STEPS`: 5m, 500m, 3km, 50km — the sorted voice reaches)
-until it gathers `target_count` visible posts or reaches the 50km ceiling; the
-step where it stopped is the feed's scope.
-- API field: `effective_radius_m` (wire name kept).
-- Code: `SCOPE_STEPS`, `MAX_SCOPE_M` (in `app.services.feed`).
+until it covers `MIN_POSTERS` **distinct posters** or reaches the 50km
+ceiling; the step where it stopped is the feed's scope. The scope is stable
+across pages: the client echoes the established scope (`radius_m`) when
+paging, so "Entro <x>" never jumps mid-pagination.
+- API fields: `effective_radius_m` (wire name kept), `radius_m` (echoed back).
+- Code: `SCOPE_STEPS`, `MAX_SCOPE_M`, `MIN_POSTERS` (in `app.services.feed`).
 
 ### Adaptive feed / bacheca adattiva
 The feed-building algorithm: walk the reach ladder (`SCOPE_STEPS`), collect
 posts within each radius, keep those whose reach covers the viewer, stop when
-`target_count` posts are gathered or at the 50km ceiling. Cold bootstrap: the
-default `city` voice (50km reach) plus the widening search means two
-brand-new neighbours always reach each other.
+`MIN_POSTERS` distinct posters are covered or at the 50km ceiling. Because the
+count is of *posters* (devices), a single prolific author's posts never fill
+the feed by themselves. Cold bootstrap: the default `city` voice (50km reach)
+plus the widening search means two brand-new neighbours always reach each other.
 - Code: `expanding_radius_feed()` in `app.services.feed`.
 
+### Minimum posters / MIN_POSTERS
+How many distinct posters (devices) the feed aims to cover before it stops
+widening (default 10). Distinct from `target_count`: this drives the *scope*,
+`target_count` caps the *page size*.
+- Code: `MIN_POSTERS` (in `app.services.feed`).
+
 ### Target count / K
-How many posts the feed aims to gather before widening (default 10). This is
-the "K" of the reach model — a fill target, not a distance.
+How many posts fit on one page (default 10). This is the "K" of the reach
+model — a fill target, not a distance. It does **not** drive widening (that is
+`MIN_POSTERS`).
 - API field: `target_count` (query param on `GET /api/feed`).
 
 ### Trust / fiducia
@@ -72,6 +82,7 @@ never reading, never reach (ADR 0022).
 | Reach             | `VOICE_TO_REACH_M`           | — (internal)    | —                         |
 | Scope (feed scope)| `expanding_radius_feed()`    | `effective_radius_m` | `composer.radius`    |
 | Scope ladder      | `SCOPE_STEPS`, `MAX_SCOPE_M` | —               | —                         |
+| Minimum posters   | `MIN_POSTERS`                | —               | —                         |
 | Target count      | `target_count`               | `target_count`  | —                         |
 | Adaptive feed     | `app.services.feed`          | `GET /api/feed` | `feed` page               |
 

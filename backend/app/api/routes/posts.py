@@ -35,6 +35,7 @@ from app.services.heatmap import bump_activity_cell
 from app.services.media import media_by_post, media_info
 from app.services.push import PushSender, get_push_sender, notify_new_post
 from app.services.quota import posts_used_today
+from app.services.reach import ScopeStep
 from app.services.trust import daily_post_quota, is_new_neighbour
 
 router = APIRouter()
@@ -175,6 +176,7 @@ async def get_feed(
     address: str = Query(min_length=1, max_length=512),
     target_count: int = Query(default=10, ge=1, le=50),
     cursor: str | None = Query(default=None),
+    radius_m: Annotated[ScopeStep | None, Query()] = None,
 ) -> FeedResponse:
     geocoded = await geocoder.geocode(address)
     if geocoded is None:
@@ -190,6 +192,7 @@ async def get_feed(
         geocoded,
         target_count=target_count,
         cursor=cursor_key,
+        radius_m=radius_m,
     )
 
     post_ids = [post.id for post in feed_posts]

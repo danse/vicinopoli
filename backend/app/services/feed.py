@@ -31,15 +31,22 @@ from sqlalchemy.orm import selectinload
 from app.core.geocoder import GeocodedAddress
 from app.models.location import Location
 from app.models.post import Post, PostStatus
-from app.services.reach import VOICE_TO_REACH_M
+from app.services.reach import VOICE_TO_REACH_M, ScopeStep, scope_step_to_m
 from app.services.trust import is_new_neighbour
 
 # Expanding-radius ladder (metres) for the adaptive feed: the sorted voice
 # reaches, so the feed fills step by step and the "Entro <x>" label is honest.
-SCOPE_STEPS: tuple[int, ...] = tuple(sorted(set(VOICE_TO_REACH_M.values())))
+SCOPE_STEPS: tuple[int, ...] = tuple(
+    sorted(scope_step_to_m(step) for step in ScopeStep)
+)
 
 # Hard ceiling for the expanding-radius search.
-MAX_SCOPE_M: int = 50_000
+MAX_SCOPE_M: int = SCOPE_STEPS[-1]
+
+# The feed widens until the posts within reach include at least this many
+# distinct posters (devices); a page is not considered full just because one
+# author posted many times. ``target_count`` is the page-size cap.
+MIN_POSTERS: int = 10
 
 
 @dataclass
@@ -116,30 +123,50 @@ def _is_visible(post: Post, distance_m: float) -> bool:
     return distance_m <= VOICE_TO_REACH_M[post.voice]
 
 
+def _distinct_posters(rows: list[tuple[Post, Location, float]]) -> int:
+    """Distinct active posters (devices) among visibility-filtered posts.
+
+    The adaptive feed widens until it covers ``MIN_POSTERS`` distinct authors,
+    so a single prolific author's posts never fill a page by themselves.
+    """
+    return len({row[0].device_id for row in rows})
+
+
 async def expanding_radius_feed(
     session: AsyncSession,
     viewer: GeocodedAddress,
     target_count: int = 10,
     cursor: tuple[datetime, uuid.UUID] | None = None,
+    radius_m: ScopeStep | None = None,
 ) -> tuple[list[FeedPost], int, str | None]:
-    """Build the feed, widening the radius until ``target_count`` is reached.
+    """Build the feed, widening the radius until ``MIN_POSTERS`` distinct
+    posters are covered (or the 50km ceiling).
+
+    ``radius_m`` seeds the ladder (the client echoes the previous page's scope
+    on scroll), so later pages never re-widen below the established scope and
+    "Entro <x>" stays stable while paging. ``target_count`` caps the returned
+    page size.
 
     Returns ``(posts, effective_radius_m, next_cursor)``. ``next_cursor`` is
     ``None`` when there are no more posts after this page; otherwise it encodes
     the last post's ``(created_at, id)`` for the next page.
     """
-    for radius_m in SCOPE_STEPS:
-        candidates = await _posts_within(session, viewer, radius_m, cursor=cursor)
-        visible: list[tuple[Post, Location, float]] = []
-        for post, location, distance_m in candidates:
-            # Candidates are newest-first: once the page is full we can stop,
-            # the remaining posts belong on a later page. At the ceiling the
-            # full scan still runs so ``has_more`` below stays accurate.
-            if radius_m < MAX_SCOPE_M and len(visible) >= target_count:
-                break
-            if _is_visible(post, distance_m):
-                visible.append((post, location, distance_m))
-        if len(visible) >= target_count or radius_m == MAX_SCOPE_M:
+    steps = SCOPE_STEPS
+    if radius_m is not None:
+        start = scope_step_to_m(radius_m)
+        steps = tuple(step for step in SCOPE_STEPS if step >= start) or (MAX_SCOPE_M,)
+
+    for radius in steps:
+        candidates = await _posts_within(session, viewer, radius, cursor=cursor)
+        # The distinct-poster count must cover *all* visible posts in the
+        # radius (not just the newest target_count), or a dense radius could
+        # be misread as sparse when one author dominates the newest posts.
+        visible = [
+            (post, location, float(distance_m))
+            for post, location, distance_m in candidates
+            if _is_visible(post, distance_m)
+        ]
+        if _distinct_posters(visible) >= MIN_POSTERS or radius == MAX_SCOPE_M:
             feed_posts = []
             for post, location, distance_m in visible[:target_count]:
                 author = post.device
@@ -157,10 +184,10 @@ async def expanding_radius_feed(
                     )
                 )
             next_cursor: str | None = None
-            has_more = radius_m < MAX_SCOPE_M or len(visible) > target_count
+            has_more = radius < MAX_SCOPE_M or len(visible) > target_count
             if has_more and feed_posts:
                 last = feed_posts[-1]
                 next_cursor = encode_cursor(last.created_at, uuid.UUID(last.id))
-            return feed_posts, radius_m, next_cursor
+            return feed_posts, radius, next_cursor
 
     return [], MAX_SCOPE_M, None

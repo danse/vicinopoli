@@ -236,8 +236,10 @@ async def test_feed_street_scope_requires_same_address(client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_feed_expands_radius_to_target(client) -> None:
-    """Expanding radius returns at least as many posts as target_count allows."""
+async def test_feed_expands_radius_for_distinct_posters(client) -> None:
+    """The radius widens until it covers MIN_POSTERS distinct posters, not
+    just ``target_count`` posts: two posts by one author do not stop the walk,
+    so the feed reaches the 50km ceiling in a sparse area."""
     await client.post(
         "/api/posts",
         json={"address": "Via Roma 1, Roma", "body": "uno", "scope": "5km"},
@@ -248,11 +250,93 @@ async def test_feed_expands_radius_to_target(client) -> None:
     )
     response = await client.get(
         "/api/feed",
-        params={"address": "Via Roma 1, Roma", "target_count": 1},
+        params={"address": "Via Roma 1, Roma"},
     )
     data = response.json()
-    assert len(data["posts"]) >= 1
-    assert data["effective_radius_m"] == 5
+    assert data["effective_radius_m"] == 50000  # ceiling: only 1 distinct poster
+    assert {post["body"] for post in data["posts"]} == {"uno", "due"}
+
+
+@pytest.mark.asyncio
+async def test_feed_widens_for_distinct_posters_not_post_count(
+    client, monkeypatch
+) -> None:
+    """Widening is driven by distinct posters: a single author's 3 posts do not
+    stop the walk, even though they fill the page's post count."""
+    monkeypatch.setattr("app.services.feed.MIN_POSTERS", 2)
+    client.cookies.clear()
+    for body in ("uno", "due", "tre"):
+        await _create_post(client, body)  # same device, 3 posts
+    data = (
+        await client.get(
+            "/api/feed", params={"address": "Via Roma 1, Roma", "target_count": 3}
+        )
+    ).json()
+    assert data["effective_radius_m"] == 50000  # 1 distinct poster < MIN_POSTERS
+
+
+@pytest.mark.asyncio
+async def test_feed_stops_when_min_posters_covered(client, monkeypatch) -> None:
+    """Once MIN_POSTERS distinct posters are within reach, the walk stops."""
+    monkeypatch.setattr("app.services.feed.MIN_POSTERS", 2)
+    client.cookies.clear()
+    await _create_post(client, "A1")
+    await _create_post(client, "A2")  # same device as A1
+    client.cookies.clear()
+    await _create_post(client, "B1")  # second device
+    data = (
+        await client.get("/api/feed", params={"address": "Via Roma 1, Roma"})
+    ).json()
+    assert data["effective_radius_m"] == 5  # 2 distinct posters within 5m
+
+
+@pytest.mark.asyncio
+async def test_feed_keeps_scope_when_seeded(client, monkeypatch) -> None:
+    """``radius_m`` seeds the ladder so a later page never restarts below the
+    established scope (which would shrink "Entro <x>" mid-pagination)."""
+    monkeypatch.setattr("app.services.feed.MIN_POSTERS", 1)
+    for body in ("uno", "due", "tre"):
+        client.cookies.clear()
+        await _create_post(client, body)
+    page1 = (
+        await client.get(
+            "/api/feed", params={"address": "Via Roma 1, Roma", "target_count": 2}
+        )
+    ).json()
+    assert page1["effective_radius_m"] == 5
+    cursor = page1["next_cursor"]
+    assert cursor is not None
+
+    seeded = (
+        await client.get(
+            "/api/feed",
+            params={
+                "address": "Via Roma 1, Roma",
+                "cursor": cursor,
+                "target_count": 2,
+                "radius_m": "50km",
+            },
+        )
+    ).json()
+    assert seeded["effective_radius_m"] == 50000  # starts at 50km, not 5m
+
+    unseeded = (
+        await client.get(
+            "/api/feed",
+            params={"address": "Via Roma 1, Roma", "cursor": cursor, "target_count": 2},
+        )
+    ).json()
+    assert unseeded["effective_radius_m"] == 5  # without the seed it restarts at 5m
+
+
+@pytest.mark.asyncio
+async def test_feed_rejects_invalid_radius_m(client) -> None:
+    """A ``radius_m`` outside the known scope steps is rejected with 422."""
+    response = await client.get(
+        "/api/feed",
+        params={"address": "Via Roma 1, Roma", "radius_m": "1km"},
+    )
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio
@@ -337,39 +421,21 @@ async def test_feed_invalid_cursor_returns_400(client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_feed_stops_evaluating_visibility_at_target_count(
+async def test_feed_counts_distinct_posters_across_the_whole_radius(
     client, monkeypatch
 ) -> None:
-    """The feed must not evaluate visibility for every post in the radius.
-
-    Candidates are ordered newest-first, so the feed should stop scanning as
-    soon as ``target_count`` visible posts have been collected (the per-candidate
-    scope lookup in ``_is_visible`` stays O(1), but the loop must still bail
-    early — otherwise a dense radius costs O(posts) work per page).
-    """
-    import app.services.feed as feed_module
-
-    for i in range(40):
-        client.cookies.clear()
-        await _create_post(client, f"dense-{i:02d}", scope="5km")
-
-    calls = 0
-    original = feed_module._is_visible
-
-    def counting_is_visible(post, distance_m):
-        nonlocal calls
-        calls += 1
-        return original(post, distance_m)
-
-    monkeypatch.setattr(feed_module, "_is_visible", counting_is_visible)
+    """The distinct-poster count spans *all* posts in the radius, not just the
+    newest ``target_count``: even when the newest page-slot posts come from one
+    author, a radius that also contains another author's posts is not widened."""
+    monkeypatch.setattr("app.services.feed.MIN_POSTERS", 2)
+    client.cookies.clear()
+    await _create_post(client, "A1")
+    client.cookies.clear()
+    await _create_post(client, "B1")
 
     response = await client.get(
         "/api/feed",
-        params={"address": "Via Roma 1, Roma", "target_count": 10},
+        params={"address": "Via Roma 1, Roma", "target_count": 1},
     )
     assert response.status_code == 200
-    assert len(response.json()["posts"]) == 10
-    assert calls <= 10, (
-        f"_is_visible ran {calls} times for a target_count of 10; the feed "
-        "should stop scanning once it has enough visible posts"
-    )
+    assert response.json()["effective_radius_m"] == 5

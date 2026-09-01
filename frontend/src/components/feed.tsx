@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { type FeedItem, getFeed, sendAnalyticsEvents } from "@/api/client";
+import { type FeedItem, getFeed, sendAnalyticsEvents, type ScopeStep } from "@/api/client";
 
 import { LinkPreview } from "@/components/link-preview";
 import { PostMedia } from "@/components/post-media";
@@ -17,6 +17,18 @@ interface FeedProps {
 function formatRadius(meters: number): string {
   if (meters >= 1000) return `${meters / 1000} km`;
   return `${meters} m`;
+}
+
+const SCOPE_STEPS: ScopeStep[] = ["5m", "500m", "3km", "50km"];
+const SCOPE_STEP_M: Record<ScopeStep, number> = {
+  "5m": 5,
+  "500m": 500,
+  "3km": 3000,
+  "50km": 50000,
+};
+
+function toScopeStep(metres: number): ScopeStep | undefined {
+  return SCOPE_STEPS.find((step) => SCOPE_STEP_M[step] === metres);
 }
 
 function formatDistance(meters: number): string {
@@ -37,6 +49,7 @@ export function Feed({
   const lastReported = useRef<string>("");
   const sentinelRef = useRef<HTMLDivElement>(null);
   const nextCursorRef = useRef<string | null>(null);
+  const effectiveRadiusRef = useRef(0);
 
   const report = useCallback(
     (batch: FeedItem[]) => {
@@ -68,6 +81,7 @@ export function Feed({
         if (cancelled) return;
         setPosts(result.posts);
         setEffectiveRadius(result.effective_radius_m);
+        effectiveRadiusRef.current = result.effective_radius_m;
         setNextCursor(result.next_cursor ?? null);
         nextCursorRef.current = result.next_cursor ?? null;
         report(result.posts);
@@ -88,9 +102,14 @@ export function Feed({
     const cursor = nextCursorRef.current;
     setLoading(true);
     try {
-      const result = await getFeed({ address, cursor });
+      const result = await getFeed({
+        address,
+        cursor,
+        radius_m: toScopeStep(effectiveRadiusRef.current),
+      });
       setPosts((prev) => [...(prev ?? []), ...result.posts]);
       setEffectiveRadius(result.effective_radius_m);
+      effectiveRadiusRef.current = result.effective_radius_m;
       nextCursorRef.current = result.next_cursor ?? null;
       setNextCursor(result.next_cursor ?? null);
       report(result.posts);
@@ -123,7 +142,10 @@ export function Feed({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold">{t("composer.feedTitle")}</h2>
-          <p className="text-sm text-muted-foreground">
+          <p
+            data-testid="feed-scope"
+            className="text-sm text-muted-foreground"
+          >
             {t("composer.radius", {
               radius: formatRadius(effectiveRadius),
             })}

@@ -20,7 +20,15 @@ test("the feed loads a first page and loads more on scroll", async ({
   expect(initial).toBeGreaterThan(0);
   expect(initial).toBeLessThanOrEqual(10);
 
+  // The scope ("Entro <x>") is established by the first page and stays stable
+  // across scroll: 22 posts from distinct devices are all within 5m, so the
+  // feed stops at the 5m step and never re-widens while paging.
+  const scope = page.getByTestId("feed-scope");
+  const scopeBefore = await scope.textContent();
+  expect(scopeBefore).toContain("5");
+
   await page.getByTestId("feed-load-more").scrollIntoViewIfNeeded();
 
   await expect(firstPage).toHaveCount(initial + 10);
+  await expect(scope).toHaveText(scopeBefore!);
 });
