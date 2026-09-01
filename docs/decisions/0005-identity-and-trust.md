@@ -13,16 +13,17 @@ scale.
 
 - **Identity:** anonymous device token (httpOnly cookie) created on first visit,
   plus an optional pseudonym. No password, no email.
-- **Trust ladder:** new/unknown devices can post immediately but with reduced
-  reach until they accrue trust (age, no reports, engagement). The reach gate
-  is a *neighbour-count* cap `K` (how many distinct other active posters a post
-  may reach): `UNTRUSTED_K = 1`, `TRUSTED_K = 25` (plan: Reach model). This
-  replaces the old km-based cap on scope; the `street` voice is always
-  honoured.
+- **Trust ladder:** new/unknown devices can post immediately but with a reduced
+  *daily posting quota* (3 posts/day) until they accrue trust by age (7 days,
+  no reports → 30 posts/day, ADR 0022). Trust no longer gates reach — reach is
+  a fixed, trust-free property of the post's voice (`VOICE_TO_REACH_M`, ADR
+  0024). The earlier neighbour-count cap `K` (`UNTRUSTED_K = 1`,
+  `TRUSTED_K = 25`) is superseded; the `street` voice is always honoured.
 - Phone/email verification is a later, optional *reach* gate — never a read gate.
 
 ## Consequences
 
 - A `devices` table with a `trust_score`/`verified` field.
-- Feed queries must account for device trust when deciding reach (via `K`,
-  converted to a distance at serve time).
+- Trust gates the daily posting quota (ADR 0022), never the feed: reach is a
+  fixed voice→distance lookup computed per post, so the feed needs no
+  per-device trust conversion.

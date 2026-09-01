@@ -1,9 +1,19 @@
 # 0018 — Reach model (voice / trust cap / reach_m)
 
-- Status: accepted
+- Status: superseded by [0022-trust-as-daily-quota.md](0022-trust-as-daily-quota.md)
+  and [0024-scope-from-voice.md](0024-scope-from-voice.md)
 - Date: 2026-08-14
+- Superseded: 2026-08-18
 - Supersedes: [0006-visibility-scopes.md](0006-visibility-scopes.md),
   [0007-cold-bootstrap.md](0007-cold-bootstrap.md)
+
+> **Historical.** The reach model below is superseded. Reach is now a fixed,
+> trust-free voice→distance lookup (`VOICE_TO_REACH_M`: street 5m / some 500m /
+> area 3km / city 50km, ADR 0024); trust gates only the daily posting quota
+> (3 → 30 after 7 days, ADR 0022). The trust cap `K` (`UNTRUSTED_K = 1`,
+> `TRUSTED_K = 25`) and the 500m → 1km → 5km → 20km → 50km ladder no longer
+> exist, and `street` is a 5m radius, not a normalized-address match. The text
+> below is kept as the record of what was decided at the time.
 
 ## Context
 
