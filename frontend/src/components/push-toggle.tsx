@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import * as Sentry from "@sentry/react";
 import { useTranslation } from "react-i18next";
 
 import { getPushConfig, getPushSubscriptions, subscribePush, unsubscribePush } from "@/api/client";
@@ -106,8 +107,10 @@ export function PushToggle({ address }: PushToggleProps) {
       });
       await subscribePush({ ...(await encodeSubscription(subscription)), address });
       localStorage.setItem(ENABLED_KEY, "1");
-    } catch {
-      // Revert the optimistic toggle so the switch reflects reality.
+    } catch (err) {
+      // Revert the optimistic toggle so the switch reflects reality, and
+      // surface the failure so "notifications not working" is diagnosable.
+      Sentry.captureException(err, { tags: { source: "push.enable" } });
       localStorage.setItem(ENABLED_KEY, "0");
       setEnabled(false);
       setError(true);
@@ -128,8 +131,9 @@ export function PushToggle({ address }: PushToggleProps) {
         await unsubscribePush(endpoint);
       }
       localStorage.setItem(ENABLED_KEY, "0");
-    } catch {
+    } catch (err) {
       // Revert the optimistic toggle so the switch reflects reality.
+      Sentry.captureException(err, { tags: { source: "push.disable" } });
       localStorage.setItem(ENABLED_KEY, "1");
       setEnabled(true);
       setError(true);
@@ -156,8 +160,9 @@ export function PushToggle({ address }: PushToggleProps) {
         if (cancelled || subscription !== null) return;
         await enable();
       })
-      .catch(() => {
+      .catch((err) => {
         // Non-fatal: the switch still lets the user enable manually.
+        Sentry.captureException(err, { tags: { source: "push.auto-attempt" } });
       });
     return () => {
       cancelled = true;
@@ -189,8 +194,9 @@ export function PushToggle({ address }: PushToggleProps) {
           await enable();
         }
       })
-      .catch(() => {
+      .catch((err) => {
         // Non-fatal: the next feed load retries.
+        Sentry.captureException(err, { tags: { source: "push.verify" } });
       });
     return () => {
       cancelled = true;

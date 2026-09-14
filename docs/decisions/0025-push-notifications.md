@@ -91,3 +91,7 @@ and timestamp — never coordinates or the author's device id.
   instead of retrying it on every covered post. The client notices the missing
   row on the next feed visit (`GET /api/push/subscriptions`) and re-subscribes
   with a fresh endpoint, so notifications resume without user action.
+- **Failures are diagnosable.** Client-side subscribe/unsubscribe/verify
+  failures and service-worker payload/display errors are reported to Sentry
+  (the SW forwards them to the app, which has the Sentry init). Declining the
+  permission prompt is a user choice and is never reported.

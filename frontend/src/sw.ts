@@ -32,22 +32,47 @@ registerRoute(
 
 // Push notifications (ADR 0025): the backend sends the post body, voice,
 // display address and timestamp; the address is a locale-neutral title.
+//
+// The handler must never fail silently: a malformed/empty payload or a failed
+// showNotification would drop the notification with no trace. We fall back to
+// a default title/body so the alert still shows, and forward any error to the
+// controlled clients, which report it to Sentry (the SW has no Sentry init).
+type PushData = { body?: string; voice?: string; display_address?: string };
+
+function reportPushError(err: unknown): void {
+  const error = String(err instanceof Error ? err.message : err);
+  self.clients
+    .matchAll({ type: "window", includeUncontrolled: true })
+    .then((clients) =>
+      clients.forEach((client) =>
+        client.postMessage({ type: "vicinopoli:push-error", error }),
+      ),
+    );
+}
+
 self.addEventListener("push", (event) => {
-  const data: { body?: string; voice?: string; display_address?: string } = event.data
-    ? (event.data.json() as typeof data)
-    : {};
+  let data: PushData = {};
+  if (event.data) {
+    try {
+      data = event.data.json() as PushData;
+    } catch (err) {
+      reportPushError(err);
+    }
+  }
 
   const title = data.display_address ?? "vicinopoli";
   const body = data.body ?? data.display_address ?? "vicinopoli";
   const pushEvent = event as PushEvent;
   pushEvent.waitUntil(
-    self.registration.showNotification(title, {
-      body,
-      tag: "vicinopoli-post",
-      icon: "/icons/icon-192x192.png",
-      badge: "/icons/icon-192x192.png",
-      data: { url: "/feed" },
-    }),
+    self.registration
+      .showNotification(title, {
+        body,
+        tag: "vicinopoli-post",
+        icon: "/icons/icon-192x192.png",
+        badge: "/icons/icon-192x192.png",
+        data: { url: "/feed" },
+      })
+      .catch(reportPushError),
   );
 });
 

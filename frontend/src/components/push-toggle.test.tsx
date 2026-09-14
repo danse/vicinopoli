@@ -4,6 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import "../i18n";
 import { HAS_POSTED_KEY, PushToggle } from "./push-toggle";
 
+const sentryCapture = vi.fn();
+vi.mock("@sentry/react", () => ({
+  captureException: (err: unknown, hint?: unknown) => sentryCapture(err, hint),
+}));
+
 const api = vi.hoisted(() => ({
   getPushConfig: vi.fn().mockResolvedValue({
     vapid_public_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
@@ -68,6 +73,7 @@ const address = "Via Roma 1, Roma";
 describe("PushToggle", () => {
   beforeEach(() => {
     localStorage.clear();
+    sentryCapture.mockClear();
     api.getPushConfig.mockClear();
     api.subscribePush.mockClear();
     api.unsubscribePush.mockClear();
@@ -142,9 +148,11 @@ describe("PushToggle", () => {
     expect(
       await screen.findByText(/Impossibile attivare le notifiche/),
     ).toBeInTheDocument();
+    // Declining permission is a user choice, not an error: never reported.
+    expect(sentryCapture).not.toHaveBeenCalled();
   });
 
-  it("flips off and remembers the choice when the config call fails", async () => {
+  it("flips off and reports to Sentry when the config call fails", async () => {
     stubBrowser();
     localStorage.setItem(HAS_POSTED_KEY, "1");
     api.getPushConfig.mockRejectedValueOnce(new Error("boom"));
@@ -155,6 +163,10 @@ describe("PushToggle", () => {
     expect(
       await screen.findByText(/Impossibile attivare le notifiche/),
     ).toBeInTheDocument();
+    expect(sentryCapture).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ tags: { source: "push.enable" } }),
+    );
   });
 
   it("unsubscribes locally and on the server when disabled", async () => {

@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./i18n";
 import "./index.css";
+import { reportServiceWorkerErrors } from "./lib/sw-errors";
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 if (sentryDsn) {
@@ -18,6 +19,9 @@ if (sentryDsn) {
     tracesSampleRate: 0.1,
   });
 }
+
+// The service worker reports its push errors here (it has no Sentry init).
+reportServiceWorkerErrors();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
