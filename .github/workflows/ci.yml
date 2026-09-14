@@ -91,6 +91,18 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Pre-create backups dir (docker bind-mounts it as root otherwise)
         run: mkdir -p backups
+      - name: Build and pull the e2e stack images (retry Docker Hub rate limits)
+        run: |
+          # GitHub-hosted runners share IPs and frequently hit Docker Hub's
+          # anonymous pull limit ("pull access denied ... denied"). Pre-build
+          # and pre-pull with retries so Playwright's webServer never has to
+          # fetch from Docker Hub at start time.
+          for i in 1 2 3 4 5; do
+            docker compose build && docker compose pull && exit 0
+            echo "image fetch attempt $i failed; retrying in 15s"
+            sleep 15
+          done
+          exit 1
       - name: Run e2e against the stack
         run: make test-e2e
 
