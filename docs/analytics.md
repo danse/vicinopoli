@@ -134,3 +134,26 @@ WHERE e.name = 'post_created'
     WHERE o.device_id = e.device_id AND o.name = 'onboarding_completed'
   );
 ```
+
+## Reading a campaign wave
+
+The funnel (all consent-gated events): clicks → `onboarding_completed` →
+`address_set` → `post_created`. Because the consent banner is deferred to the
+feed, `onboarding_completed` means "reached the feed *and* accepted" — there
+is no address-page event. To see how many clicks actually reached the feed,
+use the server-side Prometheus counter (consent-free, feed loads):
+
+```promql
+vicinopoli_http_requests_total{route="/feed", method="GET"}
+```
+
+(The route label is `/feed` — FastAPI reports paths without the `/api` mount
+prefix; unmatched paths fall back to the full URL path.)
+
+Rule of thumb: `GET /api/feed` count ≈ clicks that reached the feed; compare
+it to `onboarding_completed` to isolate the consent step. Prometheus data is
+**ephemeral** (resets on container recreation) — read it as an instant query
+for the current window, not a long-range trend.
+
+Exclude your own device (the welcome-post author) from user-facing counts:
+`WHERE device_id <> '<your-device-id>'`.
