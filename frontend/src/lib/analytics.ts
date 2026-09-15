@@ -6,6 +6,8 @@
  * them on opt-in. SPA route changes send ``page_view`` config calls.
  */
 
+import { restoreAdClickParams } from "@/lib/ad-linking";
+
 declare global {
   interface Window {
     dataLayer?: unknown[][];
@@ -94,6 +96,9 @@ export function trackConversion(
 ): void {
   if (id === "" || typeof window === "undefined") return;
   if (consentGranted !== true) return;
+  // Re-attach the ad-click params (gclid) that SPA navigation dropped, so
+  // gtag can still link this conversion to the original ad click.
+  restoreAdClickParams();
   window.gtag?.("event", "conversion", {
     send_to: FEED_CONVERSION_ID,
   });

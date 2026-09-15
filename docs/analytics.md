@@ -155,5 +155,9 @@ it to `onboarding_completed` to isolate the consent step. Prometheus data is
 **ephemeral** (resets on container recreation) — read it as an instant query
 for the current window, not a long-range trend.
 
+The ad-click `gclid` is captured at app load and re-attached to the URL right
+before the feed conversion fires, so SPA navigation doesn't break Google Ads
+attribution (`lib/ad-linking.ts`).
+
 Exclude your own device (the welcome-post author) from user-facing counts:
 `WHERE device_id <> '<your-device-id>'`.

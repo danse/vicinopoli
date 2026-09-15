@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./i18n";
 import "./index.css";
+import { captureAdClickParams } from "./lib/ad-linking";
 import { reportServiceWorkerErrors } from "./lib/sw-errors";
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
@@ -22,6 +23,9 @@ if (sentryDsn) {
 
 // The service worker reports its push errors here (it has no Sentry init).
 reportServiceWorkerErrors();
+
+// Remember the ad-click params (gclid) before SPA navigation can drop them.
+captureAdClickParams();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
