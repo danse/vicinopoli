@@ -1,0 +1,126 @@
+{
+  "app": {
+    "title": "vicinopoli",
+    "tagline": "你左邻右舍的广场",
+    "description": "vicinopoli 是你所在街区的广场：与住在你附近的人一起阅读和发布文字、语音和照片。免费，无需账号。",
+    "switchLanguage": "Italiano",
+    "version": "版本"
+  },
+  "update": {
+    "available": "有新版本。刷新以更新。",
+    "reload": "更新",
+    "close": "稍后"
+  },
+  "address": {
+    "title": "你在哪里？",
+    "intro": "你所在街区的广场：与住在你附近的人一起阅读和发布文字、语音和照片。免费，无需账号。",
+    "enter": "进入",
+    "locate": "使用我的位置",
+    "locating": "正在定位…"
+  },
+  "feed": {
+    "compose": "写消息",
+    "viewingNear": "正在查看来自以下位置的消息",
+    "changeAddress": "更改地址"
+  },
+  "composer": {
+    "addressLabel": "你在哪里？",
+    "addressPlaceholder": "例如：罗马 1 号街",
+    "messageLabel": "写消息",
+    "messagePlaceholder": "你好，邻居！",
+    "captionLabel": "标题",
+    "captionPlaceholder": "添加标题（可选）",
+    "postingAs": "发布身份",
+    "changePseudonym": "更改",
+    "typeLabel": "消息类型",
+    "typeText": "文字",
+    "typePhoto": "照片",
+    "typeVoice": "语音",
+    "publish": "发布",
+    "publishing": "发布中…",
+    "error": "无法发布。请重试。",
+    "addressNotFound": "未找到地址。",
+    "feedTitle": "附近发生了什么",
+    "empty": "还没有消息。来做第一个吧！",
+    "radius": "{{radius}} 以内",
+    "distanceFrom": "距离你 {{distance}}",
+    "anonymous": "匿名邻居",
+    "newNeighbour": "新邻居",
+    "photoLabel": "添加照片",
+    "photoAlt": "已附照片",
+    "voiceLabel": "语音消息",
+    "voiceStop": "停止",
+    "voiceRecording": "正在录音…",
+    "voiceReady": "语音已就绪（{{duration}} 秒）",
+    "voiceAlt": "已附语音消息",
+    "voiceError": "语音录制失败。",
+    "scopeLabel": "你想让谁看到",
+    "voiceStreet": "我的这条街",
+    "voiceSome": "一些邻居",
+    "voiceArea": "这个街区",
+    "voiceCity": "整个城市",
+    "addressSuggestionsLabel": "地址建议",
+    "addressNoResults": "没有结果",
+    "quotaRemaining": "今天还剩 {{count}} 条消息",
+    "quotaRemaining_other": "今天还剩 {{count}} 条消息",
+    "quotaExhausted": "今天已达到消息数量上限",
+    "quotaHelpLabel": "为什么有这个限制？",
+    "quotaHelpTitle": "每日限制",
+    "quotaHelpBody": "当你是一位新邻居时，每天只能发布少量消息。这样可以避免垃圾信息和滥用，而无需你注册账号。",
+    "quotaHelpTrust": "随着时间的推移，你的信任度会提高，限制也会放宽。",
+    "quotaHelpClose": "关闭"
+  },
+  "pseudonym": {
+    "title": "你想怎么称呼自己？",
+    "hint": "一个用于署名的昵称。",
+    "save": "保存",
+    "error": "无法保存。请重试。"
+  },
+  "consent": {
+    "title": "匿名统计",
+    "body": "我们可以收集匿名统计数据并与 Google 共享用于广告活动吗？我们绝不会记录你的地址。",
+    "accept": "接受",
+    "decline": "拒绝"
+  },
+  "support": {
+    "title": "支持",
+    "hint": "写信到 {{email}} 以报告问题或提问。",
+    "back": "返回首页"
+  },
+  "privacy": {
+    "title": "隐私与 Cookie 政策",
+    "footerLink": "隐私",
+    "bannerLink": "隐私政策",
+    "intro": "vicinopoli 是一个无需账号的街区广场：我们不要求邮箱、姓名或密码。这里用简单的语言说明我们处理哪些数据。",
+    "contactTitle": "联系方式",
+    "contactBody": "如有疑问、访问或删除请求，请写信至：",
+    "cookiesTitle": "Cookie",
+    "cookiesBody1": "我们使用一个技术 Cookie “device_id”：一个匿名随机标识符，让应用无需账号即可运行。这是必需的 Cookie，无需同意。",
+    "cookiesBody2": "Google Ads 代码只在你接受同意横幅后加载，并可能设置广告 Cookie（例如 “_gcl_*”）。你可以拒绝，之后也可以通过清除网站 Cookie 来修改选择。",
+    "localTitle": "你设备上的数据",
+    "localBody": "我们在你的浏览器（localStorage）中只保存功能性数据：地址、消息草稿、通知偏好。除非用于预期用途，否则它们不会离开你的设备。",
+    "serverTitle": "我们存储的数据",
+    "serverBody1": "服务器上我们保存匿名设备标识符、已发布的消息和粗略的地理格（绝不是你的地址或精确坐标）。",
+    "serverBody2": "在你同意后，我们会收集关于你如何使用 vicinopoli 的匿名统计。如果你启用通知，我们会保存订阅端点和粗略格。",
+    "noAccountsTitle": "没有账号，没有个人数据",
+    "noAccountsBody": "我们不记录邮箱、姓名或密码。昵称是可选的，由你选择；它可能让你被认出来，请谨慎使用。",
+    "rightsTitle": "你的权利",
+    "rightsBody": "因为我们不识别个人，我们不保存需要删除的个人数据。如有任何问题，请写信给我们："
+  },
+  "push": {
+    "toggleLabel": "有邻居发布时通知我",
+    "error": "无法启用通知。请重试。"
+  },
+  "preview": {
+    "loading": "正在加载预览…"
+  },
+  "admin": {
+    "title": "内容审查",
+    "subtitle": "所有已发送的消息，供审查",
+    "login": "登录",
+    "tokenLabel": "管理代码",
+    "tokenError": "代码无效。请重试。",
+    "reports": "举报",
+    "zone": "打开区域"
+  }
+}

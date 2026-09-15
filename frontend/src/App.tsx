@@ -14,6 +14,8 @@ import { PrivacyPage } from "@/pages/privacy-page";
 import { PseudonymPage } from "@/pages/pseudonym-page";
 import { SupportPage } from "@/pages/support-page";
 
+const LANGUAGE_CYCLE = ["it", "en", "zh"] as const;
+
 function RequireAddress({ children }: { children: ReactElement }) {
   const { address } = useApp();
   if (address.trim() === "") {
@@ -38,13 +40,23 @@ function AppRoutes() {
     trackPageView(location.pathname + location.search, document.title);
   }, [location.pathname, location.search]);
 
-  // Page-specific tab titles (ADR 0027).
+  // Page-specific tab titles (ADR 0027) and the document language, so tabs and
+  // screen readers follow the chosen locale.
   useEffect(() => {
     document.title = pageTitle(location.pathname, t);
-  }, [location.pathname, t]);
+    document.documentElement.lang = i18n.language;
+  }, [location.pathname, t, i18n.language]);
 
   const toggleLanguage = () => {
-    const next = i18n.language === "it" ? "en" : "it";
+    const cycle = LANGUAGE_CYCLE;
+    const current = cycle.includes(
+      i18n.language as (typeof cycle)[number],
+    )
+      ? (i18n.language as (typeof cycle)[number])
+      : "it";
+    const next = cycle[
+      (cycle.indexOf(current) + 1) % cycle.length
+    ] as (typeof cycle)[number];
     void i18n.changeLanguage(next);
   };
 
@@ -57,6 +69,7 @@ function AppRoutes() {
         </div>
         <button
           onClick={toggleLanguage}
+          data-testid="app-language-switch"
           className="rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent"
         >
           {t("app.switchLanguage")}

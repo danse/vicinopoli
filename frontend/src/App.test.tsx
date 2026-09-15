@@ -3,11 +3,11 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
+import i18n from "./i18n";
 import {
   DEBOUNCE_MS,
   clearSuggestionCache,
 } from "./components/address-combobox";
-import "./i18n";
 
 const sentryCapture = vi.fn();
 vi.mock("@sentry/react", () => ({
@@ -267,6 +267,21 @@ describe("App", () => {
     expect(footer).toBeInTheDocument();
     const version = screen.getByTestId("app-footer-version");
     expect(version.textContent).toMatch(/^(dev|[0-9a-f]{7,})$/);
+  });
+
+  it("cycles through the languages and sets the document language", async () => {
+    renderApp();
+    const langSwitch = screen.getByTestId("app-language-switch");
+
+    fireEvent.click(langSwitch); // it -> en
+    await waitFor(() => expect(document.documentElement.lang).toBe("en"));
+
+    fireEvent.click(langSwitch); // en -> zh
+    await waitFor(() => expect(document.documentElement.lang).toBe("zh"));
+
+    // Restore the default locale for test isolation.
+    await i18n.changeLanguage("it");
+    await waitFor(() => expect(document.documentElement.lang).toBe("it"));
   });
 
   it("links to the privacy and cookie policy from the footer", async () => {
