@@ -54,8 +54,6 @@ synonyms. The essentials:
 
 Ordered by priority, remove from the list when done
 
-
-
 - link from the composer to the feed
 - realtime feed
 - message page, navigate on click. Image shows full-screen in there

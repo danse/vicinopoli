@@ -46,6 +46,8 @@ test("an auto-hidden reported post appears in the firehose", async ({
   await expect(item).toBeVisible();
   await expect(item.getByTestId("admin-status")).toHaveText("auto_hidden");
   await expect(item.getByTestId("admin-report-count")).toHaveText("3");
+  await expect(item.getByTestId("admin-voice")).toHaveText("city");
+  await expect(item.getByTestId("admin-created-at")).toBeVisible();
   await expect(item.getByTestId("admin-zone-link")).toBeVisible();
 });
 

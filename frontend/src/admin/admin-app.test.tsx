@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import "../i18n";
 
-import { AdminApp } from "./admin-app";
+import { AdminApp, formatTimestamp } from "./admin-app";
 
 const feed = {
   posts: [
@@ -67,7 +67,7 @@ describe("AdminApp", () => {
     expect(screen.queryByTestId("admin-post")).not.toBeInTheDocument();
   });
 
-  it("renders posts with status, report count, address and geohash", async () => {
+  it("renders posts with status, report count, address, geohash, voice and timestamp", async () => {
     vi.stubGlobal("fetch", mockFetch());
     render(<AdminApp />);
     fireEvent.change(screen.getByTestId("admin-token"), {
@@ -80,6 +80,10 @@ describe("AdminApp", () => {
     });
     expect(screen.getByTestId("admin-status")).toHaveTextContent("auto_hidden");
     expect(screen.getByTestId("admin-report-count")).toHaveTextContent("3");
+    expect(screen.getByTestId("admin-voice")).toHaveTextContent("city");
+    expect(screen.getByTestId("admin-created-at")).toHaveTextContent(
+      formatTimestamp("2026-08-17T00:00:00Z"),
+    );
     expect(screen.getByText("Messaggio da controllare")).toBeInTheDocument();
     expect(
       screen.getByText(/Via Roma 1, Roma/),

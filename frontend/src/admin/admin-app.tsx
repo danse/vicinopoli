@@ -12,6 +12,12 @@ function statusLabel(status: AdminPost["status"]): string {
   return status;
 }
 
+export function formatTimestamp(iso: string): string {
+  const date = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export function AdminApp() {
   const { t } = useTranslation();
   const [token, setToken] = useState(
@@ -160,9 +166,18 @@ export function AdminApp() {
               <span data-testid="admin-status" className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
                 {statusLabel(post.status)}
               </span>
+              <span data-testid="admin-voice" className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                {post.voice}
+              </span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <span data-testid="admin-report-count">{post.report_count}</span>
                 <span>{t("admin.reports")}</span>
+              </span>
+              <span
+                data-testid="admin-created-at"
+                className="ml-auto text-xs text-muted-foreground"
+              >
+                {formatTimestamp(post.created_at)}
               </span>
             </div>
             <div className="mb-1 flex items-center gap-2">
